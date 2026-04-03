@@ -26,3 +26,7 @@ updates:
       - "ci"
     commit-message:
       prefix: "chore(ci)"
+    groups:
+      ci-workflows:
+        patterns:
+          - "*"
