@@ -1,687 +1,990 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Emprunt de matériel</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="RGAA Audit — Outil open-source d'audit d'accessibilité RGAA 4.1. Extension Chrome + CLI Playwright + Analyse IA.">
+  <meta property="og:title" content="RGAA Audit — Accessibilité numérique open-source">
+  <meta property="og:description" content="Auditez n'importe quel site en RGAA 4.1, simulez des actions humaines, obtenez un rapport en secondes.">
+  <meta property="og:type" content="website">
+  <title>RGAA Audit — Outil open-source d'accessibilité</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0f1117;
-      --surface: #181c27;
-      --surface2: #1e2335;
-      --border: #2a2f45;
-      --accent: #5b8cff;
-      --accent2: #3dffa0;
-      --text: #e8eaf2;
-      --text-muted: #7a80a0;
-      --danger: #ff5b5b;
-      --radius: 12px;
+      --bg:       #0B0C0F;
+      --bg2:      #111318;
+      --bg3:      #181B22;
+      --border:   rgba(255,255,255,0.07);
+      --border2:  rgba(255,255,255,0.12);
+      --text:     #E8EAF0;
+      --muted:    #6B7280;
+      --accent:   #FF5C35;
+      --accent2:  #FF8C6B;
+      --green:    #22C55E;
+      --yellow:   #EAB308;
+      --blue:     #3B82F6;
+      --mono:     'Geist Mono', monospace;
+      --serif:    'Instrument Serif', serif;
+      --sans:     'Geist', sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      min-height: 100vh;
-      padding: 40px 16px 80px;
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    .grain {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      opacity: 0.5;
-    }
-
-    .wrap {
-      max-width: 680px;
-      margin: 0 auto;
-      position: relative; z-index: 1;
-    }
-
-    header {
-      margin-bottom: 40px;
-      animation: fadeUp 0.5s ease both;
-    }
-
-    .badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(91,140,255,0.12);
-      border: 1px solid rgba(91,140,255,0.3);
-      border-radius: 999px;
-      padding: 5px 14px;
-      font-size: 12px; font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-
-    .badge::before {
+    /* ── GRAIN OVERLAY ── */
+    body::before {
       content: '';
-      width: 7px; height: 7px;
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: .5;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 60px;
+      background: rgba(11,12,15,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-logo-icon {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--accent), #C13A1E);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff !important;
+      padding: 7px 16px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: opacity .2s;
+    }
+    .nav-cta:hover { opacity: .85; }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      overflow: hidden;
+    }
+
+    /* Grille de fond */
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* Glow accent */
+    .hero-glow {
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(255,92,53,.12) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -60%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,92,53,0.1);
+      border: 1px solid rgba(255,92,53,0.25);
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent2);
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp .6s ease both;
+    }
+
+    .badge-dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
       border-radius: 50%;
-      background: var(--accent2);
       animation: pulse 2s infinite;
     }
 
     @keyframes pulse {
-      0%,100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(1.4); }
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
     }
 
-    h1 {
-      font-family: 'DM Serif Display', serif;
-      font-size: clamp(28px, 5vw, 42px);
-      line-height: 1.15;
-      color: var(--text);
+    .hero h1 {
+      position: relative;
+      z-index: 1;
+      font-family: var(--serif);
+      font-size: clamp(48px, 7vw, 88px);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -1px;
+      margin-bottom: 24px;
+      animation: fadeUp .7s .1s ease both;
     }
 
-    h1 span { color: var(--accent); }
-
-    .subtitle {
-      margin-top: 10px;
-      color: var(--text-muted);
-      font-size: 15px;
-      font-weight: 300;
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      margin-bottom: 16px;
-      animation: fadeUp 0.5s ease both;
-    }
-
-    .card:nth-child(2) { animation-delay: 0.05s; }
-    .card:nth-child(3) { animation-delay: 0.1s; }
-    .card:nth-child(4) { animation-delay: 0.15s; }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .card-title {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 20px;
-      display: flex; align-items: center; gap: 8px;
-    }
-
-    .card-title::before {
-      content: '';
-      display: block; width: 20px; height: 2px;
-      background: var(--accent);
-    }
-
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 520px) { .grid-2 { grid-template-columns: 1fr; } }
-
-    .field { display: flex; flex-direction: column; gap: 6px; }
-
-    label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-    }
-
-    input, textarea, select {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 11px 14px;
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      width: 100%;
-    }
-
-    input:focus, textarea:focus, select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(91,140,255,0.15);
-    }
-
-    textarea { resize: vertical; min-height: 90px; }
-
-    select option { background: var(--surface2); }
-
-    /* ---- Sélecteur de matériel ---- */
-    .materiel-section { margin-top: 4px; }
-
-    .tabs {
-      display: flex; gap: 8px; margin-bottom: 16px;
-    }
-
-    .tab {
-      flex: 1; padding: 9px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-muted);
-      font-size: 13px; font-weight: 500;
-      cursor: pointer; text-align: center;
-      transition: all 0.2s;
-    }
-
-    .tab.active {
-      background: rgba(91,140,255,0.15);
-      border-color: var(--accent);
+    .hero h1 em {
+      font-style: italic;
       color: var(--accent);
     }
 
-    .materiel-grid {
+    .hero-sub {
+      position: relative;
+      z-index: 1;
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+      animation: fadeUp .7s .2s ease both;
+    }
+
+    .hero-actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp .7s .3s ease both;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      padding: 13px 28px;
+      border-radius: 9px;
+      font-size: 15px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: transform .2s, opacity .2s;
+    }
+    .btn-primary:hover { transform: translateY(-1px); opacity: .9; }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 13px 28px;
+      border-radius: 9px;
+      font-size: 15px;
+      font-weight: 400;
+      text-decoration: none;
+      transition: border-color .2s, transform .2s;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.25); transform: translateY(-1px); }
+
+    /* Terminal hero */
+    .hero-terminal {
+      position: relative;
+      z-index: 1;
+      margin-top: 64px;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 640px;
+      overflow: hidden;
+      animation: fadeUp .7s .4s ease both;
+      text-align: left;
+    }
+
+    .terminal-bar {
+      background: var(--bg3);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r { background: #FF5F57; }
+    .dot-y { background: #FEBC2E; }
+    .dot-g { background: #28C840; }
+
+    .terminal-title {
+      margin-left: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .terminal-body {
+      padding: 20px 24px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 2;
+    }
+
+    .t-prompt { color: var(--accent); }
+    .t-cmd { color: var(--text); }
+    .t-dim { color: var(--muted); }
+    .t-green { color: var(--green); }
+    .t-yellow { color: var(--yellow); }
+    .t-blue { color: var(--blue); }
+    .t-score {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(34,197,94,.1);
+      border: 1px solid rgba(34,197,94,.2);
+      border-radius: 6px;
+      padding: 2px 10px;
+      color: var(--green);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── STATS ── */
+    .stats {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat-box {
+      background: var(--bg);
+      padding: 40px 32px;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-family: var(--serif);
+      font-size: 48px;
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-num em { font-style: italic; color: var(--accent); }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── SECTION ── */
+    section {
+      position: relative;
+      padding: 96px 40px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: var(--serif);
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 400;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    .section-title em { font-style: italic; color: var(--accent); }
+
+    .section-sub {
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 500px;
+      line-height: 1.7;
+      margin-bottom: 56px;
+    }
+
+    /* ── FEATURE GRID ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .feature {
+      background: var(--bg2);
+      padding: 32px;
+      transition: background .2s;
+    }
+    .feature:hover { background: var(--bg3); }
+
+    .feature-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    .feature h3 {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .feature p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .steps {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .steps-list { list-style: none; }
+
+    .step {
+      display: flex;
+      gap: 20px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .step:last-child { border-bottom: none; }
+
+    .step-num {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      min-width: 24px;
+      padding-top: 2px;
+    }
+
+    .step h4 { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+    .step p  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    .steps-visual {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 24px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 2.2;
+    }
+
+    /* ── CRITERIA TABLE ── */
+    .criteria-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .criterion-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .criterion-name { font-size: 13px; }
+    .criterion-num  { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    .status-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .status-auto   { background: rgba(34,197,94,.1);  color: var(--green);  border: 1px solid rgba(34,197,94,.2); }
+    .status-partial { background: rgba(234,179,8,.1);  color: var(--yellow); border: 1px solid rgba(234,179,8,.2); }
+    .status-manual { background: rgba(107,114,128,.1); color: var(--muted);  border: 1px solid rgba(107,114,128,.2); }
+
+    /* ── INSTALL ── */
+    .install-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .install-card {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .install-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
       gap: 10px;
     }
 
-    .mat-item {
-      background: var(--surface2);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      cursor: pointer;
-      transition: all 0.15s;
-      display: flex; flex-direction: column; gap: 4px;
+    .install-icon { font-size: 20px; }
+    .install-title { font-size: 15px; font-weight: 500; }
+    .install-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .install-body {
+      padding: 20px 24px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 2.1;
     }
 
-    .mat-item:hover { border-color: var(--accent); }
+    .code-line { display: flex; gap: 10px; }
+    .code-prompt { color: var(--accent); user-select: none; }
+    .code-cmd { color: var(--text); }
+    .code-comment { color: var(--muted); }
 
-    .mat-item.selected {
-      border-color: var(--accent2);
-      background: rgba(61,255,160,0.07);
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1100px;
+      margin: 0 auto;
     }
 
-    .mat-item.indispo {
-      opacity: 0.35;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
+    footer p { font-size: 13px; color: var(--muted); }
+    footer a { color: var(--muted); text-decoration: none; transition: color .2s; }
+    footer a:hover { color: var(--text); }
 
-    .mat-name { font-size: 14px; font-weight: 500; }
-    .mat-qty  { font-size: 12px; color: var(--text-muted); }
+    .footer-links { display: flex; gap: 24px; }
 
-    .mat-badge {
-      display: inline-block;
-      font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
-      padding: 2px 8px; border-radius: 999px;
-      margin-top: 2px;
-    }
-    .mat-badge.ok { background: rgba(61,255,160,0.15); color: var(--accent2); }
-    .mat-badge.indispo { background: rgba(255,91,91,0.15); color: var(--danger); }
-
-    .qty-ctrl {
-      display: flex; align-items: center; gap: 8px; margin-top: 6px;
-    }
-
-    .qty-btn {
-      width: 26px; height: 26px;
-      border-radius: 6px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-size: 16px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s;
-    }
-    .qty-btn:hover { background: var(--border); }
-
-    .qty-val { font-size: 14px; font-weight: 600; min-width: 20px; text-align: center; }
-
-    /* ---- Loading ---- */
-    .loader {
-      display: flex; align-items: center; gap: 10px;
-      color: var(--text-muted); font-size: 14px;
-      padding: 20px 0;
-    }
-
-    .spinner {
-      width: 20px; height: 20px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ---- Résumé ---- */
-    .recap {
-      background: rgba(91,140,255,0.07);
-      border: 1px solid rgba(91,140,255,0.2);
-      border-radius: 10px;
-      padding: 16px;
-      margin-top: 16px;
-      font-size: 13px;
-      display: none;
-    }
-
-    .recap.visible { display: block; }
-
-    .recap-title { font-weight: 600; margin-bottom: 10px; color: var(--accent); }
-    .recap-line { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    .recap-line:last-child { border: none; }
-    .recap-label { color: var(--text-muted); }
-
-    /* ---- Submit ---- */
-    .btn-submit {
-      width: 100%; padding: 16px;
-      background: var(--accent);
-      color: #fff;
-      border: none; border-radius: 10px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 15px; font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.15s;
-      margin-top: 8px;
-      position: relative; overflow: hidden;
-    }
-
-    .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
-    .btn-submit:active { transform: translateY(0); }
-    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-    /* ---- Success ---- */
-    .success-screen {
-      text-align: center; padding: 60px 20px;
-      display: none; flex-direction: column; align-items: center; gap: 16px;
-    }
-    .success-screen.visible { display: flex; }
-
-    .success-icon {
-      width: 72px; height: 72px;
-      background: rgba(61,255,160,0.1);
-      border: 2px solid var(--accent2);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 32px;
-    }
-
-    .success-screen h2 {
-      font-family: 'DM Serif Display', serif;
-      font-size: 26px;
-    }
-
-    .success-screen p { color: var(--text-muted); font-size: 15px; max-width: 360px; }
-
-    .btn-new {
-      margin-top: 8px; padding: 12px 28px;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text); font-family: 'DM Sans', sans-serif;
-      font-size: 14px; cursor: pointer;
-      transition: border-color 0.2s;
-    }
-    .btn-new:hover { border-color: var(--accent); color: var(--accent); }
-
-    .error-msg {
-      background: rgba(255,91,91,0.1);
-      border: 1px solid rgba(255,91,91,0.3);
-      border-radius: 8px; padding: 12px 16px;
-      color: var(--danger); font-size: 13px;
-      margin-top: 12px; display: none;
-    }
-    .error-msg.visible { display: block; }
-
-    .dispo-notice {
-      font-size: 12px; color: var(--text-muted);
-      margin-top: 8px;
-      display: flex; align-items: center; gap: 6px;
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      section { padding: 64px 20px; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .features { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .steps-visual { display: none; }
+      .criteria-grid { grid-template-columns: 1fr; }
+      .install-grid { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 16px; text-align: center; }
     }
   </style>
 </head>
 <body>
-<div class="grain"></div>
-<div class="wrap">
 
-  <!-- ======= FORMULAIRE ======= -->
-  <div id="formView">
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">♿</div>
+    rgaa-audit
+  </a>
+  <ul class="nav-links">
+    <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+    <li><a href="#comment">Comment ça marche</a></li>
+    <li><a href="#criteres">Critères</a></li>
+    <li><a href="#installer">Installer</a></li>
+    <li><a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener">GitHub</a></li>
+  </ul>
+  <a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener" class="nav-cta">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+    Voir sur GitHub
+  </a>
+</nav>
 
-    <header>
-      <div class="badge">Studio · Emprunt matériel</div>
-      <h1>Réserver du <span>matériel</span></h1>
-      <p class="subtitle">Remplissez le formulaire — un email de confirmation vous sera envoyé.</p>
-    </header>
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
 
-    <!-- 1. Identité -->
-    <div class="card">
-      <div class="card-title">Vos informations</div>
-      <div class="grid-2">
-        <div class="field">
-          <label for="prenom">Prénom</label>
-          <input id="prenom" type="text" placeholder="Ex : Marie"/>
-        </div>
-        <div class="field">
-          <label for="nom">Nom</label>
-          <input id="nom" type="text" placeholder="Ex : Dupont"/>
-        </div>
-        <div class="field">
-          <label for="email">Email</label>
-          <input id="email" type="email" placeholder="marie@example.com"/>
-        </div>
-        <div class="field">
-          <label for="tel">Téléphone</label>
-          <input id="tel" type="tel" placeholder="06 00 00 00 00"/>
-        </div>
-      </div>
-      <div class="field" style="margin-top:16px;">
-        <label for="description">Description de la prestation</label>
-        <textarea id="description" placeholder="Ex : Concert acoustique le 22 mars à la salle des fêtes de Fleurieux…"></textarea>
-      </div>
-    </div>
-
-    <!-- 2. Dates -->
-    <div class="card">
-      <div class="card-title">Période d'emprunt</div>
-      <div class="grid-2">
-        <div class="field">
-          <label for="dateDebut">Date de départ</label>
-          <input id="dateDebut" type="date"/>
-        </div>
-        <div class="field">
-          <label for="dateFin">Date de retour</label>
-          <input id="dateFin" type="date"/>
-        </div>
-      </div>
-      <p class="dispo-notice">⚡ La disponibilité du matériel sera vérifiée dès que vous choisissez vos dates.</p>
-    </div>
-
-    <!-- 3. Matériel -->
-    <div class="card" id="materielCard" style="display:none;">
-      <div class="card-title">Matériel souhaité</div>
-
-      <div class="tabs">
-        <div class="tab active" id="tabPieces" onclick="switchTab('pieces')">Pièces individuelles</div>
-        <div class="tab" id="tabKits" onclick="switchTab('kits')">Kits prédéfinis</div>
-      </div>
-
-      <!-- Pièces -->
-      <div id="panelPieces" class="materiel-section">
-        <div id="loadingPieces" class="loader" style="display:none;">
-          <div class="spinner"></div> Vérification des disponibilités…
-        </div>
-        <div class="materiel-grid" id="gridPieces"></div>
-      </div>
-
-      <!-- Kits -->
-      <div id="panelKits" class="materiel-section" style="display:none;">
-        <div id="loadingKits" class="loader" style="display:none;">
-          <div class="spinner"></div> Chargement des kits…
-        </div>
-        <div class="materiel-grid" id="gridKits"></div>
-      </div>
-
-      <!-- Récapitulatif sélection -->
-      <div class="recap" id="recap">
-        <div class="recap-title">📦 Sélection en cours</div>
-        <div id="recapLines"></div>
-      </div>
-    </div>
-
-    <!-- Submit -->
-    <div id="submitZone" style="display:none;">
-      <button class="btn-submit" id="btnSubmit" onclick="soumettreFormulaire()">
-        Confirmer l'emprunt →
-      </button>
-      <div class="error-msg" id="errorMsg"></div>
-    </div>
-
+  <div class="hero-badge">
+    <div class="badge-dot"></div>
+    v0.2.0 — Alpha · RGAA 4.1
   </div>
 
-  <!-- ======= SUCCÈS ======= -->
-  <div class="success-screen" id="successScreen">
-    <div class="success-icon">✓</div>
-    <h2>Emprunt enregistré !</h2>
-    <p>Un email de confirmation a été envoyé à votre adresse. Le responsable a été notifié.</p>
-    <button class="btn-new" onclick="resetForm()">Faire une nouvelle demande</button>
+  <h1>
+    L'accessibilité numérique<br>
+    <em>auditée automatiquement</em>
+  </h1>
+
+  <p class="hero-sub">
+    Extension Chrome + CLI Playwright open-source pour auditer la conformité RGAA 4.1
+    de n'importe quel site web, avec simulation d'actions humaines et analyse IA.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#installer" class="btn-primary">
+      ↓ Installer maintenant
+    </a>
+    <a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener" class="btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      Star sur GitHub
+    </a>
   </div>
 
+  <div class="hero-terminal">
+    <div class="terminal-bar">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+      <span class="terminal-title">Terminal — RGAA Audit CLI</span>
+    </div>
+    <div class="terminal-body">
+      <div><span class="t-prompt">$</span> <span class="t-cmd">node bin/rgaa-audit.js https://mon-site.fr -o html -s rapport.html</span></div>
+      <div class="t-dim">♿  RGAA Audit CLI v0.2.0</div>
+      <div class="t-dim">🌐 Chargement de la page…</div>
+      <div class="t-dim">⌨️  Simulation navigation clavier (15 éléments)…</div>
+      <div class="t-dim">🔍 Audit DOM — 13 thèmes RGAA 4.1…</div>
+      <div class="t-dim">🤖 Analyse IA via Claude API…</div>
+      <div>┌─────────────────────────────────────────┐</div>
+      <div>│  Taux de conformité : <span class="t-score">89%  ████████████████░░░░</span> │</div>
+      <div>│  <span class="t-green">Conformes    : 17</span>  <span class="t-yellow">Non conformes: 2</span>   │</div>
+      <div>└─────────────────────────────────────────┘</div>
+      <div><span class="t-green">📁 Rapport sauvegardé : rapport.html</span></div>
+    </div>
+  </div>
 </div>
 
+<!-- STATS -->
+<div class="stats">
+  <div class="stat-box">
+    <div class="stat-num"><em>106</em></div>
+    <div class="stat-label">Critères RGAA 4.1</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num"><em>~47</em>%</div>
+    <div class="stat-label">Automatisés</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num"><em>65</em></div>
+    <div class="stat-label">Tests unitaires</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num"><em>8s</em></div>
+    <div class="stat-label">Durée d'un audit</div>
+  </div>
+</div>
+
+<!-- FONCTIONNALITÉS -->
+<section id="fonctionnalites">
+  <div class="section-tag">Fonctionnalités</div>
+  <h2 class="section-title">Tout ce qu'il faut pour<br><em>un audit sérieux</em></h2>
+  <p class="section-sub">Un outil modulaire — utilisez ce dont vous avez besoin, ignorez le reste.</p>
+
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">🧩</div>
+      <h3>Extension Chrome</h3>
+      <p>Audit en contexte directement dans votre navigateur. Aucune installation lourde. Résultats en temps réel avec panel overlay.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⚙️</div>
+      <h3>CLI Playwright</h3>
+      <p>Automatisation complète depuis le terminal. Audit multi-pages, intégration CI/CD, rapports JSON / HTML / CSV.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⌨️</div>
+      <h3>Simulation humaine</h3>
+      <p>Navigation au clavier, zoom 200%, désactivation CSS, test responsive 320px — comme le ferait un vrai auditeur.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🤖</div>
+      <h3>Analyse IA (opt-in)</h3>
+      <p>Priorisation intelligente des non-conformités via Claude API. Utilisez votre propre clé — zéro coût d'infrastructure.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔒</div>
+      <h3>100% local</h3>
+      <p>L'audit tourne dans votre navigateur ou sur votre machine. Aucune donnée envoyée à un tiers sans votre accord.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📖</div>
+      <h3>Open-source MIT</h3>
+      <p>Code source intégralement disponible sur GitHub. Contributions bienvenues — règles, reporters, intégrations.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMMENT ÇA MARCHE -->
+<section id="comment" style="border-top: 1px solid var(--border); padding-top: 96px;">
+  <div class="section-tag">Fonctionnement</div>
+  <h2 class="section-title">8 étapes,<br><em>8 secondes</em></h2>
+  <p class="section-sub">Le simulateur reproduit le comportement d'un auditeur RGAA humain de bout en bout.</p>
+
+  <div class="steps">
+    <ul class="steps-list">
+      <li class="step">
+        <span class="step-num">01</span>
+        <div>
+          <h4>Chargement de la page</h4>
+          <p>Avec attente de stabilisation du DOM — compatible avec les SPA React/Vue/Angular.</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-num">02</span>
+        <div>
+          <h4>Audit DOM automatique</h4>
+          <p>13 thèmes RGAA scannés : images, couleurs, structure, formulaires, navigation…</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-num">03</span>
+        <div>
+          <h4>Navigation clavier (Tab ×15)</h4>
+          <p>Chaque élément focusé est analysé — outline CSS, visibilité, ordre de tabulation.</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-num">04</span>
+        <div>
+          <h4>Zoom 200% + sans CSS</h4>
+          <p>Détection de débordements, vérification de la lisibilité sans feuilles de style.</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-num">05</span>
+        <div>
+          <h4>Test responsive 320px</h4>
+          <p>Redimensionnement à 320px de large — standard mobile WCAG.</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-num">06</span>
+        <div>
+          <h4>Screenshots automatiques</h4>
+          <p>Captures à chaque étape clé pour documenter l'audit.</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-num">07</span>
+        <div>
+          <h4>Calcul du taux de conformité</h4>
+          <p>Score RGAA officiel : conformes / (conformes + non-conformes).</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-num">08</span>
+        <div>
+          <h4>Rapport + analyse IA (opt-in)</h4>
+          <p>Export HTML/JSON/CSV. Recommandations priorisées si clé Anthropic fournie.</p>
+        </div>
+      </li>
+    </ul>
+
+    <div class="steps-visual">
+      <div class="t-dim"># Simulation en cours…</div>
+      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">DOM stable (SPA hydratée)</span></div>
+      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">lang="fr" présent</span></div>
+      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">h1 unique détecté</span></div>
+      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">Lien d'évitement fonctionnel</span></div>
+      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">Focus visible (15 éléments)</span></div>
+      <div><span style="color:var(--yellow)">⚠</span> <span style="color:var(--text)">Contraste 1.54:1 insuffisant</span></div>
+      <div><span style="color:var(--yellow)">⚠</span> <span style="color:var(--text)">Zoom 200% : débordement x</span></div>
+      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">320px : responsive OK</span></div>
+      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">Aucune animation rapide</span></div>
+      <br>
+      <div class="t-score" style="display:inline-flex;gap:8px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);border-radius:6px;padding:4px 12px;color:var(--green)">
+        Taux de conformité : 89%
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CRITÈRES -->
+<section id="criteres" style="border-top: 1px solid var(--border);">
+  <div class="section-tag">Couverture RGAA</div>
+  <h2 class="section-title">13 thèmes,<br><em>~47% automatisés</em></h2>
+  <p class="section-sub">Les critères manuels sont guidés par une checklist interactive dans l'extension Chrome.</p>
+
+  <div class="criteria-grid">
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Images</div>
+        <div class="criterion-num">Thème 1 — 13 critères</div>
+      </div>
+      <span class="status-badge status-auto">Auto</span>
+    </div>
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Cadres (iframes)</div>
+        <div class="criterion-num">Thème 2 — 2 critères</div>
+      </div>
+      <span class="status-badge status-auto">Auto</span>
+    </div>
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Couleurs</div>
+        <div class="criterion-num">Thème 3 — 3 critères</div>
+      </div>
+      <span class="status-badge status-partial">Partiel</span>
+    </div>
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Multimédia</div>
+        <div class="criterion-num">Thème 4 — 13 critères</div>
+      </div>
+      <span class="status-badge status-partial">Partiel</span>
+    </div>
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Tableaux</div>
+        <div class="criterion-num">Thème 5 — 8 critères</div>
+      </div>
+      <span class="status-badge status-auto">Auto</span>
+    </div>
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Liens</div>
+        <div class="criterion-num">Thème 6 — 2 critères</div>
+      </div>
+      <span class="status-badge status-auto">Auto</span>
+    </div>
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Scripts</div>
+        <div class="criterion-num">Thème 7 — 5 critères</div>
+      </div>
+      <span class="status-badge status-partial">Partiel</span>
+    </div>
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Éléments obligatoires</div>
+        <div class="criterion-num">Thème 8 — 10 critères</div>
+      </div>
+      <span class="status-badge status-auto">Auto</span>
+    </div>
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Structure</div>
+        <div class="criterion-num">Thème 9 — 8 critères</div>
+      </div>
+      <span class="status-badge status-auto">Auto</span>
+    </div>
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Présentation</div>
+        <div class="criterion-num">Thème 10 — 14 critères</div>
+      </div>
+      <span class="status-badge status-partial">Partiel</span>
+    </div>
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Formulaires</div>
+        <div class="criterion-num">Thème 11 — 13 critères</div>
+      </div>
+      <span class="status-badge status-auto">Auto</span>
+    </div>
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Navigation</div>
+        <div class="criterion-num">Thème 12 — 12 critères</div>
+      </div>
+      <span class="status-badge status-auto">Auto</span>
+    </div>
+    <div class="criterion-card">
+      <div>
+        <div class="criterion-name">Consultation</div>
+        <div class="criterion-num">Thème 13 — 13 critères</div>
+      </div>
+      <span class="status-badge status-partial">Partiel</span>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:16px;margin-top:24px;font-size:13px;color:var(--muted)">
+    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-auto">Auto</span> Détection automatique complète</span>
+    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-partial">Partiel</span> Automatique + vérification manuelle guidée</span>
+  </div>
+</section>
+
+<!-- INSTALLER -->
+<section id="installer" style="border-top: 1px solid var(--border);">
+  <div class="section-tag">Installation</div>
+  <h2 class="section-title">Prêt en<br><em>3 minutes</em></h2>
+  <p class="section-sub">CLI Node.js ou extension Chrome — choisissez selon votre usage.</p>
+
+  <div class="install-grid">
+    <div class="install-card">
+      <div class="install-header">
+        <div class="install-icon">⚙️</div>
+        <div>
+          <div class="install-title">CLI (recommandé)</div>
+          <div class="install-sub">Audit automatisé, CI/CD, rapports</div>
+        </div>
+      </div>
+      <div class="install-body">
+        <div class="code-line">
+          <span class="code-prompt">$</span>
+          <span class="code-cmd">git clone https://github.com/Stan69000/rgaa-audit</span>
+        </div>
+        <div class="code-line">
+          <span class="code-prompt">$</span>
+          <span class="code-cmd">cd rgaa-audit/cli && npm install</span>
+        </div>
+        <div class="code-line">
+          <span class="code-prompt">$</span>
+          <span class="code-cmd">npx playwright install chromium</span>
+        </div>
+        <div style="height:8px"></div>
+        <div class="code-comment"># Lancer un audit</div>
+        <div class="code-line">
+          <span class="code-prompt">$</span>
+          <span class="code-cmd">node bin/rgaa-audit.js https://mon-site.fr -o html -s rapport.html</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="install-card">
+      <div class="install-header">
+        <div class="install-icon">🧩</div>
+        <div>
+          <div class="install-title">Extension Chrome</div>
+          <div class="install-sub">Audit en contexte, sans config</div>
+        </div>
+      </div>
+      <div class="install-body">
+        <div class="code-comment"># 1. Télécharger le dossier extension/</div>
+        <div class="code-line">
+          <span class="code-prompt">$</span>
+          <span class="code-cmd">git clone https://github.com/Stan69000/rgaa-audit</span>
+        </div>
+        <div style="height:8px"></div>
+        <div class="code-comment"># 2. Dans Chrome</div>
+        <div class="code-comment">#    chrome://extensions/</div>
+        <div class="code-comment">#    → Mode développeur ON</div>
+        <div class="code-comment">#    → Charger extension non empaquetée</div>
+        <div class="code-comment">#    → Sélectionner le dossier extension/</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <p style="font-weight:500;color:var(--text);margin-bottom:4px">RGAA Audit</p>
+    <p>MIT License · Initié en 2026 · Construit avec Playwright et Claude API</p>
+  </div>
+  <div class="footer-links">
+    <a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://github.com/Stan69000/rgaa-audit/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contribuer</a>
+    <a href="https://github.com/Stan69000/rgaa-audit/issues" target="_blank" rel="noopener">Signaler un bug</a>
+    <a href="https://accessibilite.numerique.gouv.fr/" target="_blank" rel="noopener">RGAA officiel</a>
+  </div>
+</footer>
+
 <script>
-  // ---- État global ----
-  let selection = {}; // { id: { nom, quantite, type } }
-  let materielData = [];
-  let kitsData = [];
-  let currentTab = 'pieces';
-  let datesValides = false;
-
-  // ---- Init dates ----
-  const today = new Date();
-  const fmt = d => d.toISOString().split('T')[0];
-  document.getElementById('dateDebut').value = fmt(today);
-  const demain = new Date(today); demain.setDate(today.getDate() + 1);
-  document.getElementById('dateFin').value = fmt(demain);
-
-  document.getElementById('dateDebut').addEventListener('change', onDatesChange);
-  document.getElementById('dateFin').addEventListener('change', onDatesChange);
-
-  // Déclencher au chargement avec les dates pré-remplies
-  onDatesChange();
-
-  function onDatesChange() {
-    const d1 = document.getElementById('dateDebut').value;
-    const d2 = document.getElementById('dateFin').value;
-    if (!d1 || !d2 || d2 < d1) return;
-    datesValides = true;
-    selection = {};
-    document.getElementById('materielCard').style.display = 'block';
-    document.getElementById('submitZone').style.display = 'block';
-    chargerMateriel(d1, d2);
-    chargerKits();
-    updateRecap();
-  }
-
-  // ---- Chargement matériel ----
-  function chargerMateriel(d1, d2) {
-    document.getElementById('loadingPieces').style.display = 'flex';
-    document.getElementById('gridPieces').innerHTML = '';
-    google.script.run
-      .withSuccessHandler(renderMateriel)
-      .withFailureHandler(err => console.error(err))
-      .getMaterielDisponible(d1, d2);
-  }
-
-  function chargerKits() {
-    document.getElementById('loadingKits').style.display = 'flex';
-    document.getElementById('gridKits').innerHTML = '';
-    google.script.run
-      .withSuccessHandler(renderKits)
-      .withFailureHandler(err => console.error(err))
-      .getKits();
-  }
-
-  function renderMateriel(data) {
-    materielData = data;
-    document.getElementById('loadingPieces').style.display = 'none';
-    const grid = document.getElementById('gridPieces');
-    grid.innerHTML = '';
-    if (!data.length) {
-      grid.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Aucun matériel disponible pour ces dates.</p>';
-      return;
-    }
-    data.forEach(item => {
-      const el = document.createElement('div');
-      el.className = 'mat-item' + (item.dispo === 0 ? ' indispo' : '');
-      el.id = 'mat_' + item.id;
-      el.innerHTML = `
-        <div class="mat-name">${item.nom}</div>
-        <div class="mat-qty">${item.dispo} disponible${item.dispo > 1 ? 's' : ''}</div>
-        <span class="mat-badge ${item.dispo > 0 ? 'ok' : 'indispo'}">${item.dispo > 0 ? 'Dispo' : 'Indispo'}</span>
-        ${item.dispo > 0 ? `
-        <div class="qty-ctrl" style="display:none" id="qc_${item.id}">
-          <button class="qty-btn" onclick="changeQty('${item.id}', -1, event)">−</button>
-          <span class="qty-val" id="qv_${item.id}">0</span>
-          <button class="qty-btn" onclick="changeQty('${item.id}', 1, event)">+</button>
-        </div>` : ''}
-      `;
-      if (item.dispo > 0) {
-        el.addEventListener('click', () => togglePiece(item.id, item.nom, item.dispo));
+  // Intersection Observer pour animations au scroll
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
       }
-      grid.appendChild(el);
     });
-  }
+  }, { threshold: 0.1 });
 
-  function renderKits(data) {
-    kitsData = data;
-    document.getElementById('loadingKits').style.display = 'none';
-    const grid = document.getElementById('gridKits');
-    grid.innerHTML = '';
-    if (!data.length) {
-      grid.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Aucun kit configuré.</p>';
-      return;
-    }
-    data.forEach(kit => {
-      const el = document.createElement('div');
-      el.className = 'mat-item' + (kit.disponible ? '' : ' indispo');
-      el.id = 'kit_' + kit.id;
-      el.innerHTML = `
-        <div class="mat-name">${kit.nom}</div>
-        <div class="mat-qty">${kit.contenu}</div>
-        <span class="mat-badge ${kit.disponible ? 'ok' : 'indispo'}">${kit.disponible ? 'Dispo' : 'Indispo'}</span>
-      `;
-      if (kit.disponible) {
-        el.addEventListener('click', () => toggleKit(kit.id, kit.nom));
-      }
-      grid.appendChild(el);
-    });
-  }
-
-  // ---- Interactions sélection ----
-  function togglePiece(id, nom, maxQty) {
-    const el = document.getElementById('mat_' + id);
-    const qc = document.getElementById('qc_' + id);
-    if (selection[id]) {
-      delete selection[id];
-      el.classList.remove('selected');
-      qc.style.display = 'none';
-      document.getElementById('qv_' + id).textContent = '0';
-    } else {
-      selection[id] = { nom, quantite: 1, type: 'piece', max: maxQty };
-      el.classList.add('selected');
-      qc.style.display = 'flex';
-      document.getElementById('qv_' + id).textContent = '1';
-    }
-    updateRecap();
-  }
-
-  function changeQty(id, delta, e) {
-    e.stopPropagation();
-    if (!selection[id]) return;
-    const newQ = selection[id].quantite + delta;
-    if (newQ <= 0) {
-      togglePiece(id, selection[id].nom, selection[id].max);
-      return;
-    }
-    if (newQ > selection[id].max) return;
-    selection[id].quantite = newQ;
-    document.getElementById('qv_' + id).textContent = newQ;
-    updateRecap();
-  }
-
-  function toggleKit(id, nom) {
-    const el = document.getElementById('kit_' + id);
-    if (selection['kit_' + id]) {
-      delete selection['kit_' + id];
-      el.classList.remove('selected');
-    } else {
-      selection['kit_' + id] = { nom, quantite: 1, type: 'kit' };
-      el.classList.add('selected');
-    }
-    updateRecap();
-  }
-
-  // ---- Récapitulatif ----
-  function updateRecap() {
-    const recap = document.getElementById('recap');
-    const lines = document.getElementById('recapLines');
-    const keys = Object.keys(selection);
-    if (!keys.length) { recap.classList.remove('visible'); return; }
-    recap.classList.add('visible');
-    lines.innerHTML = keys.map(k => `
-      <div class="recap-line">
-        <span class="recap-label">${selection[k].nom}</span>
-        <span>${selection[k].quantite > 1 ? '×' + selection[k].quantite : (selection[k].type === 'kit' ? 'Kit' : '1')}</span>
-      </div>`).join('');
-  }
-
-  // ---- Tabs ----
-  function switchTab(tab) {
-    currentTab = tab;
-    document.getElementById('tabPieces').classList.toggle('active', tab === 'pieces');
-    document.getElementById('tabKits').classList.toggle('active', tab === 'kits');
-    document.getElementById('panelPieces').style.display = tab === 'pieces' ? 'block' : 'none';
-    document.getElementById('panelKits').style.display  = tab === 'kits'   ? 'block' : 'none';
-  }
-
-  // ---- Soumission ----
-  function soumettreFormulaire() {
-    const prenom = document.getElementById('prenom').value.trim();
-    const nom    = document.getElementById('nom').value.trim();
-    const email  = document.getElementById('email').value.trim();
-    const tel    = document.getElementById('tel').value.trim();
-    const desc   = document.getElementById('description').value.trim();
-    const d1     = document.getElementById('dateDebut').value;
-    const d2     = document.getElementById('dateFin').value;
-    const errEl  = document.getElementById('errorMsg');
-
-    errEl.classList.remove('visible');
-
-    if (!prenom || !nom || !email || !tel || !desc) {
-      errEl.textContent = 'Merci de remplir tous les champs.';
-      errEl.classList.add('visible'); return;
-    }
-    if (!Object.keys(selection).length) {
-      errEl.textContent = 'Veuillez sélectionner au moins un article.';
-      errEl.classList.add('visible'); return;
-    }
-
-    const btn = document.getElementById('btnSubmit');
-    btn.disabled = true;
-    btn.textContent = 'Envoi en cours…';
-
-    const payload = {
-      prenom, nom, email, tel, description: desc,
-      dateDebut: d1, dateFin: d2,
-      selection: Object.entries(selection).map(([id, v]) => ({
-        id, nom: v.nom, quantite: v.quantite, type: v.type
-      }))
-    };
-
-    google.script.run
-      .withSuccessHandler(res => {
-        if (res.ok) {
-          document.getElementById('formView').style.display = 'none';
-          document.getElementById('successScreen').classList.add('visible');
-        } else {
-          errEl.textContent = res.message || 'Une erreur est survenue.';
-          errEl.classList.add('visible');
-          btn.disabled = false;
-          btn.textContent = 'Confirmer l\'emprunt →';
-        }
-      })
-      .withFailureHandler(() => {
-        errEl.textContent = 'Erreur de connexion. Réessayez.';
-        errEl.classList.add('visible');
-        btn.disabled = false;
-        btn.textContent = 'Confirmer l\'emprunt →';
-      })
-      .soumettreEmprunt(payload);
-  }
-
-  function resetForm() {
-    window.location.reload();
-  }
+  document.querySelectorAll('.feature, .criterion-card, .step, .install-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    observer.observe(el);
+  });
 </script>
+
 </body>
 </html>
