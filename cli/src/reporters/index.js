@@ -12,8 +12,9 @@ async function generateReport(report, format = 'json') {
 
 // ── CSV ──────────────────────────────────────
 function generateCsv(report) {
-  const headers = ['Critère', 'Statut', 'Message', 'Source', 'Extrait'];
+  const headers = ['Page', 'Critère', 'Statut', 'Message', 'Source', 'Extrait'];
   const rows = report.results.map(r => [
+    `"${(r.pageUrl || report.url || '').replace(/"/g, '""')}"`,
     r.id, r.status,
     `"${(r.message || '').replace(/"/g, '""')}"`,
     r.source || 'dom',
@@ -34,6 +35,7 @@ function generateHtml(report) {
 
   const itemsHtml = results.map(r => `
     <tr style="border-bottom:1px solid #1a1a2e">
+      <td style="padding:8px 12px;font-size:11px;color:#8ea0c8;font-family:monospace">${esc(r.pageUrl || url || '')}</td>
       <td style="padding:8px 12px;font-family:monospace;font-size:12px;color:#FF6B35;font-weight:700">${r.id}</td>
       <td style="padding:8px 12px">
         <span style="background:${statusBg[r.status]};color:${statusColor[r.status]};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;font-family:monospace">
@@ -113,10 +115,12 @@ function generateHtml(report) {
   <span style="background:#00C89615;color:#00C896;padding:2px 10px;border-radius:999px;font-size:12px;font-family:'DM Mono',monospace">${score.conformes} C</span>
 </div>
 
+${renderPagesSummary(report)}
+
 <table>
   <thead>
     <tr>
-      <th>Critère</th><th>Statut</th><th>Message</th><th>Source</th>
+      <th>Page</th><th>Critère</th><th>Statut</th><th>Message</th><th>Source</th>
     </tr>
   </thead>
   <tbody>${itemsHtml}</tbody>
@@ -226,6 +230,8 @@ function generateVulgarized(report) {
     <div class="cards">
       ${actionLevers || '<div class="card"><h3>Aucun levier critique détecté</h3><p>Les points non conformes sont mineurs ou absents sur cet échantillon.</p></div>'}
     </div>
+
+    ${renderVulgarizedPages(report)}
 
     <div class="box" style="margin-top:16px;">
       <strong>Ce qui reste à vérifier manuellement</strong>
@@ -427,6 +433,48 @@ function extractElementHint(snippet) {
   if (id) out += ` #${id}`;
   if (cls) out += ` .${cls}`;
   return out;
+}
+
+function renderPagesSummary(report) {
+  const pages = Array.isArray(report.pages) ? report.pages : [];
+  const fallback = report.url ? [{ url: report.url, title: report.title || report.url, score: report.score || {} }] : [];
+  const data = pages.length ? pages : fallback;
+  if (!data.length) return '';
+
+  const items = data.map((p) => {
+    const taux = Number(p.score?.taux ?? 0);
+    const nc = Number(p.score?.nonConformes ?? p.nonConformes ?? 0);
+    const c = Number(p.score?.conformes ?? p.conformes ?? 0);
+    return `<li><strong>${esc(p.title || p.url || 'Page')}</strong> — ${esc(p.url || '')} · ${taux}% · NC ${nc} · C ${c}</li>`;
+  }).join('');
+
+  return `
+    <div style="background:#0D0D1A;border:1px solid #1A1A2E;border-radius:12px;padding:14px;margin-bottom:16px;">
+      <div style="font-size:12px;color:#8ea0c8;font-family:'DM Mono',monospace;margin-bottom:8px;">Pages auditées (${data.length})</div>
+      <ul style="margin:0 0 0 18px;padding:0;color:#c8d2f2;font-size:13px;line-height:1.6">${items}</ul>
+    </div>
+  `;
+}
+
+function renderVulgarizedPages(report) {
+  const pages = Array.isArray(report.pages) ? report.pages : [];
+  const fallback = report.url ? [{ url: report.url, title: report.title || report.url, score: report.score || {} }] : [];
+  const data = pages.length ? pages : fallback;
+  if (!data.length) return '';
+
+  const rows = data.map((p) => {
+    const taux = Number(p.score?.taux ?? 0);
+    const nc = Number(p.score?.nonConformes ?? p.nonConformes ?? 0);
+    const c = Number(p.score?.conformes ?? p.conformes ?? 0);
+    return `<li><strong>${esc(p.title || p.url || 'Page')}</strong> — ${esc(p.url || '')} · ${taux}% · ${nc} NC / ${c} C</li>`;
+  }).join('');
+
+  return `
+    <div class="box" style="margin-top:16px;">
+      <strong>Pages auditées (${data.length})</strong>
+      <ul>${rows}</ul>
+    </div>
+  `;
 }
 
 function esc(str) {

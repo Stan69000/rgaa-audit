@@ -35,32 +35,70 @@ async function runAudit(url, opts = {}) {
     await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
     await page.waitForTimeout(1000);
 
-    const pageTitle = await page.title();
-    success(`   Titre : "${pageTitle}"`);
+    const rootTitle = await page.title();
+    success(`   Titre : "${rootTitle}"`);
 
-    // ── 2. SIMULATION D'ACTIONS HUMAINES ─────
-    let simulationResults = null;
-    if (simulate) {
-      log('\n⌨️  Simulation d\'actions humaines…');
-      simulationResults = await simulateHumanActions(page);
+    // ── 2. SÉLECTION DES PAGES À AUDITER ─────
+    const targets = await buildAuditTargets(page, url, depth);
+    if (targets.length > 1) {
+      success(`   Pages retenues pour audit : ${targets.length}`);
     }
 
-    // ── 3. RÈGLES DOM AUTOMATIQUES ───────────
-    log('\n🔍 Audit DOM (règles RGAA 4.1)…');
-    const domResults = await runDomRules(page);
+    // ── 3. AUDIT DES PAGES ────────────────────
+    const allResults = [];
+    const pages = [];
+    let simulationResults = null;
 
-    // ── 4. FUSION DES RÉSULTATS ───────────────
-    const allResults = mergeResults(domResults, simulationResults);
+    for (let i = 0; i < targets.length; i++) {
+      const targetUrl = targets[i];
+      const label = targets.length > 1 ? ` (${i + 1}/${targets.length})` : '';
+      log(`\n🔍 Audit DOM (règles RGAA 4.1)${label} — ${targetUrl}`);
+
+      if (i > 0) {
+        await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 30000 });
+        await page.waitForTimeout(500);
+      }
+
+      const pageTitle = await safePageTitle(page, targetUrl);
+      const domResults = (await runDomRules(page)).map((r) => ({
+        ...r,
+        pageUrl: targetUrl,
+        pageTitle,
+      }));
+
+      let pageSimulation = null;
+      if (simulate && i === 0) {
+        log('\n⌨️  Simulation d\'actions humaines (page principale)…');
+        pageSimulation = await simulateHumanActions(page);
+        simulationResults = pageSimulation;
+      }
+
+      const pageResults = mergeResults(domResults, pageSimulation, targetUrl, pageTitle);
+      const pageScore = computeScore(pageResults);
+
+      allResults.push(...pageResults);
+      pages.push({
+        url: targetUrl,
+        title: pageTitle,
+        score: pageScore,
+        nonConformes: pageScore.nonConformes,
+        conformes: pageScore.conformes,
+      });
+    }
+
+    // ── 4. SCORE GLOBAL ───────────────────────
     const score = computeScore(allResults);
-
-    printSummary(score, pageTitle, url);
+    printSummary(score, rootTitle, url, pages.length);
 
     // ── 5. RAPPORT ────────────────────────────
     const report = {
       url,
-      title: pageTitle,
+      title: rootTitle,
       timestamp: new Date().toISOString(),
       duration: Math.round((Date.now() - startTime) / 1000),
+      requestedDepth: Math.max(1, Number(depth) || 1),
+      pagesAudited: pages.length,
+      pages,
       score,
       results: allResults,
       simulation: simulationResults?.summary || null,
@@ -89,9 +127,17 @@ async function runAudit(url, opts = {}) {
   }
 }
 
-function mergeResults(domResults, simResults) {
+function mergeResults(domResults, simResults, pageUrl, pageTitle) {
   const all = [...domResults];
-  if (simResults?.findings) all.push(...simResults.findings);
+  if (simResults?.findings) {
+    all.push(
+      ...simResults.findings.map((finding) => ({
+        ...finding,
+        pageUrl: finding.pageUrl || pageUrl,
+        pageTitle: finding.pageTitle || pageTitle,
+      })),
+    );
+  }
   return all;
 }
 
@@ -119,7 +165,7 @@ function computeScore(results) {
   };
 }
 
-function printSummary(score, title, url) {
+function printSummary(score, title, url, pagesAudited = 1) {
   const bar = '█'.repeat(Math.round(score.taux / 5)) + '░'.repeat(20 - Math.round(score.taux / 5));
   const color = score.taux >= 75 ? '\x1b[32m' : score.taux >= 50 ? '\x1b[33m' : '\x1b[31m';
   const reset = '\x1b[0m';
@@ -130,8 +176,90 @@ ${color}┌───────────────────────
 │  Conformes    : ${String(score.conformes).padEnd(4)} critères             │
 │  Non conformes: ${String(score.nonConformes).padEnd(4)} critères             │
 │  N/A          : ${String(score.na).padEnd(4)} critères             │
+│  Pages auditées: ${String(pagesAudited).padEnd(4)}                    │
 └─────────────────────────────────────────┘${reset}
   `);
+}
+
+async function buildAuditTargets(page, startUrl, depth) {
+  const maxPages = Math.max(1, Number(depth) || 1);
+  if (maxPages === 1) return [startUrl];
+
+  const base = new URL(startUrl);
+  const sameOrigin = (u) => {
+    try {
+      const parsed = new URL(u);
+      return parsed.origin === base.origin;
+    } catch {
+      return false;
+    }
+  };
+
+  const normalize = (u) => {
+    try {
+      const parsed = new URL(u, base.href);
+      parsed.hash = '';
+      if (parsed.pathname.endsWith('/')) parsed.pathname = parsed.pathname.slice(0, -1) || '/';
+      return parsed.href;
+    } catch {
+      return '';
+    }
+  };
+
+  const isPageLike = (u) => !/\.(pdf|jpg|jpeg|png|gif|svg|webp|mp4|mp3|zip|xml)$/i.test(u);
+  const unique = new Set([normalize(startUrl)]);
+  const addMany = (urls = []) => {
+    for (const raw of urls) {
+      const n = normalize(raw);
+      if (!n || unique.size >= maxPages) continue;
+      if (!sameOrigin(n) || !isPageLike(n)) continue;
+      unique.add(n);
+    }
+  };
+
+  addMany(await fetchSitemapUrls(base));
+  if (unique.size < maxPages) addMany(await collectInternalLinks(page));
+
+  return Array.from(unique).slice(0, maxPages);
+}
+
+async function fetchSitemapUrls(baseUrl) {
+  const sitemapUrl = `${baseUrl.origin}/sitemap.xml`;
+  try {
+    const res = await fetch(sitemapUrl, { method: 'GET' });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const urls = [];
+    const re = /<loc>(.*?)<\/loc>/gims;
+    let m;
+    while ((m = re.exec(xml)) !== null) {
+      urls.push((m[1] || '').trim());
+    }
+    return urls;
+  } catch {
+    return [];
+  }
+}
+
+async function collectInternalLinks(page) {
+  try {
+    return await page.evaluate(() =>
+      Array.from(document.querySelectorAll('a[href]'))
+        .map((a) => a.getAttribute('href') || '')
+        .filter(Boolean)
+        .map((href) => new URL(href, location.href).href),
+    );
+  } catch {
+    return [];
+  }
+}
+
+async function safePageTitle(page, fallback) {
+  try {
+    return await page.title();
+  } catch {
+    return fallback;
+  }
 }
 
 module.exports = { runAudit, computeScore };
