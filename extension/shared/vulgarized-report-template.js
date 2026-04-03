@@ -33,13 +33,21 @@
       return `<li><strong>${escHtml(p.title || p.url || 'Page')}</strong><br><a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a><br>Conformité: <strong>${taux}%</strong> · Critères non conformes: <strong>${nc}</strong> · Critères conformes: <strong>${c}</strong></li>`;
     }).join('');
 
-    const skippedRows = skipped.map((p) =>
-      `<li>${escHtml(p.url || '')} — ${escHtml(p.reason || 'erreur')}</li>`
-    ).join('');
+    const skippedRows = skipped.map((p) => {
+      const url = escHtml(p.url || '');
+      const urlLine = url
+        ? `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`
+        : 'URL indisponible';
+      return `<li>${urlLine} — ${escHtml(p.reason || 'erreur')}</li>`;
+    }).join('');
 
-    const ncRows = topNc.map((r) =>
-      `<li><strong>${escHtml(r.id || '')}</strong> — ${escHtml(r.message || '')}${r.pageUrl ? `<br><span style="color:#475569">Page: ${escHtml(r.pageUrl)}</span>` : ''}</li>`
-    ).join('');
+    const ncRows = topNc.map((r) => {
+      const pageUrl = escHtml(r.pageUrl || '');
+      const pageLine = pageUrl
+        ? `<br><span style="color:#475569">Page: <a href="${pageUrl}" target="_blank" rel="noopener noreferrer">${pageUrl}</a></span>`
+        : '';
+      return `<li><strong>${escHtml(r.id || '')}</strong> — ${escHtml(r.message || '')}${pageLine}</li>`;
+    }).join('');
 
     return `<!DOCTYPE html>
 <html lang="fr">
