@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="RGAA Audit — Outil open-source d'aide à l'audit d'accessibilité RGAA 4.1, par Le Singe Du Numérique.">
+  <meta name="description" content="RGAA Audit — Pré-audit RGAA 4.1 open-source pour comprendre et améliorer l'accessibilité, avec transparence sur les limites.">
   <meta property="og:title" content="RGAA Audit — Accessibilité numérique open-source">
-  <meta property="og:description" content="Pré-audit automatique RGAA 4.1. Extension Chrome + CLI Playwright. Projet associatif, résultats non certifiés.">
+  <meta property="og:description" content="Pré-audit automatique RGAA 4.1 pour vulgariser l'accessibilité. Projet associatif, résultats non certifiés.">
   <meta property="og:type" content="website">
   <title>RGAA Audit — Outil open-source d'accessibilité</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -311,13 +311,20 @@
     .steps-visual { background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px; padding: 24px; font-family: var(--mono); font-size: 12px; line-height: 2.2; }
 
     /* ── CRITERIA ── */
-    .criteria-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
-    .criterion-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .criterion-name { font-size: 13px; }
-    .criterion-num  { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .criteria-table-wrap { overflow-x: auto; border: 1px solid var(--border2); border-radius: 12px; }
+    .criteria-table { width: 100%; border-collapse: collapse; min-width: 760px; background: var(--bg2); }
+    .criteria-table th, .criteria-table td { padding: 14px 16px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .criteria-table th { background: var(--bg3); color: var(--text); font-weight: 500; }
+    .criteria-table td { color: var(--muted); }
+    .criteria-table td:first-child { color: var(--text); font-weight: 500; }
+    .criteria-table tr:last-child td { border-bottom: none; }
+    .criteria-note { margin-top: 16px; font-size: 13px; color: var(--muted); line-height: 1.7; }
+    .criteria-note a { color: var(--accent2); text-decoration: underline; }
     .status-badge { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
     .status-auto    { background: rgba(34,197,94,.1);  color: #16a34a; border: 1px solid rgba(34,197,94,.25); }
     .status-partial { background: rgba(234,179,8,.1);  color: #a16207; border: 1px solid rgba(234,179,8,.25); }
+    .status-manual  { background: rgba(156,163,175,.13); color: #d1d5db; border: 1px solid rgba(156,163,175,.3); }
+    .status-todo    { background: rgba(59,130,246,.12); color: #93c5fd; border: 1px solid rgba(59,130,246,.3); }
 
     /* ── INSTALL ── */
     .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
@@ -351,7 +358,7 @@
       .features { grid-template-columns: 1fr; }
       .steps { grid-template-columns: 1fr; }
       .steps-visual { display: none; }
-      .criteria-grid { grid-template-columns: 1fr; }
+      .criteria-table { min-width: 640px; }
       .install-grid { grid-template-columns: 1fr; }
       footer { flex-direction: column; }
     }
@@ -365,14 +372,12 @@
 <!-- BANDEAU DISCLAIMER -->
 <aside aria-label="Avertissement important">
   <div class="disclaimer">
-    <span class="disclaimer-icon" aria-hidden="true">⚠️</span>
     <p>
-      <strong>Projet associatif vibe codé</strong> — Cet outil est développé bénévolement par
+      <strong>⚠️ Projet associatif vibe codé</strong> — Cet outil est développé bénévolement par
       <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener">Le Singe Du Numérique</a>
-      dans une démarche d'ouverture de l'accessibilité au plus grand nombre.
-      Il s'agit d'un <strong>pré-audit automatique</strong>, non certifié, basé sur le RGAA 4.1.
-      Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié,
-      ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.
+      dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.
+      Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé.
+      Utilisez-le comme point de départ, pas comme conclusion.
     </p>
   </div>
 </aside>
@@ -388,6 +393,7 @@
       <li><a href="#fonctionnalites">Fonctionnalités</a></li>
       <li><a href="#comment">Comment ça marche</a></li>
       <li><a href="#criteres">Critères</a></li>
+      <li><a href="/rgaa-audit/criteres.html">Guide critères</a></li>
       <li><a href="#installer">Installer</a></li>
       <li><a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener" aria-label="Voir le code source sur GitHub (nouvelle fenêtre)">GitHub</a></li>
     </ul>
@@ -411,13 +417,13 @@
   </div>
 
   <h1>
-    L'accessibilité numérique<br>
-    <em>auditée automatiquement</em>
+    Le RGAA expliqué,<br>
+    <em>page par page</em>
   </h1>
 
   <p class="hero-sub">
-    Extension Chrome + CLI Playwright open-source pour détecter les non-conformités RGAA 4.1.
-    Un projet associatif, transparent sur ses limites.
+    Un pré-audit open-source pour comprendre où agir en priorité, sans jargon inutile.
+    Vous voyez ce qui est vérifié automatiquement, ce qui reste manuel, et pourquoi.
   </p>
 
   <div class="hero-actions">
@@ -435,7 +441,7 @@
       <div class="dot dot-g"></div>
       <span class="terminal-title">Terminal — RGAA Audit CLI</span>
     </div>
-    <pre class="terminal-body"><code><span class="t-prompt">$</span> <span class="t-cmd">node bin/rgaa-audit.js https://mon-site.fr -o json -s rapport.json --vulgarized-save rapport-vulgarise.html</span>
+    <pre class="terminal-body"><code><span class="t-prompt">$</span> <span class="t-cmd">node bin/rgaa-audit.js https://mon-site.fr -o json -s rapport-home.json --vulgarized-save rapport-home-vulgarise.html</span>
 <span class="t-dim">♿  RGAA Audit CLI v0.2.0</span>
 <span class="t-dim">🌐 Chargement de la page…</span>
 <span class="t-dim">⌨️  Simulation navigation clavier (15 éléments)…</span>
@@ -457,16 +463,16 @@
     <p class="stat-label">Critères RGAA 4.1</p>
   </div>
   <div class="stat-box">
-    <p class="stat-num"><em>~47</em>%</p>
-    <p class="stat-label">Automatisés</p>
+    <p class="stat-num"><em>~26%</em></p>
+    <p class="stat-label">Automatisés aujourd'hui</p>
   </div>
   <div class="stat-box">
-    <p class="stat-num"><em>65</em></p>
-    <p class="stat-label">Tests unitaires</p>
+    <p class="stat-num"><em>~17%</em></p>
+    <p class="stat-label">Partiels (à confirmer)</p>
   </div>
   <div class="stat-box">
-    <p class="stat-num"><em>8s</em></p>
-    <p class="stat-label">Durée d'un audit</p>
+    <p class="stat-num"><em>~36%</em></p>
+    <p class="stat-label">Manuels uniquement</p>
   </div>
 </div>
 
@@ -474,33 +480,33 @@
 <section id="fonctionnalites" aria-labelledby="titre-fonctionnalites">
   <p class="section-tag">Fonctionnalités</p>
   <h2 class="section-title" id="titre-fonctionnalites">Tout ce qu'il faut pour<br><em>commencer à auditer</em></h2>
-  <p class="section-sub">Un outil modulaire — utilisez ce dont vous avez besoin, ignorez le reste.</p>
+  <p class="section-sub">Un outil pensé pour passer de “je ne sais pas par où commencer” à un plan d'action concret.</p>
 
   <div class="features">
     <div class="feature">
       <div class="feature-icon" aria-hidden="true">🧩</div>
       <h3>Extension Chrome</h3>
-      <p>Audit en contexte directement dans votre navigateur. Aucune installation lourde. Résultats en temps réel avec panel overlay.</p>
+      <p>Audit en contexte directement dans votre navigateur, pour comprendre rapidement les points bloquants d'une page.</p>
     </div>
     <div class="feature">
       <div class="feature-icon" aria-hidden="true">⚙️</div>
       <h3>CLI Playwright</h3>
-      <p>Automatisation complète depuis le terminal. Audit multi-pages, intégration CI/CD, rapports JSON / HTML / CSV + rapport vulgarisé actionnable.</p>
+      <p>Audit automatisé sur une ou plusieurs pages, intégrable en CI/CD, avec rapports exploitables par les équipes produit et dev.</p>
     </div>
     <div class="feature">
       <div class="feature-icon" aria-hidden="true">⌨️</div>
       <h3>Simulation humaine</h3>
-      <p>Navigation au clavier, zoom 200%, désactivation CSS, test responsive 320px — comme le ferait un vrai auditeur.</p>
+      <p>Navigation clavier, zoom 200%, test sans CSS, viewport 320px: les usages réels sont simulés, pas seulement la structure HTML.</p>
     </div>
     <div class="feature">
       <div class="feature-icon" aria-hidden="true">🔒</div>
       <h3>100% local</h3>
-      <p>L'audit tourne dans votre navigateur ou sur votre machine. Aucune donnée envoyée à un tiers sans votre accord.</p>
+      <p>L'audit s'exécute sur votre machine. Pas de transfert de données à un tiers pendant l'audit standard.</p>
     </div>
     <div class="feature">
       <div class="feature-icon" aria-hidden="true">📖</div>
-      <h3>Open-source MIT</h3>
-      <p>Code source intégralement disponible sur GitHub. Contributions bienvenues — règles, reporters, intégrations.</p>
+      <h3>Transparence du modèle</h3>
+      <p>Code open-source, logique de contrôle lisible, couverture détaillée par critère: vous savez ce que l'outil sait faire et ne sait pas faire.</p>
     </div>
   </div>
 </section>
@@ -508,8 +514,8 @@
 <!-- COMMENT ÇA MARCHE -->
 <section id="comment" style="border-top:1px solid var(--border)" aria-labelledby="titre-comment">
   <p class="section-tag">Fonctionnement</p>
-  <h2 class="section-title" id="titre-comment">8 étapes,<br><em>8 secondes</em></h2>
-  <p class="section-sub">Le simulateur reproduit le comportement d'un auditeur RGAA humain de bout en bout.</p>
+  <h2 class="section-title" id="titre-comment">Comment lire un<br><em>pré-audit RGAA</em></h2>
+  <p class="section-sub">Chaque étape sert à objectiver un risque. Le rapport aide à prioriser, pas à certifier. Le temps d'audit varie selon le nombre de pages.</p>
 
   <div class="steps">
     <ol class="steps-list" aria-label="Étapes de l'audit">
@@ -519,8 +525,8 @@
       <li class="step"><span class="step-num" aria-hidden="true">04</span><div><h3>Zoom 200% + sans CSS</h3><p>Détection de débordements, vérification de la lisibilité sans feuilles de style.</p></div></li>
       <li class="step"><span class="step-num" aria-hidden="true">05</span><div><h3>Test responsive 320px</h3><p>Redimensionnement à 320px de large — standard mobile WCAG.</p></div></li>
       <li class="step"><span class="step-num" aria-hidden="true">06</span><div><h3>Screenshots automatiques</h3><p>Captures à chaque étape clé pour documenter l'audit.</p></div></li>
-      <li class="step"><span class="step-num" aria-hidden="true">07</span><div><h3>Calcul du taux de conformité</h3><p>Score RGAA officiel : conformes / (conformes + non-conformes).</p></div></li>
-      <li class="step"><span class="step-num" aria-hidden="true">08</span><div><h3>Rapport actionnable</h3><p>Export JSON/HTML/CSV, rapport vulgarisé avec leviers actionnables, et export PDF depuis le rapport.</p></div></li>
+      <li class="step"><span class="step-num" aria-hidden="true">07</span><div><h3>Calcul du taux de conformité</h3><p>Indicateur de progression: il aide à comparer, mais ne remplace pas un audit de conformité officiel.</p></div></li>
+      <li class="step"><span class="step-num" aria-hidden="true">08</span><div><h3>Rapport actionnable</h3><p>Sortie JSON/HTML/CSV + rapport vulgarisé avec priorités, impacts utilisateurs et pistes de correction.</p></div></li>
     </ol>
     <div class="steps-visual" aria-hidden="true">
       <div style="color:var(--muted)"># Simulation en cours…</div>
@@ -544,36 +550,59 @@
 <!-- CRITÈRES -->
 <section id="criteres" style="border-top:1px solid var(--border)" aria-labelledby="titre-criteres">
   <p class="section-tag">Couverture RGAA</p>
-  <h2 class="section-title" id="titre-criteres">13 thèmes,<br><em>~47% automatisés</em></h2>
-  <p class="section-sub">Les critères manuels sont guidés par une checklist interactive dans l'extension Chrome.</p>
+  <h2 class="section-title" id="titre-criteres">106 critères RGAA,<br><em>avec niveau de couverture clair</em></h2>
+  <p class="section-sub">Vous voyez précisément ce qui est automatisé, partiel, manuel ou encore à implémenter, thème par thème.</p>
 
-  <div class="criteria-grid">
-    <div class="criterion-card"><div><p class="criterion-name">Images</p><p class="criterion-num">Thème 1 — 13 critères</p></div><span class="status-badge status-auto">Auto</span></div>
-    <div class="criterion-card"><div><p class="criterion-name">Cadres</p><p class="criterion-num">Thème 2 — 2 critères</p></div><span class="status-badge status-auto">Auto</span></div>
-    <div class="criterion-card"><div><p class="criterion-name">Couleurs</p><p class="criterion-num">Thème 3 — 3 critères</p></div><span class="status-badge status-partial">Partiel</span></div>
-    <div class="criterion-card"><div><p class="criterion-name">Multimédia</p><p class="criterion-num">Thème 4 — 13 critères</p></div><span class="status-badge status-partial">Partiel</span></div>
-    <div class="criterion-card"><div><p class="criterion-name">Tableaux</p><p class="criterion-num">Thème 5 — 8 critères</p></div><span class="status-badge status-auto">Auto</span></div>
-    <div class="criterion-card"><div><p class="criterion-name">Liens</p><p class="criterion-num">Thème 6 — 2 critères</p></div><span class="status-badge status-auto">Auto</span></div>
-    <div class="criterion-card"><div><p class="criterion-name">Scripts</p><p class="criterion-num">Thème 7 — 5 critères</p></div><span class="status-badge status-partial">Partiel</span></div>
-    <div class="criterion-card"><div><p class="criterion-name">Éléments obligatoires</p><p class="criterion-num">Thème 8 — 10 critères</p></div><span class="status-badge status-auto">Auto</span></div>
-    <div class="criterion-card"><div><p class="criterion-name">Structure</p><p class="criterion-num">Thème 9 — 8 critères</p></div><span class="status-badge status-auto">Auto</span></div>
-    <div class="criterion-card"><div><p class="criterion-name">Présentation</p><p class="criterion-num">Thème 10 — 14 critères</p></div><span class="status-badge status-partial">Partiel</span></div>
-    <div class="criterion-card"><div><p class="criterion-name">Formulaires</p><p class="criterion-num">Thème 11 — 13 critères</p></div><span class="status-badge status-auto">Auto</span></div>
-    <div class="criterion-card"><div><p class="criterion-name">Navigation</p><p class="criterion-num">Thème 12 — 12 critères</p></div><span class="status-badge status-auto">Auto</span></div>
-    <div class="criterion-card"><div><p class="criterion-name">Consultation</p><p class="criterion-num">Thème 13 — 13 critères</p></div><span class="status-badge status-partial">Partiel</span></div>
+  <div class="criteria-table-wrap">
+    <table class="criteria-table" aria-label="Détail de couverture RGAA par thème">
+      <thead>
+        <tr>
+          <th>Thème RGAA</th>
+          <th>Total</th>
+          <th>Auto ✅</th>
+          <th>Partiel ⚠️</th>
+          <th>Manuel ❌</th>
+          <th>À faire 🚧</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1. Images</td><td>9</td><td>2</td><td>3</td><td>4</td><td>0</td></tr>
+        <tr><td>2. Cadres</td><td>2</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+        <tr><td>3. Couleurs</td><td>3</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+        <tr><td>4. Multimédia</td><td>13</td><td>0</td><td>4</td><td>8</td><td>1</td></tr>
+        <tr><td>5. Tableaux</td><td>8</td><td>4</td><td>1</td><td>2</td><td>1</td></tr>
+        <tr><td>6. Liens</td><td>2</td><td>2</td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><td>7. Scripts</td><td>5</td><td>0</td><td>2</td><td>2</td><td>1</td></tr>
+        <tr><td>8. Éléments obligatoires</td><td>10</td><td>4</td><td>0</td><td>3</td><td>3</td></tr>
+        <tr><td>9. Structure</td><td>4</td><td>3</td><td>0</td><td>0</td><td>1</td></tr>
+        <tr><td>10. Présentation</td><td>14</td><td>2</td><td>3</td><td>5</td><td>4</td></tr>
+        <tr><td>11. Formulaires</td><td>13</td><td>4</td><td>0</td><td>5</td><td>4</td></tr>
+        <tr><td>12. Navigation</td><td>11</td><td>4</td><td>0</td><td>4</td><td>3</td></tr>
+        <tr><td>13. Consultation</td><td>12</td><td>1</td><td>1</td><td>6</td><td>4</td></tr>
+        <tr><td>Total</td><td>106</td><td>28</td><td>15</td><td>41</td><td>22</td></tr>
+      </tbody>
+    </table>
   </div>
 
-  <div style="display:flex;gap:16px;margin-top:24px;font-size:13px;color:var(--muted);flex-wrap:wrap">
-    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-auto">Auto</span> Détection automatique</span>
-    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-partial">Partiel</span> Auto + vérification manuelle guidée</span>
+  <div style="display:flex;gap:12px;margin-top:16px;font-size:13px;color:var(--muted);flex-wrap:wrap">
+    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-auto">Auto</span> Vérifié automatiquement</span>
+    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-partial">Partiel</span> Indice technique, validation humaine requise</span>
+    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-manual">Manuel</span> Évaluation humaine indispensable</span>
+    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-todo">À faire</span> Automatisable, non implémenté</span>
   </div>
+
+  <p class="criteria-note">
+    Détail complet par critère: <a href="https://github.com/Stan69000/rgaa-audit/blob/main/docs/RGAA-mapping.md" target="_blank" rel="noopener" aria-label="Ouvrir le fichier de mapping RGAA sur GitHub (nouvelle fenêtre)">RGAA-mapping.md</a>.
+    Cette transparence permet de savoir exactement comment interpréter les résultats.
+    Pour une version pédagogique, consultez aussi <a href="/rgaa-audit/criteres.html">le guide des critères RGAA</a>.
+  </p>
 </section>
 
 <!-- INSTALLER -->
 <section id="installer" style="border-top:1px solid var(--border)" aria-labelledby="titre-installer">
   <p class="section-tag">Installation</p>
-  <h2 class="section-title" id="titre-installer">Prêt en<br><em>3 minutes</em></h2>
-  <p class="section-sub">CLI Node.js ou extension Chrome — choisissez selon votre usage.</p>
+  <h2 class="section-title" id="titre-installer">Commandes simples,<br><em>rapports immédiats</em></h2>
+  <p class="section-sub">Deux usages fréquents côté CLI: auditer une home page, puis élargir à plusieurs pages.</p>
 
   <div class="install-grid">
     <div class="install-card">
@@ -587,8 +616,11 @@
         <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">npm install</span></div>
         <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">npx playwright install chromium</span></div>
         <div style="height:8px"></div>
-        <div class="code-comment"># Lancer un audit</div>
-        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">node bin/rgaa-audit.js https://mon-site.fr -o json -s ./rapport.json --vulgarized-save ./rapport-vulgarise.html</span></div>
+        <div class="code-comment"># 1) Rapport home page</div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">node bin/rgaa-audit.js https://mon-site.fr -o json -s ./rapport-home.json --vulgarized-save ./rapport-home-vulgarise.html</span></div>
+        <div style="height:8px"></div>
+        <div class="code-comment"># 2) Rapport multi-pages</div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">node bin/rgaa-audit.js https://mon-site.fr --depth 8 -o json -s ./rapport-multipages.json --vulgarized-save ./rapport-multipages-vulgarise.html</span></div>
       </div>
     </div>
     <div class="install-card">
@@ -618,12 +650,14 @@
     <p>
       Un projet associatif de <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener" aria-label="Visiter le site de Le Singe Du Numérique (nouvelle fenêtre)">Le Singe Du Numérique</a>
       — ouverture de l'accessibilité numérique au plus grand nombre.<br>
+      ⚠️ Projet associatif vibe codé — Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.<br>
       MIT License · RGAA 4.1 · v0.2.0 · Construit avec Playwright
     </p>
   </div>
   <nav class="footer-links" aria-label="Liens utiles">
     <a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener" aria-label="Code source sur GitHub (nouvelle fenêtre)">GitHub</a>
     <a href="https://github.com/Stan69000/rgaa-audit/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" aria-label="Guide de contribution (nouvelle fenêtre)">Contribuer</a>
+    <a href="/rgaa-audit/criteres.html">Guide critères RGAA</a>
     <a href="https://github.com/Stan69000/rgaa-audit/issues" target="_blank" rel="noopener" aria-label="Signaler un bug sur GitHub (nouvelle fenêtre)">Signaler un bug</a>
     <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener" aria-label="Site de l'association Le Singe Du Numérique (nouvelle fenêtre)">lesingedunumerique.fr</a>
     <a href="https://accessibilite.numerique.gouv.fr/" target="_blank" rel="noopener" aria-label="Référentiel RGAA officiel sur le site du gouvernement (nouvelle fenêtre)">RGAA officiel</a>
@@ -640,7 +674,7 @@
     });
   }, { threshold: 0.1 });
 
-  document.querySelectorAll('.feature, .criterion-card, .step, .install-card').forEach(el => {
+  document.querySelectorAll('.feature, .step, .install-card, .criteria-table-wrap').forEach(el => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(16px)';
     el.style.transition = 'opacity .5s ease, transform .5s ease';

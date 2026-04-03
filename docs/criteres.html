@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Guide des critères RGAA — comprendre ce qui est automatisé, partiel ou manuel dans RGAA Audit.">
+  <title>Guide des critères RGAA — RGAA Audit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0C0F;
+      --bg2: #111318;
+      --bg3: #181B22;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text: #E8EAF0;
+      --muted: #9CA3AF;
+      --accent: #C63F1D;
+      --accent2: #FF8C6B;
+      --green: #22C55E;
+      --yellow: #EAB308;
+      --blue: #3B82F6;
+      --mono: 'Geist Mono', monospace;
+      --serif: 'Instrument Serif', serif;
+      --sans: 'Geist', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.65; }
+    .disclaimer {
+      background: rgba(234,179,8,0.08);
+      border-bottom: 1px solid rgba(234,179,8,0.2);
+      padding: 12px 24px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .disclaimer a { color: var(--accent2); }
+    nav {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(11,12,15,0.92);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      padding: 0 24px; height: 60px;
+    }
+    .nav-logo { text-decoration: none; color: var(--text); font-family: var(--mono); font-size: 14px; }
+    .nav-links { display: flex; gap: 18px; align-items: center; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 13px; }
+    .nav-links a:hover, .nav-links a:focus { color: var(--text); text-decoration: underline; }
+    main { max-width: 1100px; margin: 0 auto; padding: 56px 24px 96px; }
+    .hero { margin-bottom: 40px; }
+    .hero h1 { font-family: var(--serif); font-size: clamp(34px, 6vw, 64px); font-weight: 400; line-height: 1.05; margin-bottom: 12px; }
+    .hero h1 em { color: var(--accent); font-style: italic; }
+    .hero p { max-width: 760px; color: var(--muted); font-size: 17px; }
+    .legend { margin: 24px 0 40px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .badge { font-family: var(--mono); font-size: 11px; padding: 5px 10px; border-radius: 999px; border: 1px solid transparent; }
+    .auto { background: rgba(34,197,94,.1); color: #16a34a; border-color: rgba(34,197,94,.25); }
+    .partiel { background: rgba(234,179,8,.1); color: #a16207; border-color: rgba(234,179,8,.25); }
+    .manuel { background: rgba(156,163,175,.13); color: #d1d5db; border-color: rgba(156,163,175,.3); }
+    .todo { background: rgba(59,130,246,.12); color: #93c5fd; border-color: rgba(59,130,246,.3); }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 18px 18px 16px;
+    }
+    .card-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .card h2 { font-size: 18px; font-weight: 500; }
+    .meta { color: var(--muted); font-family: var(--mono); font-size: 12px; margin-bottom: 10px; }
+    .card p { color: var(--muted); font-size: 14px; margin-bottom: 10px; }
+    .card ul { margin-left: 18px; color: var(--muted); font-size: 14px; }
+    .card li + li { margin-top: 4px; }
+    .summary {
+      margin-top: 28px; padding: 18px;
+      background: var(--bg3); border: 1px solid var(--border2); border-radius: 12px;
+      color: var(--muted); font-size: 14px;
+    }
+    .summary strong { color: var(--text); }
+    footer { border-top: 1px solid var(--border); padding: 28px 24px 42px; color: var(--muted); font-size: 13px; }
+    footer a { color: var(--accent2); }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <aside aria-label="Avertissement important">
+    <div class="disclaimer">
+      <strong>⚠️ Projet associatif vibe codé</strong> — Cet outil est développé bénévolement par
+      <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener">Le Singe Du Numérique</a>
+      dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.
+      Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé.
+      Utilisez-le comme point de départ, pas comme conclusion.
+    </div>
+  </aside>
+
+  <nav aria-label="Navigation principale">
+    <a class="nav-logo" href="/rgaa-audit/">♿ rgaa-audit</a>
+    <div class="nav-links">
+      <a href="/rgaa-audit/">Accueil</a>
+      <a href="https://github.com/Stan69000/rgaa-audit/blob/main/docs/RGAA-mapping.md" target="_blank" rel="noopener">Mapping complet</a>
+      <a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <h1>Guide simple des <em>critères RGAA</em></h1>
+      <p>
+        Cette page explique les 13 thèmes RGAA dans un langage opérationnel. L'objectif est de comprendre les risques utilisateur
+        et de prioriser les corrections, sans faire croire qu'un pré-audit automatique suffit pour certifier un service.
+      </p>
+    </section>
+
+    <div class="legend" aria-label="Légende des niveaux de couverture">
+      <span class="badge auto">Auto</span>
+      <span class="badge partiel">Partiel</span>
+      <span class="badge manuel">Manuel</span>
+      <span class="badge todo">À faire</span>
+    </div>
+
+    <section class="grid" aria-label="Détail par thème">
+      <article class="card">
+        <div class="card-head"><h2>1. Images</h2><span class="badge partiel">2 auto / 3 partiels / 4 manuels</span></div>
+        <p class="meta">9 critères</p>
+        <p>Vérifie si les images ont une alternative lisible et utile.</p>
+        <ul><li>Automatique: présence de `alt`, gestion des images décoratives.</li><li>Manuel: pertinence de la description selon le contexte.</li></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2>2. Cadres</h2><span class="badge partiel">1 auto / 1 manuel</span></div>
+        <p class="meta">2 critères</p>
+        <p>Vérifie si les `iframe` sont identifiables et compréhensibles.</p>
+        <ul><li>Automatique: présence d'un titre.</li><li>Manuel: qualité et clarté du titre.</li></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2>3. Couleurs</h2><span class="badge partiel">1 auto / 1 partiel / 1 manuel</span></div>
+        <p class="meta">3 critères</p>
+        <p>Vérifie le contraste et l'usage de la couleur comme seul signal.</p>
+        <ul><li>Automatique: contraste texte/fond.</li><li>Manuel: vérifier qu'une info n'existe pas uniquement par la couleur.</li></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2>4. Multimédia</h2><span class="badge manuel">0 auto / 4 partiels / 8 manuels / 1 à faire</span></div>
+        <p class="meta">13 critères</p>
+        <p>Thème fortement éditorial: sous-titres, transcription, audio-description.</p>
+        <ul><li>Partiel: détection technique d'indices (tracks, autoplay).</li><li>Manuel: contrôle qualité et complétude des alternatives.</li></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2>5. Tableaux</h2><span class="badge partiel">4 auto / 1 partiel / 2 manuels / 1 à faire</span></div>
+        <p class="meta">8 critères</p>
+        <p>Vérifie la structure des tableaux de données.</p>
+        <ul><li>Automatique: `th`, `scope`, résumé.</li><li>Manuel: pertinence métier des intitulés.</li></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2>6. Liens</h2><span class="badge auto">2 auto</span></div>
+        <p class="meta">2 critères</p>
+        <p>Vérifie que les liens sont compréhensibles hors contexte.</p>
+        <ul><li>Automatique: intitulés trop vagues, liens image sans alternative.</li></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2>7. Scripts</h2><span class="badge partiel">0 auto / 2 partiels / 2 manuels / 1 à faire</span></div>
+        <p class="meta">5 critères</p>
+        <p>Concerne les composants interactifs et leur usage clavier/lecteur d'écran.</p>
+        <ul><li>Partiel: signaux ARIA et interactions suspectes.</li><li>Manuel: comportement réel avec technologies d'assistance.</li></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2>8. Éléments obligatoires</h2><span class="badge partiel">4 auto / 3 manuels / 3 à faire</span></div>
+        <p class="meta">10 critères</p>
+        <p>Vérifie les bases du document: langue, titre, structure technique.</p>
+        <ul><li>Automatique: `doctype`, `lang`, `title`.</li><li>Manuel: pertinence éditoriale.</li></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2>9. Structure</h2><span class="badge partiel">3 auto / 1 à faire</span></div>
+        <p class="meta">4 critères</p>
+        <p>Vérifie que la page est lisible de façon structurée.</p>
+        <ul><li>Automatique: titres, listes, repères de navigation.</li></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2>10. Présentation</h2><span class="badge partiel">2 auto / 3 partiels / 5 manuels / 4 à faire</span></div>
+        <p class="meta">14 critères</p>
+        <p>Concerne la lisibilité, le focus, les contenus masqués et les survols.</p>
+        <ul><li>Partiel: zoom, test sans CSS.</li><li>Manuel: compréhension réelle dans des parcours d'usage.</li></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2>11. Formulaires</h2><span class="badge partiel">4 auto / 5 manuels / 4 à faire</span></div>
+        <p class="meta">13 critères</p>
+        <p>Vérifie les labels, aides de saisie et messages d'erreur.</p>
+        <ul><li>Automatique: association `label`/champ.</li><li>Manuel: qualité des consignes et de la récupération d'erreurs.</li></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2>12. Navigation</h2><span class="badge partiel">4 auto / 4 manuels / 3 à faire</span></div>
+        <p class="meta">11 critères</p>
+        <p>Vérifie la cohérence de navigation et l'accès clavier.</p>
+        <ul><li>Automatique: liens d'évitement et ordre de tabulation de base.</li><li>Manuel: cohérence globale entre pages.</li></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><h2>13. Consultation</h2><span class="badge partiel">1 auto / 1 partiel / 6 manuels / 4 à faire</span></div>
+        <p class="meta">12 critères</p>
+        <p>Concerne sessions, téléchargements, ouverture de fenêtres, contenus animés.</p>
+        <ul><li>Automatique: signaux techniques simples.</li><li>Manuel: impacts réels selon les usages.</li></ul>
+      </article>
+    </section>
+
+    <section class="summary" aria-label="Résumé interprétation">
+      <p><strong>Comment utiliser ce guide ?</strong> Commencez par les thèmes avec le plus de critères manuels (multimédia, présentation, consultation). Ce sont eux qui demandent le plus souvent une revue humaine.</p>
+      <p><strong>Où voir le détail critère par critère ?</strong> Consultez le mapping complet: <a href="https://github.com/Stan69000/rgaa-audit/blob/main/docs/RGAA-mapping.md" target="_blank" rel="noopener">docs/RGAA-mapping.md</a>.</p>
+    </section>
+  </main>
+
+  <footer>
+    ⚠️ Projet associatif vibe codé — Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.
+  </footer>
+</body>
+</html>

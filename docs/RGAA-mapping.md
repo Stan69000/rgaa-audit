@@ -1,10 +1,18 @@
 # RGAA 4.1 — Mapping critères → couverture automatique
 
+> ⚠️ Projet associatif vibe codé — Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.
+
 Légende :
 - ✅ Automatisé — couvert dans `src/rules/index.js` et `extension/content.js`
 - ⚠️ Partiel — détection possible mais pertinence non vérifiable automatiquement
 - ❌ Manuel — impossible à automatiser, nécessite un jugement humain
 - 🚧 À faire — automatisable, non encore implémenté
+
+Lecture simple :
+- ✅ = le contrôle est effectué automatiquement
+- ⚠️ = le signal est détecté, mais la conformité doit être confirmée humainement
+- ❌ = contrôle entièrement manuel (contexte, usage réel, compréhension)
+- 🚧 = contrôle techniquement automatisable, en attente d'implémentation
 
 ---
 
@@ -185,10 +193,10 @@ Légende :
 
 | Statut | Nombre | % |
 |--------|--------|---|
-| ✅ Automatisé | ~28 | ~26% |
-| ⚠️ Partiel | ~18 | ~17% |
-| 🚧 À faire | ~22 | ~21% |
-| ❌ Manuel uniquement | ~38 | ~36% |
+| ✅ Automatisé | 28 | 26.4% |
+| ⚠️ Partiel | 15 | 14.2% |
+| 🚧 À faire | 22 | 20.8% |
+| ❌ Manuel uniquement | 41 | 38.7% |
 | **TOTAL** | **106** | **100%** |
 
-**Potentiel automatisable (✅ + 🚧) : ~47%** du référentiel RGAA 4.1.
+**Potentiel automatisable (✅ + 🚧) : 50 / 106 (47.2%)** du référentiel RGAA 4.1.
