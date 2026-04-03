@@ -79,6 +79,12 @@ node bin/rgaa-fill-grid.js \
 - Une partie importante du RGAA reste manuelle et contextuelle
 - Les résultats doivent être revus par une personne formée
 
+## Legal & Security
+
+- Disclaimer: [DISCLAIMER.md](DISCLAIMER.md)
+- Security policy: [SECURITY.md](SECURITY.md)
+- Privacy policy: [PRIVACY.md](PRIVACY.md)
+
 ## Contribuer
 
 Voir [CONTRIBUTING.md](CONTRIBUTING.md).
