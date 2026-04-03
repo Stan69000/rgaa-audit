@@ -144,9 +144,17 @@ document.getElementById('btnAI').addEventListener('click', async () => {
     .slice(0, 20)
     .join('\n');
 
-  const promptText = `Expert RGAA 4.1. Site audité : ${currentReport.url}. Taux : ${currentReport.score.taux}%.
-Non-conformités détectées :\n${ncList || 'Aucune'}\n
-En 3-4 phrases : synthèse, 2-3 priorités absolues à corriger, impact utilisateur principal. Sois direct.`;
+  const promptText = `Tu es auditeur RGAA 4.1 senior. Réponds en français, factuel, sans marketing.
+Site audité : ${currentReport.url}
+Taux : ${currentReport.score.taux}% (NC:${currentReport.score.nonConformes}, C:${currentReport.score.conformes}, NA:${currentReport.score.na})
+NC détectées :\n${ncList || 'Aucune'}\n
+Format de réponse obligatoire :
+1) Synthèse (2 phrases max)
+2) Top 3 priorités (P1/P2/P3) avec : critère RGAA, correction concrète, impact utilisateur
+3) Vérifications manuelles à faire (max 3)
+4) Risque de faux positifs/faux négatifs (1 phrase)
+
+Si aucune NC : ne pas féliciter. Donne 3 contrôles de robustesse à exécuter avant mise en prod.`;
 
   chrome.runtime.sendMessage(
     { action: 'callClaude', apiKey, prompt: promptText },
