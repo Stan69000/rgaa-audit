@@ -131,7 +131,13 @@ document.getElementById('btnExportHtml').addEventListener('click', () => {
   const html = buildVulgarizedHtml(currentReport);
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  chrome.tabs.create({ url });
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rapport-vulgarise-${Date.now()}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 
 function buildVulgarizedHtml(report) {
