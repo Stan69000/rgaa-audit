@@ -272,6 +272,33 @@
     .t-dim    { color: var(--muted); }
     .t-green  { color: var(--green); }
     .t-yellow { color: var(--yellow); }
+    .term-summary {
+      display: block;
+      margin: 10px 0;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,0.7);
+      line-height: 1.7;
+    }
+    .term-summary-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .term-progress {
+      display: inline-block;
+      width: 180px;
+      height: 16px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.08);
+      vertical-align: middle;
+    }
+    .term-progress > span {
+      display: block;
+      height: 100%;
+      width: 89%;
+      background: linear-gradient(90deg, #22C55E, #2ED573);
+    }
     @keyframes fadeUp { from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none} }
 
     /* ── STATS ── */
@@ -459,10 +486,8 @@
 <span class="t-dim">⌨️  Simulation navigation clavier (15 éléments)…</span>
 <span class="t-dim">🔍 Audit DOM — 13 thèmes RGAA 4.1…</span>
 <span class="t-dim">🧾 Génération du rapport vulgarisé…</span>
-+--------------------------------------------+
-|  Taux de conformité : <span style="color:var(--green)">89%  [############....]</span>  |
-|  <span class="t-green">Conformes : 17</span>  <span class="t-yellow">Non conformes : 2</span>         |
-+--------------------------------------------+
+<span class="term-summary"><span class="term-summary-row">Taux de conformité : <span class="t-green">89%</span> <span class="term-progress" aria-hidden="true"><span></span></span></span>
+<span class="term-summary-row"><span class="t-green">Conformes : 17</span> <span class="t-yellow">Non conformes : 2</span></span></span>
 <span class="t-green">📁 Rapport sauvegardé : rapport.json</span>
 <span class="t-green">📄 Rapport vulgarisé sauvegardé : rapport-vulgarise.html</span></code></pre>
   </div>
