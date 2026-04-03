@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="RGAA Audit — Outil open-source d'audit d'accessibilité RGAA 4.1. Extension Chrome + CLI Playwright + Analyse IA.">
+  <meta name="description" content="RGAA Audit — Outil open-source d'aide à l'audit d'accessibilité RGAA 4.1, par Le Singe Du Numérique.">
   <meta property="og:title" content="RGAA Audit — Accessibilité numérique open-source">
-  <meta property="og:description" content="Auditez n'importe quel site en RGAA 4.1, simulez des actions humaines, obtenez un rapport en secondes.">
+  <meta property="og:description" content="Pré-audit automatique RGAA 4.1. Extension Chrome + CLI Playwright. Projet associatif, résultats non certifiés.">
   <meta property="og:type" content="website">
   <title>RGAA Audit — Outil open-source d'accessibilité</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,27 +13,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:       #0B0C0F;
-      --bg2:      #111318;
-      --bg3:      #181B22;
-      --border:   rgba(255,255,255,0.07);
-      --border2:  rgba(255,255,255,0.12);
-      --text:     #E8EAF0;
-      --muted:    #6B7280;
-      --accent:   #FF5C35;
-      --accent2:  #FF8C6B;
-      --green:    #22C55E;
-      --yellow:   #EAB308;
-      --blue:     #3B82F6;
-      --mono:     'Geist Mono', monospace;
-      --serif:    'Instrument Serif', serif;
-      --sans:     'Geist', sans-serif;
+      --bg:      #0B0C0F;
+      --bg2:     #111318;
+      --bg3:     #181B22;
+      --border:  rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text:    #E8EAF0;
+      --muted:   #9CA3AF;
+      --accent:  #FF5C35;
+      --accent2: #FF8C6B;
+      --green:   #22C55E;
+      --yellow:  #EAB308;
+      --blue:    #3B82F6;
+      --mono:    'Geist Mono', monospace;
+      --serif:   'Instrument Serif', serif;
+      --sans:    'Geist', sans-serif;
     }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { scroll-behavior: smooth; }
-
     body {
       background: var(--bg);
       color: var(--text);
@@ -43,8 +40,6 @@
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
     }
-
-    /* ── GRAIN OVERLAY ── */
     body::before {
       content: '';
       position: fixed;
@@ -55,21 +50,40 @@
       opacity: .5;
     }
 
+    /* ── DISCLAIMER BANNER ── */
+    .disclaimer {
+      background: rgba(234,179,8,0.08);
+      border-bottom: 1px solid rgba(234,179,8,0.2);
+      padding: 12px 40px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .disclaimer-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .disclaimer a { color: var(--accent2); text-decoration: underline; }
+    .disclaimer strong { color: #E8EAF0; font-weight: 500; }
+
     /* ── NAV ── */
     nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
+      position: sticky;
+      top: 0;
       z-index: 100;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 40px;
       height: 60px;
-      background: rgba(11,12,15,0.85);
+      background: rgba(11,12,15,0.92);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
     }
-
     .nav-logo {
       display: flex;
       align-items: center;
@@ -80,36 +94,33 @@
       color: var(--text);
       text-decoration: none;
     }
-
     .nav-logo-icon {
       width: 28px; height: 28px;
       background: linear-gradient(135deg, var(--accent), #C13A1E);
       border-radius: 7px;
       display: flex; align-items: center; justify-content: center;
       font-size: 14px;
+      line-height: 1;
     }
-
-    .nav-links {
+    nav ul {
       display: flex;
       align-items: center;
       gap: 32px;
       list-style: none;
     }
-
-    .nav-links a {
+    nav ul a {
       font-size: 13px;
       color: var(--muted);
       text-decoration: none;
       transition: color .2s;
     }
-    .nav-links a:hover { color: var(--text); }
-
+    nav ul a:hover, nav ul a:focus { color: var(--text); outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
     .nav-cta {
       display: flex;
       align-items: center;
       gap: 8px;
       background: var(--accent);
-      color: #fff !important;
+      color: #fff;
       padding: 7px 16px;
       border-radius: 7px;
       font-size: 13px;
@@ -117,22 +128,37 @@
       text-decoration: none;
       transition: opacity .2s;
     }
-    .nav-cta:hover { opacity: .85; }
+    .nav-cta:hover, .nav-cta:focus { opacity: .85; outline: 2px solid #fff; outline-offset: 3px; }
+
+    /* ── SKIP LINK ── */
+    .skip-link {
+      position: absolute;
+      top: -100px;
+      left: 16px;
+      background: var(--accent);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      z-index: 9999;
+      transition: top .15s;
+    }
+    .skip-link:focus { top: 8px; }
 
     /* ── HERO ── */
     .hero {
       position: relative;
-      min-height: 100vh;
+      min-height: 90vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 120px 24px 80px;
+      padding: 80px 24px 64px;
       overflow: hidden;
     }
-
-    /* Grille de fond */
     .hero::after {
       content: '';
       position: absolute;
@@ -144,17 +170,15 @@
       mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 100%);
       pointer-events: none;
     }
-
-    /* Glow accent */
     .hero-glow {
       position: absolute;
       width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(255,92,53,.12) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(255,92,53,.10) 0%, transparent 70%);
       top: 50%; left: 50%;
       transform: translate(-50%, -60%);
       pointer-events: none;
+      aria-hidden: true;
     }
-
     .hero-badge {
       display: inline-flex;
       align-items: center;
@@ -171,36 +195,25 @@
       z-index: 1;
       animation: fadeUp .6s ease both;
     }
-
     .badge-dot {
       width: 6px; height: 6px;
       background: var(--accent);
       border-radius: 50%;
       animation: pulse 2s infinite;
     }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .4; }
-    }
-
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
     .hero h1 {
       position: relative;
       z-index: 1;
       font-family: var(--serif);
-      font-size: clamp(48px, 7vw, 88px);
+      font-size: clamp(44px, 7vw, 84px);
       font-weight: 400;
       line-height: 1.05;
       letter-spacing: -1px;
       margin-bottom: 24px;
       animation: fadeUp .7s .1s ease both;
     }
-
-    .hero h1 em {
-      font-style: italic;
-      color: var(--accent);
-    }
-
+    .hero h1 em { font-style: italic; color: var(--accent); }
     .hero-sub {
       position: relative;
       z-index: 1;
@@ -211,7 +224,6 @@
       margin-bottom: 40px;
       animation: fadeUp .7s .2s ease both;
     }
-
     .hero-actions {
       position: relative;
       z-index: 1;
@@ -221,341 +233,119 @@
       justify-content: center;
       animation: fadeUp .7s .3s ease both;
     }
-
     .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--accent);
-      color: #fff;
-      padding: 13px 28px;
-      border-radius: 9px;
-      font-size: 15px;
-      font-weight: 500;
-      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: #fff;
+      padding: 13px 28px; border-radius: 9px;
+      font-size: 15px; font-weight: 500; text-decoration: none;
       transition: transform .2s, opacity .2s;
     }
-    .btn-primary:hover { transform: translateY(-1px); opacity: .9; }
-
+    .btn-primary:hover, .btn-primary:focus { transform: translateY(-1px); opacity: .9; outline: 2px solid var(--accent2); outline-offset: 3px; }
     .btn-ghost {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--bg3);
-      border: 1px solid var(--border2);
-      color: var(--text);
-      padding: 13px 28px;
-      border-radius: 9px;
-      font-size: 15px;
-      font-weight: 400;
-      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--bg3); border: 1px solid var(--border2); color: var(--text);
+      padding: 13px 28px; border-radius: 9px;
+      font-size: 15px; font-weight: 400; text-decoration: none;
       transition: border-color .2s, transform .2s;
     }
-    .btn-ghost:hover { border-color: rgba(255,255,255,0.25); transform: translateY(-1px); }
-
-    /* Terminal hero */
+    .btn-ghost:hover, .btn-ghost:focus { border-color: rgba(255,255,255,0.25); transform: translateY(-1px); outline: 2px solid var(--border2); outline-offset: 3px; }
     .hero-terminal {
-      position: relative;
-      z-index: 1;
+      position: relative; z-index: 1;
       margin-top: 64px;
-      background: var(--bg2);
-      border: 1px solid var(--border2);
-      border-radius: 12px;
-      width: 100%;
-      max-width: 640px;
-      overflow: hidden;
-      animation: fadeUp .7s .4s ease both;
-      text-align: left;
+      background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px;
+      width: 100%; max-width: 640px; overflow: hidden;
+      animation: fadeUp .7s .4s ease both; text-align: left;
     }
-
     .terminal-bar {
-      background: var(--bg3);
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      background: var(--bg3); padding: 10px 16px;
+      display: flex; align-items: center; gap: 6px;
       border-bottom: 1px solid var(--border);
     }
-
     .dot { width: 10px; height: 10px; border-radius: 50%; }
     .dot-r { background: #FF5F57; }
     .dot-y { background: #FEBC2E; }
     .dot-g { background: #28C840; }
-
-    .terminal-title {
-      margin-left: 8px;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .terminal-body {
-      padding: 20px 24px;
-      font-family: var(--mono);
-      font-size: 13px;
-      line-height: 2;
-    }
-
+    .terminal-title { margin-left: 8px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .terminal-body { padding: 20px 24px; font-family: var(--mono); font-size: 13px; line-height: 2; }
     .t-prompt { color: var(--accent); }
-    .t-cmd { color: var(--text); }
-    .t-dim { color: var(--muted); }
-    .t-green { color: var(--green); }
+    .t-cmd    { color: var(--text); }
+    .t-dim    { color: var(--muted); }
+    .t-green  { color: var(--green); }
     .t-yellow { color: var(--yellow); }
-    .t-blue { color: var(--blue); }
-    .t-score {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(34,197,94,.1);
-      border: 1px solid rgba(34,197,94,.2);
-      border-radius: 6px;
-      padding: 2px 10px;
-      color: var(--green);
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none} }
 
     /* ── STATS ── */
     .stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 1px; background: var(--border);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
     }
-
-    .stat-box {
-      background: var(--bg);
-      padding: 40px 32px;
-      text-align: center;
-    }
-
-    .stat-num {
-      font-family: var(--serif);
-      font-size: 48px;
-      font-weight: 400;
-      color: var(--text);
-      line-height: 1;
-      margin-bottom: 8px;
-    }
-
+    .stat-box { background: var(--bg); padding: 40px 32px; text-align: center; }
+    .stat-num { font-family: var(--serif); font-size: 48px; font-weight: 400; color: var(--text); line-height: 1; margin-bottom: 8px; }
     .stat-num em { font-style: italic; color: var(--accent); }
+    .stat-label { font-size: 13px; color: var(--muted); }
 
-    .stat-label {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    /* ── SECTION ── */
-    section {
-      position: relative;
-      padding: 96px 40px;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .section-tag {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--accent);
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-
-    .section-title {
-      font-family: var(--serif);
-      font-size: clamp(32px, 4vw, 52px);
-      font-weight: 400;
-      line-height: 1.1;
-      margin-bottom: 16px;
-    }
-
+    /* ── SECTIONS ── */
+    section { position: relative; padding: 96px 40px; max-width: 1100px; margin: 0 auto; }
+    .section-tag { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 16px; }
+    .section-title { font-family: var(--serif); font-size: clamp(32px,4vw,52px); font-weight: 400; line-height: 1.1; margin-bottom: 16px; }
     .section-title em { font-style: italic; color: var(--accent); }
+    .section-sub { font-size: 16px; color: var(--muted); max-width: 500px; line-height: 1.7; margin-bottom: 56px; }
 
-    .section-sub {
-      font-size: 16px;
-      color: var(--muted);
-      max-width: 500px;
-      line-height: 1.7;
-      margin-bottom: 56px;
-    }
-
-    /* ── FEATURE GRID ── */
-    .features {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .feature {
-      background: var(--bg2);
-      padding: 32px;
-      transition: background .2s;
-    }
+    /* ── FEATURES ── */
+    .features { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .feature { background: var(--bg2); padding: 32px; transition: background .2s; }
     .feature:hover { background: var(--bg3); }
+    .feature-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--bg3); border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 20px; }
+    .feature h3 { font-size: 15px; font-weight: 500; margin-bottom: 8px; }
+    .feature p  { font-size: 13px; color: var(--muted); line-height: 1.65; }
 
-    .feature-icon {
-      width: 40px; height: 40px;
-      border-radius: 10px;
-      background: var(--bg3);
-      border: 1px solid var(--border2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      margin-bottom: 20px;
-    }
-
-    .feature h3 {
-      font-size: 15px;
-      font-weight: 500;
-      margin-bottom: 8px;
-    }
-
-    .feature p {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.65;
-    }
-
-    /* ── HOW IT WORKS ── */
-    .steps {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 48px;
-      align-items: center;
-    }
-
+    /* ── STEPS ── */
+    .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
     .steps-list { list-style: none; }
-
-    .step {
-      display: flex;
-      gap: 20px;
-      padding: 24px 0;
-      border-bottom: 1px solid var(--border);
-    }
+    .step { display: flex; gap: 20px; padding: 24px 0; border-bottom: 1px solid var(--border); }
     .step:last-child { border-bottom: none; }
-
-    .step-num {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--accent);
-      min-width: 24px;
-      padding-top: 2px;
-    }
-
+    .step-num { font-family: var(--mono); font-size: 11px; color: var(--accent); min-width: 24px; padding-top: 2px; }
     .step h4 { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
     .step p  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .steps-visual { background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px; padding: 24px; font-family: var(--mono); font-size: 12px; line-height: 2.2; }
 
-    .steps-visual {
-      background: var(--bg2);
-      border: 1px solid var(--border2);
-      border-radius: 12px;
-      padding: 24px;
-      font-family: var(--mono);
-      font-size: 12px;
-      line-height: 2.2;
-    }
-
-    /* ── CRITERIA TABLE ── */
-    .criteria-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-
-    .criterion-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
+    /* ── CRITERIA ── */
+    .criteria-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .criterion-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .criterion-name { font-size: 13px; }
     .criterion-num  { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-
-    .status-badge {
-      font-family: var(--mono);
-      font-size: 11px;
-      padding: 3px 10px;
-      border-radius: 999px;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .status-auto   { background: rgba(34,197,94,.1);  color: var(--green);  border: 1px solid rgba(34,197,94,.2); }
-    .status-partial { background: rgba(234,179,8,.1);  color: var(--yellow); border: 1px solid rgba(234,179,8,.2); }
-    .status-manual { background: rgba(107,114,128,.1); color: var(--muted);  border: 1px solid rgba(107,114,128,.2); }
+    .status-badge { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
+    .status-auto    { background: rgba(34,197,94,.1);  color: #16a34a; border: 1px solid rgba(34,197,94,.25); }
+    .status-partial { background: rgba(234,179,8,.1);  color: #a16207; border: 1px solid rgba(234,179,8,.25); }
 
     /* ── INSTALL ── */
-    .install-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-
-    .install-card {
-      background: var(--bg2);
-      border: 1px solid var(--border2);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .install-header {
-      padding: 20px 24px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .install-icon { font-size: 20px; }
+    .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .install-card { background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px; overflow: hidden; }
+    .install-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .install-icon  { font-size: 20px; }
     .install-title { font-size: 15px; font-weight: 500; }
     .install-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-    .install-body {
-      padding: 20px 24px;
-      font-family: var(--mono);
-      font-size: 12px;
-      line-height: 2.1;
-    }
-
-    .code-line { display: flex; gap: 10px; }
-    .code-prompt { color: var(--accent); user-select: none; }
-    .code-cmd { color: var(--text); }
+    .install-body  { padding: 20px 24px; font-family: var(--mono); font-size: 12px; line-height: 2.1; }
+    .code-line    { display: flex; gap: 10px; }
+    .code-prompt  { color: var(--accent); user-select: none; }
+    .code-cmd     { color: var(--text); }
     .code-comment { color: var(--muted); }
 
     /* ── FOOTER ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    footer p { font-size: 13px; color: var(--muted); }
-    footer a { color: var(--muted); text-decoration: none; transition: color .2s; }
-    footer a:hover { color: var(--text); }
-
-    .footer-links { display: flex; gap: 24px; }
+    footer { border-top: 1px solid var(--border); padding: 40px; display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; max-width: 1100px; margin: 0 auto; }
+    .footer-brand p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .footer-brand strong { font-size: 14px; font-weight: 500; color: var(--text); }
+    .footer-brand a { color: var(--accent2); text-decoration: underline; }
+    .footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+    footer a { color: var(--muted); text-decoration: none; font-size: 13px; transition: color .2s; }
+    footer a:hover, footer a:focus { color: var(--text); text-decoration: underline; }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
+      .disclaimer { padding: 12px 20px; font-size: 12px; }
       nav { padding: 0 20px; }
-      .nav-links { display: none; }
+      nav ul { display: none; }
       section { padding: 64px 20px; }
       .stats { grid-template-columns: 1fr 1fr; }
       .features { grid-template-columns: 1fr; }
@@ -563,37 +353,58 @@
       .steps-visual { display: none; }
       .criteria-grid { grid-template-columns: 1fr; }
       .install-grid { grid-template-columns: 1fr; }
-      footer { flex-direction: column; gap: 16px; text-align: center; }
+      footer { flex-direction: column; }
     }
   </style>
 </head>
 <body>
 
+<!-- SKIP LINK ── RGAA 12.1 -->
+<a href="#main" class="skip-link">Aller au contenu principal</a>
+
+<!-- BANDEAU DISCLAIMER -->
+<aside aria-label="Avertissement important">
+  <div class="disclaimer">
+    <span class="disclaimer-icon" aria-hidden="true">⚠️</span>
+    <p>
+      <strong>Projet associatif vibe codé</strong> — Cet outil est développé bénévolement par
+      <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener">Le Singe Du Numérique</a>
+      dans une démarche d'ouverture de l'accessibilité au plus grand nombre.
+      Il s'agit d'un <strong>pré-audit automatique</strong>, non certifié, basé sur le RGAA 4.1.
+      Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié,
+      ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.
+    </p>
+  </div>
+</aside>
+
 <!-- NAV -->
-<nav>
+<nav aria-label="Navigation principale">
   <a href="/rgaa-audit/" class="nav-logo">
-    <div class="nav-logo-icon">♿</div>
+    <div class="nav-logo-icon" aria-hidden="true">♿</div>
     rgaa-audit
   </a>
-  <ul class="nav-links">
+  <ul>
     <li><a href="#fonctionnalites">Fonctionnalités</a></li>
     <li><a href="#comment">Comment ça marche</a></li>
     <li><a href="#criteres">Critères</a></li>
     <li><a href="#installer">Installer</a></li>
-    <li><a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener">GitHub</a></li>
+    <li><a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener" aria-label="Voir le code source sur GitHub (nouvelle fenêtre)">GitHub</a></li>
   </ul>
-  <a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener" class="nav-cta">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+  <a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener" class="nav-cta" aria-label="Voir sur GitHub (nouvelle fenêtre)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
     Voir sur GitHub
   </a>
 </nav>
 
+<!-- MAIN -->
+<main id="main">
+
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-glow"></div>
+  <div class="hero-glow" aria-hidden="true"></div>
 
-  <div class="hero-badge">
-    <div class="badge-dot"></div>
+  <div class="hero-badge" aria-label="Version 0.2.0, statut Alpha, RGAA 4.1">
+    <div class="badge-dot" aria-hidden="true"></div>
     v0.2.0 — Alpha · RGAA 4.1
   </div>
 
@@ -603,97 +414,93 @@
   </h1>
 
   <p class="hero-sub">
-    Extension Chrome + CLI Playwright open-source pour auditer la conformité RGAA 4.1
-    de n'importe quel site web, avec simulation d'actions humaines et analyse IA.
+    Extension Chrome + CLI Playwright open-source pour détecter les non-conformités RGAA 4.1.
+    Un projet associatif, transparent sur ses limites.
   </p>
 
   <div class="hero-actions">
-    <a href="#installer" class="btn-primary">
-      ↓ Installer maintenant
-    </a>
-    <a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener" class="btn-ghost">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+    <a href="#installer" class="btn-primary">↓ Installer maintenant</a>
+    <a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener" class="btn-ghost" aria-label="Voir le code sur GitHub (nouvelle fenêtre)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
       Star sur GitHub
     </a>
   </div>
 
-  <div class="hero-terminal">
-    <div class="terminal-bar">
+  <div class="hero-terminal" role="region" aria-label="Exemple de sortie terminal">
+    <div class="terminal-bar" aria-hidden="true">
       <div class="dot dot-r"></div>
       <div class="dot dot-y"></div>
       <div class="dot dot-g"></div>
       <span class="terminal-title">Terminal — RGAA Audit CLI</span>
     </div>
-    <div class="terminal-body">
-      <div><span class="t-prompt">$</span> <span class="t-cmd">node bin/rgaa-audit.js https://mon-site.fr -o html -s rapport.html</span></div>
-      <div class="t-dim">♿  RGAA Audit CLI v0.2.0</div>
-      <div class="t-dim">🌐 Chargement de la page…</div>
-      <div class="t-dim">⌨️  Simulation navigation clavier (15 éléments)…</div>
-      <div class="t-dim">🔍 Audit DOM — 13 thèmes RGAA 4.1…</div>
-      <div class="t-dim">🤖 Analyse IA via Claude API…</div>
-      <div>┌─────────────────────────────────────────┐</div>
-      <div>│  Taux de conformité : <span class="t-score">89%  ████████████████░░░░</span> │</div>
-      <div>│  <span class="t-green">Conformes    : 17</span>  <span class="t-yellow">Non conformes: 2</span>   │</div>
-      <div>└─────────────────────────────────────────┘</div>
-      <div><span class="t-green">📁 Rapport sauvegardé : rapport.html</span></div>
-    </div>
+    <pre class="terminal-body"><code><span class="t-prompt">$</span> <span class="t-cmd">node bin/rgaa-audit.js https://mon-site.fr -o html -s rapport.html</span>
+<span class="t-dim">♿  RGAA Audit CLI v0.2.0</span>
+<span class="t-dim">🌐 Chargement de la page…</span>
+<span class="t-dim">⌨️  Simulation navigation clavier (15 éléments)…</span>
+<span class="t-dim">🔍 Audit DOM — 13 thèmes RGAA 4.1…</span>
+<span class="t-dim">🤖 Analyse IA via Claude API…</span>
+┌─────────────────────────────────────────┐
+│  Taux de conformité : <span style="color:var(--green)">89%  ████████████░░░░</span>  │
+│  <span class="t-green">Conformes : 17</span>  <span class="t-yellow">Non conformes : 2</span>         │
+└─────────────────────────────────────────┘
+<span class="t-green">📁 Rapport sauvegardé : rapport.html</span></code></pre>
   </div>
 </div>
 
 <!-- STATS -->
-<div class="stats">
+<div class="stats" aria-label="Chiffres clés du projet">
   <div class="stat-box">
-    <div class="stat-num"><em>106</em></div>
-    <div class="stat-label">Critères RGAA 4.1</div>
+    <p class="stat-num"><em>106</em></p>
+    <p class="stat-label">Critères RGAA 4.1</p>
   </div>
   <div class="stat-box">
-    <div class="stat-num"><em>~47</em>%</div>
-    <div class="stat-label">Automatisés</div>
+    <p class="stat-num"><em>~47</em>%</p>
+    <p class="stat-label">Automatisés</p>
   </div>
   <div class="stat-box">
-    <div class="stat-num"><em>65</em></div>
-    <div class="stat-label">Tests unitaires</div>
+    <p class="stat-num"><em>65</em></p>
+    <p class="stat-label">Tests unitaires</p>
   </div>
   <div class="stat-box">
-    <div class="stat-num"><em>8s</em></div>
-    <div class="stat-label">Durée d'un audit</div>
+    <p class="stat-num"><em>8s</em></p>
+    <p class="stat-label">Durée d'un audit</p>
   </div>
 </div>
 
 <!-- FONCTIONNALITÉS -->
-<section id="fonctionnalites">
-  <div class="section-tag">Fonctionnalités</div>
-  <h2 class="section-title">Tout ce qu'il faut pour<br><em>un audit sérieux</em></h2>
+<section id="fonctionnalites" aria-labelledby="titre-fonctionnalites">
+  <p class="section-tag">Fonctionnalités</p>
+  <h2 class="section-title" id="titre-fonctionnalites">Tout ce qu'il faut pour<br><em>commencer à auditer</em></h2>
   <p class="section-sub">Un outil modulaire — utilisez ce dont vous avez besoin, ignorez le reste.</p>
 
   <div class="features">
     <div class="feature">
-      <div class="feature-icon">🧩</div>
+      <div class="feature-icon" aria-hidden="true">🧩</div>
       <h3>Extension Chrome</h3>
       <p>Audit en contexte directement dans votre navigateur. Aucune installation lourde. Résultats en temps réel avec panel overlay.</p>
     </div>
     <div class="feature">
-      <div class="feature-icon">⚙️</div>
+      <div class="feature-icon" aria-hidden="true">⚙️</div>
       <h3>CLI Playwright</h3>
       <p>Automatisation complète depuis le terminal. Audit multi-pages, intégration CI/CD, rapports JSON / HTML / CSV.</p>
     </div>
     <div class="feature">
-      <div class="feature-icon">⌨️</div>
+      <div class="feature-icon" aria-hidden="true">⌨️</div>
       <h3>Simulation humaine</h3>
       <p>Navigation au clavier, zoom 200%, désactivation CSS, test responsive 320px — comme le ferait un vrai auditeur.</p>
     </div>
     <div class="feature">
-      <div class="feature-icon">🤖</div>
+      <div class="feature-icon" aria-hidden="true">🤖</div>
       <h3>Analyse IA (opt-in)</h3>
-      <p>Priorisation intelligente des non-conformités via Claude API. Utilisez votre propre clé — zéro coût d'infrastructure.</p>
+      <p>Priorisation des non-conformités via Claude API. Votre propre clé — zéro coût d'infrastructure.</p>
     </div>
     <div class="feature">
-      <div class="feature-icon">🔒</div>
+      <div class="feature-icon" aria-hidden="true">🔒</div>
       <h3>100% local</h3>
       <p>L'audit tourne dans votre navigateur ou sur votre machine. Aucune donnée envoyée à un tiers sans votre accord.</p>
     </div>
     <div class="feature">
-      <div class="feature-icon">📖</div>
+      <div class="feature-icon" aria-hidden="true">📖</div>
       <h3>Open-source MIT</h3>
       <p>Code source intégralement disponible sur GitHub. Contributions bienvenues — règles, reporters, intégrations.</p>
     </div>
@@ -701,84 +508,35 @@
 </section>
 
 <!-- COMMENT ÇA MARCHE -->
-<section id="comment" style="border-top: 1px solid var(--border); padding-top: 96px;">
-  <div class="section-tag">Fonctionnement</div>
-  <h2 class="section-title">8 étapes,<br><em>8 secondes</em></h2>
+<section id="comment" style="border-top:1px solid var(--border)" aria-labelledby="titre-comment">
+  <p class="section-tag">Fonctionnement</p>
+  <h2 class="section-title" id="titre-comment">8 étapes,<br><em>8 secondes</em></h2>
   <p class="section-sub">Le simulateur reproduit le comportement d'un auditeur RGAA humain de bout en bout.</p>
 
   <div class="steps">
-    <ul class="steps-list">
-      <li class="step">
-        <span class="step-num">01</span>
-        <div>
-          <h4>Chargement de la page</h4>
-          <p>Avec attente de stabilisation du DOM — compatible avec les SPA React/Vue/Angular.</p>
-        </div>
-      </li>
-      <li class="step">
-        <span class="step-num">02</span>
-        <div>
-          <h4>Audit DOM automatique</h4>
-          <p>13 thèmes RGAA scannés : images, couleurs, structure, formulaires, navigation…</p>
-        </div>
-      </li>
-      <li class="step">
-        <span class="step-num">03</span>
-        <div>
-          <h4>Navigation clavier (Tab ×15)</h4>
-          <p>Chaque élément focusé est analysé — outline CSS, visibilité, ordre de tabulation.</p>
-        </div>
-      </li>
-      <li class="step">
-        <span class="step-num">04</span>
-        <div>
-          <h4>Zoom 200% + sans CSS</h4>
-          <p>Détection de débordements, vérification de la lisibilité sans feuilles de style.</p>
-        </div>
-      </li>
-      <li class="step">
-        <span class="step-num">05</span>
-        <div>
-          <h4>Test responsive 320px</h4>
-          <p>Redimensionnement à 320px de large — standard mobile WCAG.</p>
-        </div>
-      </li>
-      <li class="step">
-        <span class="step-num">06</span>
-        <div>
-          <h4>Screenshots automatiques</h4>
-          <p>Captures à chaque étape clé pour documenter l'audit.</p>
-        </div>
-      </li>
-      <li class="step">
-        <span class="step-num">07</span>
-        <div>
-          <h4>Calcul du taux de conformité</h4>
-          <p>Score RGAA officiel : conformes / (conformes + non-conformes).</p>
-        </div>
-      </li>
-      <li class="step">
-        <span class="step-num">08</span>
-        <div>
-          <h4>Rapport + analyse IA (opt-in)</h4>
-          <p>Export HTML/JSON/CSV. Recommandations priorisées si clé Anthropic fournie.</p>
-        </div>
-      </li>
-    </ul>
-
-    <div class="steps-visual">
-      <div class="t-dim"># Simulation en cours…</div>
-      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">DOM stable (SPA hydratée)</span></div>
-      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">lang="fr" présent</span></div>
-      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">h1 unique détecté</span></div>
-      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">Lien d'évitement fonctionnel</span></div>
-      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">Focus visible (15 éléments)</span></div>
-      <div><span style="color:var(--yellow)">⚠</span> <span style="color:var(--text)">Contraste 1.54:1 insuffisant</span></div>
-      <div><span style="color:var(--yellow)">⚠</span> <span style="color:var(--text)">Zoom 200% : débordement x</span></div>
-      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">320px : responsive OK</span></div>
-      <div><span style="color:var(--green)">✓</span> <span style="color:var(--text)">Aucune animation rapide</span></div>
+    <ol class="steps-list" aria-label="Étapes de l'audit">
+      <li class="step"><span class="step-num" aria-hidden="true">01</span><div><h3>Chargement de la page</h3><p>Avec attente de stabilisation du DOM — compatible avec les SPA React/Vue/Angular.</p></div></li>
+      <li class="step"><span class="step-num" aria-hidden="true">02</span><div><h3>Audit DOM automatique</h3><p>13 thèmes RGAA scannés : images, couleurs, structure, formulaires, navigation…</p></div></li>
+      <li class="step"><span class="step-num" aria-hidden="true">03</span><div><h3>Navigation clavier (Tab ×15)</h3><p>Chaque élément focusé est analysé — outline CSS, visibilité, ordre de tabulation.</p></div></li>
+      <li class="step"><span class="step-num" aria-hidden="true">04</span><div><h3>Zoom 200% + sans CSS</h3><p>Détection de débordements, vérification de la lisibilité sans feuilles de style.</p></div></li>
+      <li class="step"><span class="step-num" aria-hidden="true">05</span><div><h3>Test responsive 320px</h3><p>Redimensionnement à 320px de large — standard mobile WCAG.</p></div></li>
+      <li class="step"><span class="step-num" aria-hidden="true">06</span><div><h3>Screenshots automatiques</h3><p>Captures à chaque étape clé pour documenter l'audit.</p></div></li>
+      <li class="step"><span class="step-num" aria-hidden="true">07</span><div><h3>Calcul du taux de conformité</h3><p>Score RGAA officiel : conformes / (conformes + non-conformes).</p></div></li>
+      <li class="step"><span class="step-num" aria-hidden="true">08</span><div><h3>Rapport + analyse IA (opt-in)</h3><p>Export HTML/JSON/CSV. Recommandations priorisées si clé Anthropic fournie.</p></div></li>
+    </ol>
+    <div class="steps-visual" aria-hidden="true">
+      <div style="color:var(--muted)"># Simulation en cours…</div>
+      <div><span style="color:var(--green)">✓</span> DOM stable (SPA hydratée)</div>
+      <div><span style="color:var(--green)">✓</span> lang="fr" présent</div>
+      <div><span style="color:var(--green)">✓</span> h1 unique détecté</div>
+      <div><span style="color:var(--green)">✓</span> Lien d'évitement fonctionnel</div>
+      <div><span style="color:var(--green)">✓</span> Focus visible (15 éléments)</div>
+      <div><span style="color:var(--yellow)">⚠</span> Contraste 1.54:1 insuffisant</div>
+      <div><span style="color:var(--yellow)">⚠</span> Zoom 200% : débordement x</div>
+      <div><span style="color:var(--green)">✓</span> 320px : responsive OK</div>
+      <div><span style="color:var(--green)">✓</span> Aucune animation rapide</div>
       <br>
-      <div class="t-score" style="display:inline-flex;gap:8px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);border-radius:6px;padding:4px 12px;color:var(--green)">
+      <div style="display:inline-flex;gap:8px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);border-radius:6px;padding:4px 12px;color:var(--green)">
         Taux de conformité : 89%
       </div>
     </div>
@@ -786,189 +544,94 @@
 </section>
 
 <!-- CRITÈRES -->
-<section id="criteres" style="border-top: 1px solid var(--border);">
-  <div class="section-tag">Couverture RGAA</div>
-  <h2 class="section-title">13 thèmes,<br><em>~47% automatisés</em></h2>
+<section id="criteres" style="border-top:1px solid var(--border)" aria-labelledby="titre-criteres">
+  <p class="section-tag">Couverture RGAA</p>
+  <h2 class="section-title" id="titre-criteres">13 thèmes,<br><em>~47% automatisés</em></h2>
   <p class="section-sub">Les critères manuels sont guidés par une checklist interactive dans l'extension Chrome.</p>
 
   <div class="criteria-grid">
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Images</div>
-        <div class="criterion-num">Thème 1 — 13 critères</div>
-      </div>
-      <span class="status-badge status-auto">Auto</span>
-    </div>
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Cadres (iframes)</div>
-        <div class="criterion-num">Thème 2 — 2 critères</div>
-      </div>
-      <span class="status-badge status-auto">Auto</span>
-    </div>
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Couleurs</div>
-        <div class="criterion-num">Thème 3 — 3 critères</div>
-      </div>
-      <span class="status-badge status-partial">Partiel</span>
-    </div>
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Multimédia</div>
-        <div class="criterion-num">Thème 4 — 13 critères</div>
-      </div>
-      <span class="status-badge status-partial">Partiel</span>
-    </div>
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Tableaux</div>
-        <div class="criterion-num">Thème 5 — 8 critères</div>
-      </div>
-      <span class="status-badge status-auto">Auto</span>
-    </div>
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Liens</div>
-        <div class="criterion-num">Thème 6 — 2 critères</div>
-      </div>
-      <span class="status-badge status-auto">Auto</span>
-    </div>
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Scripts</div>
-        <div class="criterion-num">Thème 7 — 5 critères</div>
-      </div>
-      <span class="status-badge status-partial">Partiel</span>
-    </div>
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Éléments obligatoires</div>
-        <div class="criterion-num">Thème 8 — 10 critères</div>
-      </div>
-      <span class="status-badge status-auto">Auto</span>
-    </div>
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Structure</div>
-        <div class="criterion-num">Thème 9 — 8 critères</div>
-      </div>
-      <span class="status-badge status-auto">Auto</span>
-    </div>
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Présentation</div>
-        <div class="criterion-num">Thème 10 — 14 critères</div>
-      </div>
-      <span class="status-badge status-partial">Partiel</span>
-    </div>
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Formulaires</div>
-        <div class="criterion-num">Thème 11 — 13 critères</div>
-      </div>
-      <span class="status-badge status-auto">Auto</span>
-    </div>
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Navigation</div>
-        <div class="criterion-num">Thème 12 — 12 critères</div>
-      </div>
-      <span class="status-badge status-auto">Auto</span>
-    </div>
-    <div class="criterion-card">
-      <div>
-        <div class="criterion-name">Consultation</div>
-        <div class="criterion-num">Thème 13 — 13 critères</div>
-      </div>
-      <span class="status-badge status-partial">Partiel</span>
-    </div>
+    <div class="criterion-card"><div><p class="criterion-name">Images</p><p class="criterion-num">Thème 1 — 13 critères</p></div><span class="status-badge status-auto">Auto</span></div>
+    <div class="criterion-card"><div><p class="criterion-name">Cadres</p><p class="criterion-num">Thème 2 — 2 critères</p></div><span class="status-badge status-auto">Auto</span></div>
+    <div class="criterion-card"><div><p class="criterion-name">Couleurs</p><p class="criterion-num">Thème 3 — 3 critères</p></div><span class="status-badge status-partial">Partiel</span></div>
+    <div class="criterion-card"><div><p class="criterion-name">Multimédia</p><p class="criterion-num">Thème 4 — 13 critères</p></div><span class="status-badge status-partial">Partiel</span></div>
+    <div class="criterion-card"><div><p class="criterion-name">Tableaux</p><p class="criterion-num">Thème 5 — 8 critères</p></div><span class="status-badge status-auto">Auto</span></div>
+    <div class="criterion-card"><div><p class="criterion-name">Liens</p><p class="criterion-num">Thème 6 — 2 critères</p></div><span class="status-badge status-auto">Auto</span></div>
+    <div class="criterion-card"><div><p class="criterion-name">Scripts</p><p class="criterion-num">Thème 7 — 5 critères</p></div><span class="status-badge status-partial">Partiel</span></div>
+    <div class="criterion-card"><div><p class="criterion-name">Éléments obligatoires</p><p class="criterion-num">Thème 8 — 10 critères</p></div><span class="status-badge status-auto">Auto</span></div>
+    <div class="criterion-card"><div><p class="criterion-name">Structure</p><p class="criterion-num">Thème 9 — 8 critères</p></div><span class="status-badge status-auto">Auto</span></div>
+    <div class="criterion-card"><div><p class="criterion-name">Présentation</p><p class="criterion-num">Thème 10 — 14 critères</p></div><span class="status-badge status-partial">Partiel</span></div>
+    <div class="criterion-card"><div><p class="criterion-name">Formulaires</p><p class="criterion-num">Thème 11 — 13 critères</p></div><span class="status-badge status-auto">Auto</span></div>
+    <div class="criterion-card"><div><p class="criterion-name">Navigation</p><p class="criterion-num">Thème 12 — 12 critères</p></div><span class="status-badge status-auto">Auto</span></div>
+    <div class="criterion-card"><div><p class="criterion-name">Consultation</p><p class="criterion-num">Thème 13 — 13 critères</p></div><span class="status-badge status-partial">Partiel</span></div>
   </div>
 
-  <div style="display:flex;gap:16px;margin-top:24px;font-size:13px;color:var(--muted)">
-    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-auto">Auto</span> Détection automatique complète</span>
-    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-partial">Partiel</span> Automatique + vérification manuelle guidée</span>
+  <div style="display:flex;gap:16px;margin-top:24px;font-size:13px;color:var(--muted);flex-wrap:wrap">
+    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-auto">Auto</span> Détection automatique</span>
+    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-partial">Partiel</span> Auto + vérification manuelle guidée</span>
   </div>
 </section>
 
 <!-- INSTALLER -->
-<section id="installer" style="border-top: 1px solid var(--border);">
-  <div class="section-tag">Installation</div>
-  <h2 class="section-title">Prêt en<br><em>3 minutes</em></h2>
+<section id="installer" style="border-top:1px solid var(--border)" aria-labelledby="titre-installer">
+  <p class="section-tag">Installation</p>
+  <h2 class="section-title" id="titre-installer">Prêt en<br><em>3 minutes</em></h2>
   <p class="section-sub">CLI Node.js ou extension Chrome — choisissez selon votre usage.</p>
 
   <div class="install-grid">
     <div class="install-card">
       <div class="install-header">
-        <div class="install-icon">⚙️</div>
-        <div>
-          <div class="install-title">CLI (recommandé)</div>
-          <div class="install-sub">Audit automatisé, CI/CD, rapports</div>
-        </div>
+        <span class="install-icon" aria-hidden="true">⚙️</span>
+        <div><p class="install-title">CLI (recommandé)</p><p class="install-sub">Audit automatisé, CI/CD, rapports</p></div>
       </div>
       <div class="install-body">
-        <div class="code-line">
-          <span class="code-prompt">$</span>
-          <span class="code-cmd">git clone https://github.com/Stan69000/rgaa-audit</span>
-        </div>
-        <div class="code-line">
-          <span class="code-prompt">$</span>
-          <span class="code-cmd">cd rgaa-audit/cli && npm install</span>
-        </div>
-        <div class="code-line">
-          <span class="code-prompt">$</span>
-          <span class="code-cmd">npx playwright install chromium</span>
-        </div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">git clone https://github.com/Stan69000/rgaa-audit</span></div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">cd rgaa-audit/cli && npm install</span></div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">npx playwright install chromium</span></div>
         <div style="height:8px"></div>
         <div class="code-comment"># Lancer un audit</div>
-        <div class="code-line">
-          <span class="code-prompt">$</span>
-          <span class="code-cmd">node bin/rgaa-audit.js https://mon-site.fr -o html -s rapport.html</span>
-        </div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">node bin/rgaa-audit.js https://mon-site.fr -o html -s rapport.html</span></div>
       </div>
     </div>
-
     <div class="install-card">
       <div class="install-header">
-        <div class="install-icon">🧩</div>
-        <div>
-          <div class="install-title">Extension Chrome</div>
-          <div class="install-sub">Audit en contexte, sans config</div>
-        </div>
+        <span class="install-icon" aria-hidden="true">🧩</span>
+        <div><p class="install-title">Extension Chrome</p><p class="install-sub">Audit en contexte, sans config</p></div>
       </div>
       <div class="install-body">
-        <div class="code-comment"># 1. Télécharger le dossier extension/</div>
-        <div class="code-line">
-          <span class="code-prompt">$</span>
-          <span class="code-cmd">git clone https://github.com/Stan69000/rgaa-audit</span>
-        </div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">git clone https://github.com/Stan69000/rgaa-audit</span></div>
         <div style="height:8px"></div>
-        <div class="code-comment"># 2. Dans Chrome</div>
-        <div class="code-comment">#    chrome://extensions/</div>
-        <div class="code-comment">#    → Mode développeur ON</div>
-        <div class="code-comment">#    → Charger extension non empaquetée</div>
-        <div class="code-comment">#    → Sélectionner le dossier extension/</div>
+        <div class="code-comment"># Dans Chrome :</div>
+        <div class="code-comment"># chrome://extensions/</div>
+        <div class="code-comment"># → Mode développeur ON</div>
+        <div class="code-comment"># → Charger extension non empaquetée</div>
+        <div class="code-comment"># → Sélectionner le dossier extension/</div>
       </div>
     </div>
   </div>
 </section>
 
+</main>
+
 <!-- FOOTER -->
 <footer>
-  <div>
-    <p style="font-weight:500;color:var(--text);margin-bottom:4px">RGAA Audit</p>
-    <p>MIT License · Initié en 2026 · Construit avec Playwright et Claude API</p>
+  <div class="footer-brand">
+    <strong>RGAA Audit</strong>
+    <p>
+      Un projet associatif de <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener" aria-label="Visiter le site de Le Singe Du Numérique (nouvelle fenêtre)">Le Singe Du Numérique</a>
+      — ouverture de l'accessibilité numérique au plus grand nombre.<br>
+      MIT License · RGAA 4.1 · v0.2.0 · Construit avec Playwright et Claude API
+    </p>
   </div>
-  <div class="footer-links">
-    <a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener">GitHub</a>
-    <a href="https://github.com/Stan69000/rgaa-audit/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contribuer</a>
-    <a href="https://github.com/Stan69000/rgaa-audit/issues" target="_blank" rel="noopener">Signaler un bug</a>
-    <a href="https://accessibilite.numerique.gouv.fr/" target="_blank" rel="noopener">RGAA officiel</a>
-  </div>
+  <nav class="footer-links" aria-label="Liens utiles">
+    <a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener" aria-label="Code source sur GitHub (nouvelle fenêtre)">GitHub</a>
+    <a href="https://github.com/Stan69000/rgaa-audit/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" aria-label="Guide de contribution (nouvelle fenêtre)">Contribuer</a>
+    <a href="https://github.com/Stan69000/rgaa-audit/issues" target="_blank" rel="noopener" aria-label="Signaler un bug sur GitHub (nouvelle fenêtre)">Signaler un bug</a>
+    <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener" aria-label="Site de l'association Le Singe Du Numérique (nouvelle fenêtre)">lesingedunumerique.fr</a>
+    <a href="https://accessibilite.numerique.gouv.fr/" target="_blank" rel="noopener" aria-label="Référentiel RGAA officiel sur le site du gouvernement (nouvelle fenêtre)">RGAA officiel</a>
+  </nav>
 </footer>
 
 <script>
-  // Intersection Observer pour animations au scroll
   const observer = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (e.isIntersecting) {
