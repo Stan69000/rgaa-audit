@@ -179,6 +179,7 @@ function buildVulgarizedHtml(report) {
     .kpi .v { font-size:30px; font-weight:700; line-height:1.05; }
     .kpi .l { font-size:12px; color:#5b6476; margin-top:4px; }
     .box { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:14px; margin-bottom:16px; }
+    .disclaimer { margin-bottom:16px; padding:10px 12px; border-radius:10px; background:#fff7e6; border:1px solid #f5c96a; color:#7a4a00; font-size:12px; }
     ul { margin: 8px 0 0 18px; }
     li { margin: 6px 0; line-height:1.45; }
     a { color:#0f4fbf; word-break:break-all; }
@@ -188,6 +189,7 @@ function buildVulgarizedHtml(report) {
   <div class="wrap">
     <h1>Rapport vulgarisé d’accessibilité</h1>
     <div class="sub">${escHtml(report.title || report.url || '')} · ${new Date(report.timestamp || Date.now()).toLocaleString('fr-FR')}</div>
+    <div class="disclaimer"><strong>Avertissement:</strong> ce rapport ne remplace pas un audit professionnel et n'est pas certifiant.</div>
 
     <div class="grid">
       <div class="kpi"><div class="v">${score.taux}%</div><div class="l">Niveau global</div></div>

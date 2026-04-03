@@ -62,6 +62,7 @@ function generateHtml(report) {
   * { box-sizing:border-box; margin:0; padding:0; }
   body { background:#07071A; color:#E8E8FF; font-family:'DM Sans',sans-serif; padding:32px; }
   h1 { font-size:28px; font-weight:800; margin-bottom:4px; }
+  .disclaimer { margin: 0 0 16px; padding: 10px 12px; border-radius: 10px; background: #2a1f08; border: 1px solid #6b4f12; color: #fde68a; font-size: 12px; }
   .meta { font-family:'DM Mono',monospace; font-size:12px; color:#445; margin-bottom:32px; }
   .cards { display:grid; grid-template-columns:200px 1fr; gap:24px; margin-bottom:32px; }
   .card { background:#0D0D1A; border:1px solid #1A1A2E; border-radius:16px; padding:24px; }
@@ -79,6 +80,7 @@ function generateHtml(report) {
 </head>
 <body>
 <h1>♿ Rapport RGAA 4.1</h1>
+<div class="disclaimer">Avertissement: ce rapport ne remplace pas un audit professionnel et n'est pas certifiant.</div>
 <div class="meta">
   ${esc(url)} — ${new Date(timestamp).toLocaleString('fr-FR')} — Durée : ${report.duration}s
 </div>
@@ -184,6 +186,7 @@ function generateVulgarized(report) {
     .btn { border:1px solid #c9d4ea; background:#fff; color:#1f2a44; border-radius:10px; padding:8px 12px; font-weight:600; cursor:pointer; }
     .btn:hover { background:#f3f7ff; }
     .where { margin-top:8px; font-size:13px; color:#334155; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px; }
+    .disclaimer { margin-bottom:16px; padding:10px 12px; border-radius:10px; background:#fff7e6; border:1px solid #f5c96a; color:#7a4a00; font-size:12px; }
     @media print {
       .tools { display:none; }
       body { background:#fff; }
@@ -196,6 +199,7 @@ function generateVulgarized(report) {
   <div class="wrap">
     <h1>Rapport vulgarisé d’accessibilité</h1>
     <div class="sub">${esc(report.title || report.url || '')} · ${new Date(report.timestamp).toLocaleString('fr-FR')}</div>
+    <div class="disclaimer"><strong>Avertissement:</strong> ce rapport ne remplace pas un audit professionnel et n'est pas certifiant.</div>
     <div class="tools">
       <button type="button" class="btn" onclick="downloadHtmlReport()">Télécharger HTML</button>
       <button type="button" class="btn" onclick="window.print()">Exporter PDF</button>
