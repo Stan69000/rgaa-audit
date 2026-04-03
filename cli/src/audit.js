@@ -16,6 +16,7 @@ async function runAudit(url, opts = {}) {
   const {
     output   = 'json',
     save     = '',
+    vulgarizedSave = '',
     simulate = true,
     depth    = 1,
     apiKey   = '',
@@ -77,13 +78,19 @@ async function runAudit(url, opts = {}) {
     };
 
     const output_str = await generateReport(report, output);
+    const fs = require('node:fs');
 
     if (save) {
-      const fs = require('node:fs');
       fs.writeFileSync(save, output_str, 'utf8');
       success(`\n📁 Rapport sauvegardé : ${save}`);
     } else {
       console.log('\n' + output_str);
+    }
+
+    if (vulgarizedSave) {
+      const vulgarized = await generateReport(report, 'vulgarized');
+      fs.writeFileSync(vulgarizedSave, vulgarized, 'utf8');
+      success(`📄 Rapport vulgarisé sauvegardé : ${vulgarizedSave}`);
     }
 
     return report;

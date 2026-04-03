@@ -5,6 +5,7 @@ async function generateReport(report, format = 'json') {
   switch (format) {
     case 'html': return generateHtml(report);
     case 'csv':  return generateCsv(report);
+    case 'vulgarized': return generateVulgarized(report);
     default:     return JSON.stringify(report, null, 2);
   }
 }
@@ -132,6 +133,175 @@ ${aiAnalysis ? `
 
 </body>
 </html>`;
+}
+
+function generateVulgarized(report) {
+  const summary = summarizeCriteria(report.results || []);
+  const top = buildTopPriorities(summary.byCriterion).slice(0, 5);
+  const score = report.score || { taux: 0, nonConformes: 0, conformes: 0, na: 0, total: 0 };
+
+  const cards = top.map(item => `
+    <div class="card">
+      <div class="chip chip-${item.priority.toLowerCase()}">${item.priority}</div>
+      <h3>${item.title}</h3>
+      <p><strong>Constat :</strong> ${esc(item.issue)}</p>
+      <p><strong>Impact :</strong> ${esc(item.impact)}</p>
+      <p><strong>Action :</strong> ${esc(item.action)}</p>
+      <p class="meta">Critère RGAA ${esc(item.criterion)} · Effort ${esc(item.effort)}</p>
+    </div>
+  `).join('');
+
+  const avg = top.length ? Math.round(top.reduce((acc, item) => acc + effortToPoints(item.effort), 0) / top.length) : 0;
+  const effortLabel = avg <= 1 ? 'Faible' : avg === 2 ? 'Moyen' : 'Élevé';
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Rapport vulgarisé — ${esc(report.title || report.url || 'Audit RGAA')}</title>
+  <style>
+    body { margin:0; font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif; background:#f7f8fc; color:#1d2433; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 40px; }
+    h1 { margin: 0 0 6px; font-size: 28px; }
+    .sub { color:#5b6476; margin-bottom:20px; }
+    .grid { display:grid; grid-template-columns: repeat(4, minmax(140px,1fr)); gap:12px; margin:18px 0 24px; }
+    .kpi { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:12px 14px; }
+    .kpi .v { font-size:30px; font-weight:700; line-height:1.05; }
+    .kpi .l { font-size:12px; color:#5b6476; margin-top:4px; }
+    .box { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:14px; margin-bottom:16px; }
+    .cards { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:12px; }
+    .card { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:14px; }
+    .chip { display:inline-block; font-size:11px; font-weight:700; border-radius:999px; padding:4px 8px; margin-bottom:8px; }
+    .chip-p1 { background:#ffdfe0; color:#a3181f; }
+    .chip-p2 { background:#fff1d6; color:#9b5d00; }
+    .chip-p3 { background:#dff6ff; color:#0a5271; }
+    .meta { font-size:12px; color:#5b6476; margin-top:8px; }
+    ul { margin: 8px 0 0 18px; }
+    li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Rapport vulgarisé d’accessibilité</h1>
+    <div class="sub">${esc(report.title || report.url || '')} · ${new Date(report.timestamp).toLocaleString('fr-FR')}</div>
+
+    <div class="grid">
+      <div class="kpi"><div class="v">${score.taux}%</div><div class="l">Niveau global</div></div>
+      <div class="kpi"><div class="v">${score.nonConformes}</div><div class="l">Points bloquants</div></div>
+      <div class="kpi"><div class="v">${score.conformes}</div><div class="l">Points conformes</div></div>
+      <div class="kpi"><div class="v">${effortLabel}</div><div class="l">Effort moyen estimé</div></div>
+    </div>
+
+    <div class="box">
+      <strong>Lecture rapide</strong>
+      <ul>
+        <li>L’outil automatise la collecte de preuves techniques; la validation complète RGAA reste humaine.</li>
+        <li>Les priorités ci-dessous sont orientées impact utilisateur (navigation clavier, lisibilité, compréhension).</li>
+        <li>Objectif: corriger d’abord les points P1, puis sécuriser P2/P3.</li>
+      </ul>
+    </div>
+
+    <h2>Top priorités</h2>
+    <div class="cards">
+      ${cards || '<div class="card"><h3>Aucun point prioritaire détecté</h3><p>Aucun critère non conforme n’a été détecté automatiquement sur cet échantillon.</p></div>'}
+    </div>
+
+    <div class="box" style="margin-top:16px;">
+      <strong>Ce qui reste à vérifier manuellement</strong>
+      <ul>
+        <li>Pertinence rédactionnelle des alternatives (images, liens, formulaires).</li>
+        <li>Tests lecteurs d’écran et cohérence de parcours sur des scénarios réels.</li>
+        <li>Vérification des contenus/processus non couverts automatiquement.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function summarizeCriteria(results) {
+  const byCriterion = new Map();
+  for (const item of results) {
+    if (!item || !item.id) continue;
+    if (!byCriterion.has(item.id)) byCriterion.set(item.id, []);
+    byCriterion.get(item.id).push(item);
+  }
+  return { byCriterion };
+}
+
+function buildTopPriorities(byCriterion) {
+  const priorities = [];
+  for (const [criterion, items] of byCriterion.entries()) {
+    const statuses = items.map(i => i.status);
+    if (!statuses.includes('NC')) continue;
+    const firstMessage = items.find(i => i.status === 'NC')?.message || 'Non-conformité détectée';
+    priorities.push(enrichPriority(criterion, firstMessage));
+  }
+  return priorities.sort((a, b) => priorityScore(b.priority) - priorityScore(a.priority));
+}
+
+function enrichPriority(criterion, issue) {
+  const key = String(criterion || '').split('.')[0];
+  const fallback = {
+    title: 'Accessibilité à améliorer',
+    impact: 'Certaines personnes peuvent avoir des difficultés à utiliser la page.',
+    action: 'Corriger la non-conformité signalée puis valider sur parcours clavier.',
+    priority: 'P2',
+    effort: 'M',
+  };
+
+  const map = {
+    '3': {
+      title: 'Lisibilité insuffisante (contrastes)',
+      impact: 'Les personnes malvoyantes lisent difficilement le contenu.',
+      action: 'Augmenter les contrastes texte/fond pour atteindre les seuils RGAA.',
+      priority: 'P1',
+      effort: 'M',
+    },
+    '10': {
+      title: 'Mise en page fragile au zoom',
+      impact: 'Le contenu devient difficile à lire/atteindre à fort agrandissement.',
+      action: 'Supprimer les largeurs fixes et rendre les blocs fluides.',
+      priority: 'P1',
+      effort: 'M',
+    },
+    '11': {
+      title: 'Formulaire insuffisamment accessible',
+      impact: 'Saisie difficile pour clavier/lecteurs d’écran.',
+      action: 'Associer chaque champ à une étiquette explicite et un focus visible.',
+      priority: 'P1',
+      effort: 'M',
+    },
+    '12': {
+      title: 'Navigation clavier imparfaite',
+      impact: 'Les utilisateurs clavier perdent du temps ou restent bloqués.',
+      action: 'Garantir un ordre de tabulation cohérent et des liens d’évitement fonctionnels.',
+      priority: 'P1',
+      effort: 'S',
+    },
+    '1': {
+      title: 'Images non accessibles',
+      impact: 'Les personnes aveugles ne perçoivent pas l’information portée par les images.',
+      action: 'Ajouter des alternatives textuelles pertinentes.',
+      priority: 'P2',
+      effort: 'S',
+    },
+  };
+
+  const preset = map[key] || fallback;
+  return { criterion, issue, ...preset };
+}
+
+function priorityScore(priority) {
+  if (priority === 'P1') return 3;
+  if (priority === 'P2') return 2;
+  return 1;
+}
+
+function effortToPoints(effort) {
+  if (effort === 'S') return 1;
+  if (effort === 'M') return 2;
+  return 3;
 }
 
 function esc(str) {
