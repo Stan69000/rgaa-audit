@@ -254,7 +254,11 @@
     .url-display {
       font-family: 'DM Mono', monospace; font-size: 10px;
       color: #707AA6; padding: 0 16px 8px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      white-space: normal;
+      word-break: break-all;
+      line-height: 1.4;
+      max-height: 40px;
+      overflow: auto;
     }
     .privacy-note {
       font-family: 'DM Mono', monospace;
@@ -290,6 +294,7 @@
       font-family: 'DM Mono', monospace;
     }
     .audit-options input { width: 86px; }
+    .depth-wrap.hidden { display: none; }
 
   </style>
 </head>
@@ -344,7 +349,9 @@
     <option value="single">Page courante</option>
     <option value="multi">Multi-pages</option>
   </select>
-  <input id="depthInput" type="number" min="2" max="20" value="5" title="Nombre max de pages (mode multi-pages)">
+  <div class="depth-wrap hidden" id="depthWrap">
+    <input id="depthInput" type="number" min="2" max="20" value="5" title="Nombre max de pages (mode multi-pages)">
+  </div>
 </div>
 <div class="privacy-note" style="padding-top:0;">Mode multi-pages: l’onglet actif est parcouru automatiquement puis restauré sur la page de départ.</div>
 

@@ -12,6 +12,7 @@ const urlDisplay = document.getElementById('urlDisplay');
 const scoreExplain = document.getElementById('scoreExplain');
 const modeSelect = document.getElementById('modeSelect');
 const depthInput = document.getElementById('depthInput');
+const depthWrap = document.getElementById('depthWrap');
 
 // ── LANCEMENT AUDIT ──────────────────────────
 
@@ -133,9 +134,12 @@ document.getElementById('btnExportHtml').addEventListener('click', () => {
 });
 
 modeSelect.addEventListener('change', () => {
-  depthInput.disabled = modeSelect.value !== 'multi';
+  const isMulti = modeSelect.value === 'multi';
+  depthInput.disabled = !isMulti;
+  depthWrap.classList.toggle('hidden', !isMulti);
 });
 depthInput.disabled = modeSelect.value !== 'multi';
+depthWrap.classList.toggle('hidden', modeSelect.value !== 'multi');
 
 function buildVulgarizedHtml(report) {
   const score = report.score || { taux: 0, nonConformes: 0, conformes: 0, na: 0, total: 0 };
@@ -145,6 +149,8 @@ function buildVulgarizedHtml(report) {
   const skipped = Array.isArray(report.pagesSkipped) ? report.pagesSkipped : [];
   const results = Array.isArray(report.results) ? report.results : [];
   const topNc = results.filter((r) => r.status === 'NC').slice(0, 20);
+  const ods = report.odsDownload || null;
+  const hasOds = Boolean(ods?.base64 && ods?.fileName);
 
   const pageRows = pages.map((p) => {
     const pScore = p.score || {};
@@ -180,6 +186,11 @@ function buildVulgarizedHtml(report) {
     .kpi .l { font-size:12px; color:#5b6476; margin-top:4px; }
     .box { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:14px; margin-bottom:16px; }
     .disclaimer { margin-bottom:16px; padding:10px 12px; border-radius:10px; background:#fff7e6; border:1px solid #f5c96a; color:#7a4a00; font-size:12px; }
+    .tools { display:flex; flex-wrap:wrap; gap:10px; margin: 8px 0 14px; }
+    .btn { border:1px solid #c9d4ea; background:#fff; color:#1f2a44; border-radius:10px; padding:8px 12px; font-weight:600; cursor:pointer; text-decoration:none; }
+    .btn:hover { background:#f3f7ff; }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .hint { margin-top:8px; color:#5b6476; font-size:12px; }
     ul { margin: 8px 0 0 18px; }
     li { margin: 6px 0; line-height:1.45; }
     a { color:#0f4fbf; word-break:break-all; }
@@ -190,6 +201,13 @@ function buildVulgarizedHtml(report) {
     <h1>Rapport vulgarisé d’accessibilité</h1>
     <div class="sub">${escHtml(report.title || report.url || '')} · ${new Date(report.timestamp || Date.now()).toLocaleString('fr-FR')}</div>
     <div class="disclaimer"><strong>Avertissement:</strong> ce rapport ne remplace pas un audit professionnel et n'est pas certifiant.</div>
+    <div class="tools">
+      <button class="btn" type="button" onclick="window.print()">Exporter PDF</button>
+      <button class="btn" type="button" onclick="downloadJson()">Télécharger JSON</button>
+      <button class="btn" type="button" onclick="downloadOds()" ${hasOds ? '' : 'disabled'}>Télécharger ODS</button>
+      <a class="btn" href="https://products.aspose.app/cells/fr/viewer/ods" target="_blank" rel="noopener noreferrer">Lire ODS en ligne</a>
+    </div>
+    ${hasOds ? '' : '<div class="hint">ODS non généré depuis l’extension. Utiliser le CLI pour produire la grille ODS.</div>'}
 
     <div class="grid">
       <div class="kpi"><div class="v">${score.taux}%</div><div class="l">Niveau global</div></div>
@@ -210,6 +228,36 @@ function buildVulgarizedHtml(report) {
       <ul>${ncRows || '<li>Aucune non-conformité détectée.</li>'}</ul>
     </div>
   </div>
+  <script>
+    const REPORT_DATA = ${JSON.stringify(report)};
+    const ODS_DOWNLOAD = ${JSON.stringify(hasOds ? ods : null)};
+    function downloadJson() {
+      const blob = new Blob([JSON.stringify(REPORT_DATA, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rgaa-audit.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+    function downloadOds() {
+      if (!ODS_DOWNLOAD || !ODS_DOWNLOAD.base64) return;
+      const bin = atob(ODS_DOWNLOAD.base64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: ODS_DOWNLOAD.mimeType || 'application/vnd.oasis.opendocument.spreadsheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = ODS_DOWNLOAD.fileName || 'rgaa-grille.ods';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+  </script>
 </body>
 </html>`;
 }
