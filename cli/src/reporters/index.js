@@ -139,6 +139,9 @@ function generateVulgarized(report) {
   const summary = summarizeCriteria(report.results || []);
   const top = buildTopPriorities(summary.byCriterion).slice(0, 5);
   const score = report.score || { taux: 0, nonConformes: 0, conformes: 0, na: 0, total: 0 };
+  const positives = buildPositiveSignals(report);
+  const encouragement = buildEncouragement(score);
+  const actionLevers = buildActionLevers(top, summary.byCriterion);
 
   const cards = top.map(item => `
     <div class="card">
@@ -178,12 +181,26 @@ function generateVulgarized(report) {
     .meta { font-size:12px; color:#5b6476; margin-top:8px; }
     ul { margin: 8px 0 0 18px; }
     li { margin: 4px 0; }
+    .tools { display:flex; flex-wrap:wrap; gap:10px; margin: 8px 0 14px; }
+    .btn { border:1px solid #c9d4ea; background:#fff; color:#1f2a44; border-radius:10px; padding:8px 12px; font-weight:600; cursor:pointer; }
+    .btn:hover { background:#f3f7ff; }
+    .where { margin-top:8px; font-size:13px; color:#334155; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px; }
+    @media print {
+      .tools { display:none; }
+      body { background:#fff; }
+      .wrap { max-width: none; }
+      .box, .kpi, .card { break-inside: avoid; }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Rapport vulgarisé d’accessibilité</h1>
     <div class="sub">${esc(report.title || report.url || '')} · ${new Date(report.timestamp).toLocaleString('fr-FR')}</div>
+    <div class="tools">
+      <button type="button" class="btn" onclick="downloadHtmlReport()">Télécharger HTML</button>
+      <button type="button" class="btn" onclick="window.print()">Exporter PDF</button>
+    </div>
 
     <div class="grid">
       <div class="kpi"><div class="v">${score.taux}%</div><div class="l">Niveau global</div></div>
@@ -201,9 +218,22 @@ function generateVulgarized(report) {
       </ul>
     </div>
 
+    <div class="box">
+      <strong>Ce qui fonctionne déjà</strong>
+      <ul>
+        ${positives.map(item => `<li>${esc(item)}</li>`).join('')}
+      </ul>
+      <p style="margin-top:10px;color:#334155;"><strong>${esc(encouragement)}</strong></p>
+    </div>
+
     <h2>Top priorités</h2>
     <div class="cards">
       ${cards || '<div class="card"><h3>Aucun point prioritaire détecté</h3><p>Aucun critère non conforme n’a été détecté automatiquement sur cet échantillon.</p></div>'}
+    </div>
+
+    <h2 style="margin-top:16px;">Leviers actionnables</h2>
+    <div class="cards">
+      ${actionLevers || '<div class="card"><h3>Aucun levier critique détecté</h3><p>Les points non conformes sont mineurs ou absents sur cet échantillon.</p></div>'}
     </div>
 
     <div class="box" style="margin-top:16px;">
@@ -215,6 +245,20 @@ function generateVulgarized(report) {
       </ul>
     </div>
   </div>
+  <script>
+    function downloadHtmlReport() {
+      const html = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rapport-vulgarise.html';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+  </script>
 </body>
 </html>`;
 }
@@ -302,6 +346,96 @@ function effortToPoints(effort) {
   if (effort === 'S') return 1;
   if (effort === 'M') return 2;
   return 3;
+}
+
+function buildPositiveSignals(report) {
+  const score = report.score || {};
+  const positives = [];
+
+  if (typeof score.conformes === 'number' && typeof score.total === 'number' && score.total > 0) {
+    positives.push(`${score.conformes} critères conformes sur ${score.total} critères applicables sur cet échantillon.`);
+  }
+  if (typeof score.na === 'number' && score.na > 0) {
+    positives.push(`${score.na} critères sont non applicables sur cette page (pas de faux signal à corriger).`);
+  }
+
+  const simulation = report.simulation || {};
+  if (typeof simulation.c === 'number' && simulation.c > 0) {
+    positives.push(`${simulation.c} vérifications utilisateur (clavier, responsive, CSS) sont passées.`);
+  }
+  if (typeof simulation.focusElementsTested === 'number' && simulation.focusElementsTested > 0) {
+    positives.push(`Le focus clavier est visible sur ${simulation.focusElementsTested} éléments testés.`);
+  }
+
+  if (!positives.length) {
+    positives.push('Aucun signal positif automatique disponible, mais la base est prête pour progresser rapidement.');
+  }
+  return positives;
+}
+
+function buildEncouragement(score) {
+  const taux = Number(score?.taux || 0);
+  if (taux >= 90) return 'Très bonne base: quelques ajustements ciblés suffisent pour consolider un niveau déjà élevé.';
+  if (taux >= 75) return 'Bonne dynamique: en traitant les points P1 d’abord, le service peut monter rapidement en qualité d’accès.';
+  if (taux >= 50) return 'Base exploitable: prioriser les blocages majeurs donnera des gains utilisateurs visibles.';
+  return 'Point de départ clair: en corrigeant les priorités critiques, l’amélioration sera rapidement perceptible.';
+}
+
+function buildActionLevers(top, byCriterion) {
+  return top.map((item) => {
+    const ncItems = (byCriterion.get(item.criterion) || []).filter((i) => i.status === 'NC');
+    const where = ncItems.map((entry) => describeWhereToFix(entry)).filter(Boolean).slice(0, 3);
+    const fixes = where.length
+      ? where.map((line) => `<li>${esc(line)}</li>`).join('')
+      : '<li>Emplacement précis non fourni: reprendre le message de constat et inspecter les composants liés.</li>';
+
+    return `
+      <div class="card">
+        <div class="chip chip-${item.priority.toLowerCase()}">${item.priority}</div>
+        <h3>${esc(item.title)}</h3>
+        <p><strong>Levier :</strong> ${esc(item.action)}</p>
+        <p><strong>Résultat attendu :</strong> ${esc(item.impact)}</p>
+        <p class="meta">Critère RGAA ${esc(item.criterion)} · Effort ${esc(item.effort)}</p>
+        <div class="where">
+          <strong>Où corriger :</strong>
+          <ul>${fixes}</ul>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function describeWhereToFix(entry) {
+  const source = entry?.source || 'dom';
+  const message = entry?.message || 'non-conformité détectée';
+
+  if (source === 'simulation') {
+    return `Parcours simulé (zoom/clavier) : ${message}`;
+  }
+
+  const snippet = String(entry?.snippet || '').trim();
+  if (!snippet) {
+    return `Analyse DOM : ${message}`;
+  }
+
+  const hint = extractElementHint(snippet);
+  if (hint) {
+    return `${hint} : ${message}`;
+  }
+  return `Extrait DOM : ${message}`;
+}
+
+function extractElementHint(snippet) {
+  const tag = snippet.match(/^<([a-zA-Z0-9-]+)/)?.[1];
+  const id = snippet.match(/\sid="([^"]+)"/)?.[1];
+  const cls = snippet.match(/\sclass="([^"]+)"/)?.[1]?.split(/\s+/).filter(Boolean)[0];
+
+  if (!tag && !id && !cls) return '';
+
+  let out = tag ? `<${tag}>` : 'élément';
+  if (id) out += ` #${id}`;
+  if (cls) out += ` .${cls}`;
+  return out;
 }
 
 function esc(str) {
