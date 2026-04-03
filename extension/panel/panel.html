@@ -163,14 +163,7 @@
     .btn-export-json:hover { background: #00C89615; }
     .btn-export-html { border-color: #FFB80040; color: #FFB800; }
     .btn-export-html:hover { background: #FFB80015; }
-    .btn-link {
-      border-color: #4A9EFF40;
-      color: #4A9EFF;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
+    .btn-link { border-color: #4A9EFF40; color: #4A9EFF; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
     .btn-link:hover { background: #4A9EFF15; }
     .btn-ai { border-color: #8E44AD40; color: #A855F7; margin-left: auto; }
     .btn-ai:hover { background: #8E44AD15; }
@@ -277,25 +270,6 @@
       font-size: 11px;
       line-height: 1.45;
     }
-    .audit-options {
-      display: flex;
-      gap: 8px;
-      padding: 0 16px 8px;
-      align-items: center;
-    }
-    .audit-options select,
-    .audit-options input {
-      background: #0D0D1A;
-      border: 1px solid #253057;
-      color: #D9E3FF;
-      border-radius: 8px;
-      padding: 6px 8px;
-      font-size: 11px;
-      font-family: 'DM Mono', monospace;
-    }
-    .audit-options input { width: 86px; }
-    .depth-wrap.hidden { display: none; }
-
   </style>
 </head>
 <body>
@@ -344,16 +318,7 @@
 
 <div class="url-display" id="urlDisplay"></div>
 <div class="privacy-note">Données d’audit traitées localement uniquement.</div>
-<div class="audit-options">
-  <select id="modeSelect">
-    <option value="single">Page courante</option>
-    <option value="multi">Multi-pages</option>
-  </select>
-  <div class="depth-wrap hidden" id="depthWrap">
-    <input id="depthInput" type="number" min="2" max="20" value="5" title="Nombre max de pages (mode multi-pages)">
-  </div>
-</div>
-<div class="privacy-note" style="padding-top:0;">Mode multi-pages: l’onglet actif est parcouru automatiquement puis restauré sur la page de départ.</div>
+<div class="privacy-note" style="padding-top:0;">Audit extension: page courante uniquement.</div>
 
 <button class="btn-audit" id="btnAudit">▶ Lancer l'audit</button>
 
@@ -373,7 +338,8 @@
 
 <div class="footer" id="footer" style="display:none">
   <button class="btn-sm btn-export-json" id="btnExport">↓ JSON</button>
-  <button class="btn-sm btn-export-html" id="btnExportHtml">↗ Rapport HTML</button>
+  <button class="btn-sm btn-export-html" id="btnExportHtml">↗ Rapport HTML (single page)</button>
+  <a class="btn-sm btn-link" href="https://stan69000.github.io/rgaa-audit/" target="_blank" rel="noopener noreferrer">Audit complet CLI</a>
 </div>
 
 <script src="panel.js"></script>

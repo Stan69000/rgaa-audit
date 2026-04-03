@@ -10,21 +10,15 @@ const filters = document.getElementById('filters');
 const footer = document.getElementById('footer');
 const urlDisplay = document.getElementById('urlDisplay');
 const scoreExplain = document.getElementById('scoreExplain');
-const modeSelect = document.getElementById('modeSelect');
-const depthInput = document.getElementById('depthInput');
-const depthWrap = document.getElementById('depthWrap');
 
 // ── LANCEMENT AUDIT ──────────────────────────
 
 btnAudit.addEventListener('click', () => {
-  const mode = modeSelect.value === 'multi' ? 'multi' : 'single';
-  const depth = Math.max(2, Math.min(20, Number(depthInput.value) || 5));
-
   btnAudit.disabled = true;
   btnAudit.textContent = '⏳ Analyse en cours…';
   resultsEl.innerHTML = '<div style="text-align:center;padding:32px;color:#445;font-family:\'DM Mono\',monospace;font-size:12px;">Scan en cours…</div>';
 
-  chrome.runtime.sendMessage({ action: 'getAuditResults', mode, depth }, response => {
+  chrome.runtime.sendMessage({ action: 'getAuditResults' }, response => {
     btnAudit.disabled = false;
     btnAudit.textContent = '↻ Relancer l\'audit';
 
@@ -60,9 +54,7 @@ function renderScore(score) {
   document.getElementById('statC').textContent = score.conformes;
   document.getElementById('statNA').textContent = score.na;
   document.getElementById('statTotal').textContent = score.total;
-
-  const pagesCount = Number(currentReport?.pagesAudited || (currentReport?.pages?.length || 1));
-  scoreExplain.textContent = `Conformité: ${score.taux}% · Critères non conformes: ${score.nonConformes} · Critères conformes: ${score.conformes} · Critères non applicables: ${score.na} · Pages auditées: ${pagesCount}`;
+  scoreExplain.textContent = `Conformité: ${score.taux}% · Critères non conformes: ${score.nonConformes} · Critères conformes: ${score.conformes} · Critères non applicables: ${score.na}`;
 }
 
 // ── RÉSULTATS ────────────────────────────────
@@ -90,7 +82,6 @@ function renderResults(results, filter) {
       <span class="result-badge badge-${r.status}">${r.status}</span>
       <div class="result-text">
         ${escHtml(r.message)}
-        ${r.pageUrl ? `<div class="result-snippet" title="${escHtml(r.pageUrl)}">Page: ${escHtml(r.pageUrl)}</div>` : ''}
         ${r.snippet ? `<div class="result-snippet">${escHtml(r.snippet)}</div>` : ''}
       </div>
     </div>
@@ -133,20 +124,9 @@ document.getElementById('btnExportHtml').addEventListener('click', () => {
   chrome.tabs.create({ url });
 });
 
-modeSelect.addEventListener('change', () => {
-  const isMulti = modeSelect.value === 'multi';
-  depthInput.disabled = !isMulti;
-  depthWrap.classList.toggle('hidden', !isMulti);
-});
-depthInput.disabled = modeSelect.value !== 'multi';
-depthWrap.classList.toggle('hidden', modeSelect.value !== 'multi');
-
 function buildVulgarizedHtml(report) {
   const score = report.score || { taux: 0, nonConformes: 0, conformes: 0, na: 0, total: 0 };
-  const pages = Array.isArray(report.pages) && report.pages.length
-    ? report.pages
-    : [{ url: report.url || '', title: report.title || report.url || 'Page', score }];
-  const skipped = Array.isArray(report.pagesSkipped) ? report.pagesSkipped : [];
+  const pages = [{ url: report.url || '', title: report.title || report.url || 'Page', score }];
   const results = Array.isArray(report.results) ? report.results : [];
   const topNc = results.filter((r) => r.status === 'NC').slice(0, 20);
 
@@ -158,10 +138,6 @@ function buildVulgarizedHtml(report) {
     const url = escHtml(p.url || '');
     return `<li><strong>${escHtml(p.title || p.url || 'Page')}</strong><br><a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a><br>Conformité: <strong>${taux}%</strong> · Critères non conformes: <strong>${nc}</strong> · Critères conformes: <strong>${c}</strong></li>`;
   }).join('');
-
-  const skippedRows = skipped.map((p) =>
-    `<li>${escHtml(p.url || '')} — ${escHtml(p.reason || 'erreur')}</li>`
-  ).join('');
 
   const ncRows = topNc.map((r) => `
     <li><strong>${escHtml(r.id || '')}</strong> — ${escHtml(r.message || '')}${r.pageUrl ? `<br><span style="color:#475569">Page: ${escHtml(r.pageUrl)}</span>` : ''}</li>
@@ -202,7 +178,9 @@ function buildVulgarizedHtml(report) {
     <div class="tools">
       <button class="btn" type="button" onclick="window.print()">Exporter PDF</button>
       <button class="btn" type="button" onclick="downloadJson()">Télécharger JSON</button>
+      <a class="btn" href="https://stan69000.github.io/rgaa-audit/" target="_blank" rel="noopener noreferrer">Audit complet CLI</a>
     </div>
+    <div class="hint">Pour un audit complet multi-pages et l’export ODS, utilisez la version CLI.</div>
 
     <div class="grid">
       <div class="kpi"><div class="v">${score.taux}%</div><div class="l">Niveau global</div></div>
@@ -215,8 +193,6 @@ function buildVulgarizedHtml(report) {
       <strong>Pages auditées (${pages.length})</strong>
       <ul>${pageRows}</ul>
     </div>
-
-    ${skipped.length ? `<div class="box"><strong>Pages non auditées (${skipped.length})</strong><ul>${skippedRows}</ul></div>` : ''}
 
     <div class="box">
       <strong>Principales non-conformités détectées (${topNc.length})</strong>
