@@ -89,6 +89,109 @@ function escHtml(str) {
   return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function formatAiInline(text) {
+  return text
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+}
+
+function isTableSeparatorLine(line) {
+  return /^\s*\|?(\s*:?-{3,}:?\s*\|)+\s*:?-{3,}:?\s*\|?\s*$/.test(line);
+}
+
+function tableCells(line) {
+  const raw = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+  return raw.split('|').map(cell => formatAiInline(cell.trim()));
+}
+
+function renderAiMarkdown(markdown) {
+  const src = escHtml(markdown || '').replace(/\r\n/g, '\n');
+  const lines = src.split('\n');
+  const html = [];
+  let inUl = false;
+  let inOl = false;
+
+  const closeLists = () => {
+    if (inUl) { html.push('</ul>'); inUl = false; }
+    if (inOl) { html.push('</ol>'); inOl = false; }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    if (!line) {
+      closeLists();
+      continue;
+    }
+
+    if (line.includes('|') && i + 1 < lines.length && isTableSeparatorLine(lines[i + 1])) {
+      closeLists();
+      const headers = tableCells(line);
+      i += 1; // skip separator row
+      const rows = [];
+      while (i + 1 < lines.length && lines[i + 1].includes('|')) {
+        i += 1;
+        rows.push(tableCells(lines[i]));
+      }
+
+      html.push('<table class="ai-table"><thead><tr>');
+      headers.forEach(h => html.push(`<th>${h}</th>`));
+      html.push('</tr></thead><tbody>');
+      rows.forEach(row => {
+        html.push('<tr>');
+        row.forEach(cell => html.push(`<td>${cell}</td>`));
+        html.push('</tr>');
+      });
+      html.push('</tbody></table>');
+      continue;
+    }
+
+    const h3 = line.match(/^###\s+(.+)$/);
+    if (h3) {
+      closeLists();
+      html.push(`<h3>${formatAiInline(h3[1])}</h3>`);
+      continue;
+    }
+
+    const h2 = line.match(/^##\s+(.+)$/);
+    if (h2) {
+      closeLists();
+      html.push(`<h2>${formatAiInline(h2[1])}</h2>`);
+      continue;
+    }
+
+    const h1 = line.match(/^#\s+(.+)$/);
+    if (h1) {
+      closeLists();
+      html.push(`<h1>${formatAiInline(h1[1])}</h1>`);
+      continue;
+    }
+
+    const ol = line.match(/^\d+\.\s+(.+)$/);
+    if (ol) {
+      if (inUl) { html.push('</ul>'); inUl = false; }
+      if (!inOl) { html.push('<ol>'); inOl = true; }
+      html.push(`<li>${formatAiInline(ol[1])}</li>`);
+      continue;
+    }
+
+    const ul = line.match(/^[*-]\s+(.+)$/);
+    if (ul) {
+      if (inOl) { html.push('</ol>'); inOl = false; }
+      if (!inUl) { html.push('<ul>'); inUl = true; }
+      html.push(`<li>${formatAiInline(ul[1])}</li>`);
+      continue;
+    }
+
+    closeLists();
+    html.push(`<p>${formatAiInline(line)}</p>`);
+  }
+
+  closeLists();
+  return html.join('');
+}
+
 // ── FILTRES ──────────────────────────────────
 
 document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -164,7 +267,7 @@ Si aucune NC : ne pas féliciter. Donne 3 contrôles de robustesse à exécuter 
       } else if (response?.error) {
         aiText.textContent = `Erreur API : ${response.error}`;
       } else if (response?.text) {
-        aiText.textContent = response.text;
+        aiText.innerHTML = renderAiMarkdown(response.text);
       } else {
         aiText.textContent = 'Réponse inattendue du service IA.';
       }
