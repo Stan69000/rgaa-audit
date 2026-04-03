@@ -601,6 +601,16 @@ function runAudit() {
 // ─────────────────────────────────────────────
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!message || message.action !== 'runAudit') {
+    sendResponse({ success: false, error: 'Action non autorisée.' });
+    return false;
+  }
+
+  if (sender?.id && sender.id !== chrome.runtime.id) {
+    sendResponse({ success: false, error: 'Émetteur non autorisé.' });
+    return false;
+  }
+
   if (message.action === 'runAudit') {
     try {
       const report = runAudit();

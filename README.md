@@ -108,6 +108,11 @@ rgaa-audit https://mon-site.fr --simulate --depth 3
 3. Charger le dossier `extension/`
 4. Naviguer sur n'importe quel site → icône RGAA dans la barre d'outils
 
+Sécurité et confidentialité :
+- Les résultats d'audit restent locaux par défaut (analyse DOM + export JSON).
+- L'analyse IA est optionnelle et nécessite un consentement explicite avant tout envoi réseau.
+- La clé API peut être gardée en session uniquement (par défaut) ou persistée explicitement.
+
 ---
 
 ## 🤖 Simulation d'actions humaines (Playwright)

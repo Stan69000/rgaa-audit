@@ -222,13 +222,21 @@ document.getElementById('btnExport').addEventListener('click', () => {
 document.getElementById('btnAI').addEventListener('click', async () => {
   if (!currentReport) return;
 
+  const consent = await getFlag('aiNetworkConsent');
+  if (!consent) {
+    const ok = confirm('L’analyse IA envoie un extrait des résultats d’audit vers Anthropic. Continuer ?');
+    if (!ok) return;
+    await setFlag('aiNetworkConsent', true);
+  }
+
   let apiKey = await getApiKey();
   if (!apiKey) {
-    const key = prompt('Entrez votre clé API Anthropic (stockée localement uniquement) :');
+    const key = prompt('Entrez votre clé API Anthropic :');
     if (!key || !key.startsWith('sk-ant-')) {
       return;
     }
-    await chrome.storage.local.set({ anthropicKey: key });
+    const remember = confirm('Mémoriser la clé sur cet appareil ?\nOK = persistant local, Annuler = session courante uniquement');
+    await setApiKey(key, remember);
     apiKey = key;
   }
 
@@ -279,7 +287,43 @@ Si aucune NC : ne pas féliciter. Donne 3 contrôles de robustesse à exécuter 
 });
 
 function getApiKey() {
+  const sessionStore = chrome.storage.session;
+  if (sessionStore && typeof sessionStore.get === 'function') {
+    return new Promise(resolve => {
+      sessionStore.get('anthropicKey', data => {
+        if (data?.anthropicKey) {
+          resolve(data.anthropicKey);
+          return;
+        }
+        chrome.storage.local.get('anthropicKey', fallback => resolve(fallback.anthropicKey || null));
+      });
+    });
+  }
+
   return new Promise(resolve => {
     chrome.storage.local.get('anthropicKey', data => resolve(data.anthropicKey || null));
   });
+}
+
+function setApiKey(key, persistLocally) {
+  if (persistLocally) {
+    return chrome.storage.local.set({ anthropicKey: key });
+  }
+
+  const sessionStore = chrome.storage.session;
+  if (sessionStore && typeof sessionStore.set === 'function') {
+    return sessionStore.set({ anthropicKey: key });
+  }
+
+  return Promise.resolve();
+}
+
+function getFlag(name) {
+  return new Promise(resolve => {
+    chrome.storage.local.get(name, data => resolve(Boolean(data[name])));
+  });
+}
+
+function setFlag(name, value) {
+  return chrome.storage.local.set({ [name]: Boolean(value) });
 }
