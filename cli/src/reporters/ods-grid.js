@@ -5,6 +5,26 @@ const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
+function assertSafeArchiveEntries(zipPath) {
+  const listing = execFileSync('unzip', ['-Z1', zipPath], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  const entries = String(listing).split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+
+  for (const entry of entries) {
+    const normalized = entry.replace(/\\/g, '/');
+    const segments = normalized.split('/').filter(Boolean);
+
+    const isAbsolute = normalized.startsWith('/') || /^[a-zA-Z]:\//.test(normalized);
+    const hasParentTraversal = segments.includes('..');
+
+    if (isAbsolute || hasParentTraversal) {
+      throw new Error(`Archive ODS invalide: chemin dangereux détecté (${entry})`);
+    }
+  }
+}
+
 function xmlEscape(value) {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -168,6 +188,7 @@ function fillRgaaGridFromReports({
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rgaa-grid-'));
 
   try {
+    assertSafeArchiveEntries(resolvedTemplatePath);
     execFileSync('unzip', ['-q', resolvedTemplatePath, '-d', tempDir], { stdio: 'pipe' });
 
     const contentXmlPath = path.join(tempDir, 'content.xml');

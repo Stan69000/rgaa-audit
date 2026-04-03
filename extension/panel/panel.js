@@ -23,7 +23,7 @@ btnAudit.addEventListener('click', () => {
     btnAudit.textContent = '↻ Relancer l\'audit';
 
     if (!response || !response.success) {
-      resultsEl.innerHTML = `<div style="color:#FF4444;padding:16px;font-size:12px;">Erreur : ${response?.error || 'Impossible de communiquer avec la page.'}</div>`;
+      renderError(response?.error);
       return;
     }
 
@@ -90,6 +90,16 @@ function renderResults(results, filter) {
 
 function escHtml(str) {
   return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderError(message) {
+  resultsEl.innerHTML = '';
+  const container = document.createElement('div');
+  container.style.color = '#FF4444';
+  container.style.padding = '16px';
+  container.style.fontSize = '12px';
+  container.textContent = `Erreur : ${message || 'Impossible de communiquer avec la page.'}`;
+  resultsEl.appendChild(container);
 }
 
 // ── FILTRES ──────────────────────────────────
