@@ -25,6 +25,10 @@ async function runAudit(url, opts = {}) {
 
   const startTime = Date.now();
   let browser, page;
+  const navigationProfile = {
+    preferDomContentLoadedOrigins: new Set(),
+    warnedOrigins: new Set(),
+  };
 
   try {
     // ── 1. NAVIGATEUR ────────────────────────
@@ -32,7 +36,7 @@ async function runAudit(url, opts = {}) {
     ({ browser, page } = await createBrowser({ headless }));
 
     log(`📄 Chargement de ${url}…`);
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+    await navigateWithFallback(page, url, navigationProfile);
     await page.waitForTimeout(1000);
 
     const rootTitle = await page.title();
@@ -57,7 +61,7 @@ async function runAudit(url, opts = {}) {
 
       try {
         if (i > 0) {
-          await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 30000 });
+          await navigateWithFallback(page, targetUrl, navigationProfile);
           await page.waitForTimeout(500);
         }
       } catch (e) {
@@ -204,10 +208,21 @@ async function buildAuditTargets(page, startUrl, depth) {
   if (maxPages === 1) return [startUrl];
 
   const base = new URL(startUrl);
+  const sectionPrefix = detectSectionPrefix(base.pathname);
   const sameOrigin = (u) => {
     try {
       const parsed = new URL(u);
       return parsed.origin === base.origin;
+    } catch {
+      return false;
+    }
+  };
+  const inSameSection = (u) => {
+    if (!sectionPrefix) return true;
+    try {
+      const parsed = new URL(u);
+      const path = parsed.pathname || '/';
+      return path === sectionPrefix || path.startsWith(`${sectionPrefix}/`);
     } catch {
       return false;
     }
@@ -230,7 +245,7 @@ async function buildAuditTargets(page, startUrl, depth) {
     for (const raw of urls) {
       const n = normalize(raw);
       if (!n || unique.size >= maxPages) continue;
-      if (!sameOrigin(n) || !isPageLike(n)) continue;
+      if (!sameOrigin(n) || !inSameSection(n) || !isPageLike(n)) continue;
       unique.add(n);
     }
   };
@@ -239,6 +254,13 @@ async function buildAuditTargets(page, startUrl, depth) {
   if (unique.size < maxPages) addMany(await collectInternalLinks(page));
 
   return Array.from(unique).slice(0, maxPages);
+}
+
+function detectSectionPrefix(pathname) {
+  const path = String(pathname || '/');
+  const segments = path.split('/').filter(Boolean);
+  if (!segments.length) return '';
+  return `/${segments[0]}`;
 }
 
 async function fetchSitemapUrls(baseUrl) {
@@ -285,6 +307,40 @@ function normalizeSkipReason(err) {
   if (/Timeout/i.test(msg)) return 'timeout';
   if (/ERR_|net::|Navigation/i.test(msg)) return 'navigation error';
   return 'unexpected error';
+}
+
+async function navigateWithFallback(page, url, profile = {}) {
+  const origin = safeOrigin(url);
+  const preferDomContentLoadedOrigins = profile.preferDomContentLoadedOrigins || new Set();
+  const warnedOrigins = profile.warnedOrigins || new Set();
+
+  if (origin && preferDomContentLoadedOrigins.has(origin)) {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    return;
+  }
+
+  try {
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 8000 });
+    return;
+  } catch (err) {
+    const isTimeout = /Timeout/i.test(String(err?.message || err || ''));
+    if (!isTimeout) throw err;
+
+    if (origin) preferDomContentLoadedOrigins.add(origin);
+    if (origin && !warnedOrigins.has(origin)) {
+      warn('   networkidle instable sur ce domaine, navigation basculée en domcontentloaded');
+      warnedOrigins.add(origin);
+    }
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  }
+}
+
+function safeOrigin(url) {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return '';
+  }
 }
 
 module.exports = { runAudit, computeScore };

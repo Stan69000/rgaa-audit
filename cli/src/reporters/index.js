@@ -468,7 +468,11 @@ function renderVulgarizedPages(report) {
     const taux = Number(p.score?.taux ?? 0);
     const nc = Number(p.score?.nonConformes ?? p.nonConformes ?? 0);
     const c = Number(p.score?.conformes ?? p.conformes ?? 0);
-    return `<li><strong>${esc(p.title || p.url || 'Page')}</strong> — ${esc(p.url || '')} · ${taux}% · ${nc} NC / ${c} C</li>`;
+    const href = esc(p.url || '');
+    const urlLine = href
+      ? `<a href="${href}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;">${href}</a>`
+      : 'URL indisponible';
+    return `<li><strong>${esc(p.title || p.url || 'Page')}</strong><br>${urlLine} · ${taux}% · ${nc} NC / ${c} C</li>`;
   }).join('');
 
   return `
