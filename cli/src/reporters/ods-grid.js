@@ -140,14 +140,27 @@ function fillRgaaGridFromReports({
     };
   });
 
-  const pageEntries = replicateToAllSheets && normalized[0]
-    ? Array.from({ length: 20 }, (_, i) => ({
-        pageCode: `P${String(i + 1).padStart(2, '0')}`,
-        title: normalized[0].title,
-        url: normalized[0].url,
-        criterionMap: normalized[0].criterionMap,
-      }))
-    : normalized;
+  const pageEntries = Array.from({ length: 20 }, (_, i) => ({
+    pageCode: `P${String(i + 1).padStart(2, '0')}`,
+    title: 'Non audité',
+    url: '',
+    criterionMap: null,
+  }));
+
+  if (replicateToAllSheets && normalized[0]) {
+    for (const entry of pageEntries) {
+      entry.title = normalized[0].title;
+      entry.url = normalized[0].url;
+      entry.criterionMap = normalized[0].criterionMap;
+    }
+  } else {
+    normalized.forEach((entry, idx) => {
+      if (!pageEntries[idx]) return;
+      pageEntries[idx].title = entry.title;
+      pageEntries[idx].url = entry.url;
+      pageEntries[idx].criterionMap = entry.criterionMap;
+    });
+  }
 
   const siteLabel = normalized[0].url || normalized[0].title || 'Site audité';
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rgaa-grid-'));
@@ -173,7 +186,9 @@ function fillRgaaGridFromReports({
       if (!sheetMatch) continue;
       let sheet = sheetMatch[0];
       sheet = updatePageHeaderRow(sheet, entry.title, entry.url);
-      sheet = updateCriteriaRows(sheet, entry.criterionMap);
+      if (entry.criterionMap) {
+        sheet = updateCriteriaRows(sheet, entry.criterionMap);
+      }
       updatedXml = updatedXml.replace(sheetRegex, sheet);
     }
 
@@ -186,8 +201,8 @@ function fillRgaaGridFromReports({
 
     return {
       outputPath,
-      filledSheets: pageEntries.length,
-      filledCriteria: pageEntries.reduce((acc, p) => acc + p.criterionMap.size, 0),
+      filledSheets: pageEntries.filter(p => p.criterionMap).length,
+      filledCriteria: pageEntries.reduce((acc, p) => acc + (p.criterionMap ? p.criterionMap.size : 0), 0),
     };
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
