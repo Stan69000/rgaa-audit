@@ -116,6 +116,7 @@ function generateHtml(report) {
 </div>
 
 ${renderPagesSummary(report)}
+${renderSkippedPagesSummary(report)}
 
 <table>
   <thead>
@@ -232,6 +233,7 @@ function generateVulgarized(report) {
     </div>
 
     ${renderVulgarizedPages(report)}
+    ${renderVulgarizedSkippedPages(report)}
 
     <div class="box" style="margin-top:16px;">
       <strong>Ce qui reste à vérifier manuellement</strong>
@@ -473,6 +475,31 @@ function renderVulgarizedPages(report) {
     <div class="box" style="margin-top:16px;">
       <strong>Pages auditées (${data.length})</strong>
       <ul>${rows}</ul>
+    </div>
+  `;
+}
+
+function renderSkippedPagesSummary(report) {
+  const skipped = Array.isArray(report.pagesSkipped) ? report.pagesSkipped : [];
+  if (!skipped.length) return '';
+  const rows = skipped.map((p) => `<li>${esc(p.url || '')} — ${esc(p.reason || 'erreur')}</li>`).join('');
+  return `
+    <div style="background:#231a0f;border:1px solid #4a3417;border-radius:12px;padding:14px;margin-bottom:16px;">
+      <div style="font-size:12px;color:#fbbf24;font-family:'DM Mono',monospace;margin-bottom:8px;">Pages ignorées (${skipped.length})</div>
+      <ul style="margin:0 0 0 18px;padding:0;color:#fde68a;font-size:13px;line-height:1.6">${rows}</ul>
+    </div>
+  `;
+}
+
+function renderVulgarizedSkippedPages(report) {
+  const skipped = Array.isArray(report.pagesSkipped) ? report.pagesSkipped : [];
+  if (!skipped.length) return '';
+  const rows = skipped.map((p) => `<li>${esc(p.url || '')} — ${esc(p.reason || 'erreur')}</li>`).join('');
+  return `
+    <div class="box" style="margin-top:16px;">
+      <strong>Pages non auditées (${skipped.length})</strong>
+      <ul>${rows}</ul>
+      <p style="margin-top:8px;color:#5b6476;">Ces pages ont été détectées mais ignorées (ex: timeout). Le reste de l'audit est conservé.</p>
     </div>
   `;
 }

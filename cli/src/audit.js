@@ -9,7 +9,7 @@ const { createBrowser, closeBrowser } = require('./browser');
 const { simulateHumanActions }        = require('./simulator');
 const { runDomRules }                  = require('./rules');
 const { generateReport }               = require('./reporters');
-const { log, success }                 = require('./logger');
+const { log, success, warn }           = require('./logger');
 
 async function runAudit(url, opts = {}) {
   const {
@@ -47,6 +47,7 @@ async function runAudit(url, opts = {}) {
     // ── 3. AUDIT DES PAGES ────────────────────
     const allResults = [];
     const pages = [];
+    const pagesSkipped = [];
     let simulationResults = null;
 
     for (let i = 0; i < targets.length; i++) {
@@ -54,17 +55,33 @@ async function runAudit(url, opts = {}) {
       const label = targets.length > 1 ? ` (${i + 1}/${targets.length})` : '';
       log(`\n🔍 Audit DOM (règles RGAA 4.1)${label} — ${targetUrl}`);
 
-      if (i > 0) {
-        await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 30000 });
-        await page.waitForTimeout(500);
+      try {
+        if (i > 0) {
+          await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 30000 });
+          await page.waitForTimeout(500);
+        }
+      } catch (e) {
+        const reason = normalizeSkipReason(e);
+        warn(`   Page ignorée (${reason}) : ${targetUrl}`);
+        pagesSkipped.push({ url: targetUrl, reason });
+        continue;
       }
 
-      const pageTitle = await safePageTitle(page, targetUrl);
-      const domResults = (await runDomRules(page)).map((r) => ({
-        ...r,
-        pageUrl: targetUrl,
-        pageTitle,
-      }));
+      let pageTitle = targetUrl;
+      let domResults = [];
+      try {
+        pageTitle = await safePageTitle(page, targetUrl);
+        domResults = (await runDomRules(page)).map((r) => ({
+          ...r,
+          pageUrl: targetUrl,
+          pageTitle,
+        }));
+      } catch (e) {
+        const reason = normalizeSkipReason(e);
+        warn(`   Audit DOM impossible (${reason}) : ${targetUrl}`);
+        pagesSkipped.push({ url: targetUrl, reason });
+        continue;
+      }
 
       let pageSimulation = null;
       if (simulate && i === 0) {
@@ -99,6 +116,7 @@ async function runAudit(url, opts = {}) {
       requestedDepth: Math.max(1, Number(depth) || 1),
       pagesAudited: pages.length,
       pages,
+      pagesSkipped,
       score,
       results: allResults,
       simulation: simulationResults?.summary || null,
@@ -260,6 +278,13 @@ async function safePageTitle(page, fallback) {
   } catch {
     return fallback;
   }
+}
+
+function normalizeSkipReason(err) {
+  const msg = String(err?.message || err || '').replace(/\s+/g, ' ').trim();
+  if (/Timeout/i.test(msg)) return 'timeout';
+  if (/ERR_|net::|Navigation/i.test(msg)) return 'navigation error';
+  return 'unexpected error';
 }
 
 module.exports = { runAudit, computeScore };
