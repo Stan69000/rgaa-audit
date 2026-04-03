@@ -311,15 +311,24 @@
     .steps-visual { background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px; padding: 24px; font-family: var(--mono); font-size: 12px; line-height: 2.2; }
 
     /* ── CRITERIA ── */
-    .criteria-table-wrap { overflow-x: auto; border: 1px solid var(--border2); border-radius: 12px; }
-    .criteria-table { width: 100%; border-collapse: collapse; min-width: 760px; background: var(--bg2); }
-    .criteria-table th, .criteria-table td { padding: 14px 16px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
-    .criteria-table th { background: var(--bg3); color: var(--text); font-weight: 500; }
-    .criteria-table td { color: var(--muted); }
-    .criteria-table td:first-child { color: var(--text); font-weight: 500; }
-    .criteria-table tr:last-child td { border-bottom: none; }
+    .criteria-public { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .criteria-card { background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px; padding: 20px; }
+    .criteria-card h3 { font-size: 16px; margin-bottom: 10px; }
+    .criteria-card p { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 10px; }
+    .criteria-card ul { margin-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .criteria-card li + li { margin-top: 4px; }
+    .criteria-cta { margin-top: 20px; }
     .criteria-note { margin-top: 16px; font-size: 13px; color: var(--muted); line-height: 1.7; }
     .criteria-note a { color: var(--accent2); text-decoration: underline; }
+    .criteria-highlight {
+      margin-top: 18px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .criteria-highlight strong { color: var(--text); font-weight: 500; }
     .status-badge { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
     .status-auto    { background: rgba(34,197,94,.1);  color: #16a34a; border: 1px solid rgba(34,197,94,.25); }
     .status-partial { background: rgba(234,179,8,.1);  color: #a16207; border: 1px solid rgba(234,179,8,.25); }
@@ -358,7 +367,7 @@
       .features { grid-template-columns: 1fr; }
       .steps { grid-template-columns: 1fr; }
       .steps-visual { display: none; }
-      .criteria-table { min-width: 640px; }
+      .criteria-public { grid-template-columns: 1fr; }
       .install-grid { grid-template-columns: 1fr; }
       footer { flex-direction: column; }
     }
@@ -550,52 +559,42 @@
 <!-- CRITÈRES -->
 <section id="criteres" style="border-top:1px solid var(--border)" aria-labelledby="titre-criteres">
   <p class="section-tag">Couverture RGAA</p>
-  <h2 class="section-title" id="titre-criteres">106 critères RGAA,<br><em>avec niveau de couverture clair</em></h2>
-  <p class="section-sub">Vous voyez précisément ce qui est automatisé, partiel, manuel ou encore à implémenter, thème par thème.</p>
+  <h2 class="section-title" id="titre-criteres">Ce que l'outil vérifie,<br><em>et ce qu'il ne peut pas certifier</em></h2>
+  <p class="section-sub">Pour le grand public, le plus important est de savoir comment lire le résultat: aide au diagnostic, pas verdict légal.</p>
 
-  <div class="criteria-table-wrap">
-    <table class="criteria-table" aria-label="Détail de couverture RGAA par thème">
-      <thead>
-        <tr>
-          <th>Thème RGAA</th>
-          <th>Total</th>
-          <th>Auto ✅</th>
-          <th>Partiel ⚠️</th>
-          <th>Manuel ❌</th>
-          <th>À faire 🚧</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>1. Images</td><td>9</td><td>2</td><td>3</td><td>4</td><td>0</td></tr>
-        <tr><td>2. Cadres</td><td>2</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
-        <tr><td>3. Couleurs</td><td>3</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
-        <tr><td>4. Multimédia</td><td>13</td><td>0</td><td>4</td><td>8</td><td>1</td></tr>
-        <tr><td>5. Tableaux</td><td>8</td><td>4</td><td>1</td><td>2</td><td>1</td></tr>
-        <tr><td>6. Liens</td><td>2</td><td>2</td><td>0</td><td>0</td><td>0</td></tr>
-        <tr><td>7. Scripts</td><td>5</td><td>0</td><td>2</td><td>2</td><td>1</td></tr>
-        <tr><td>8. Éléments obligatoires</td><td>10</td><td>4</td><td>0</td><td>3</td><td>3</td></tr>
-        <tr><td>9. Structure</td><td>4</td><td>3</td><td>0</td><td>0</td><td>1</td></tr>
-        <tr><td>10. Présentation</td><td>14</td><td>2</td><td>3</td><td>5</td><td>4</td></tr>
-        <tr><td>11. Formulaires</td><td>13</td><td>4</td><td>0</td><td>5</td><td>4</td></tr>
-        <tr><td>12. Navigation</td><td>11</td><td>4</td><td>0</td><td>4</td><td>3</td></tr>
-        <tr><td>13. Consultation</td><td>12</td><td>1</td><td>1</td><td>6</td><td>4</td></tr>
-        <tr><td>Total</td><td>106</td><td>28</td><td>15</td><td>41</td><td>22</td></tr>
-      </tbody>
-    </table>
+  <div class="criteria-note criteria-highlight">
+    <p><strong>Détail complet par critère :</strong> <a href="https://github.com/Stan69000/rgaa-audit/blob/main/docs/RGAA-mapping.md" target="_blank" rel="noopener" aria-label="Ouvrir le fichier de mapping RGAA sur GitHub (nouvelle fenêtre)">RGAA-mapping.md</a>.</p>
+    <p>Cette transparence permet de savoir exactement comment interpréter les résultats.</p>
+    <p>Pour une version pédagogique, consultez aussi <a href="/rgaa-audit/criteres.html">le guide des critères RGAA</a>.</p>
   </div>
 
-  <div style="display:flex;gap:12px;margin-top:16px;font-size:13px;color:var(--muted);flex-wrap:wrap">
-    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-auto">Auto</span> Vérifié automatiquement</span>
-    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-partial">Partiel</span> Indice technique, validation humaine requise</span>
-    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-manual">Manuel</span> Évaluation humaine indispensable</span>
-    <span style="display:flex;align-items:center;gap:6px"><span class="status-badge status-todo">À faire</span> Automatisable, non implémenté</span>
+  <div class="criteria-public">
+    <article class="criteria-card">
+      <h3>✅ Vérifié automatiquement</h3>
+      <p>L'outil repère des points techniques fréquents: structure HTML, labels, contrastes, navigation clavier de base.</p>
+      <ul>
+        <li>Utile pour gagner du temps rapidement</li>
+        <li>Donne des priorités concrètes de correction</li>
+      </ul>
+    </article>
+    <article class="criteria-card">
+      <h3>⚠️ À confirmer humainement</h3>
+      <p>Certains signaux sont détectés, mais leur conformité dépend du contexte réel d'usage.</p>
+      <ul>
+        <li>Exemple: pertinence d'un texte alternatif</li>
+        <li>Exemple: qualité d'une aide de formulaire</li>
+      </ul>
+    </article>
+    <article class="criteria-card">
+      <h3>❌ Nécessairement manuel</h3>
+      <p>Une partie du RGAA nécessite un jugement humain, des tests d'usage et parfois des technologies d'assistance.</p>
+      <ul>
+        <li>Le pré-audit ne remplace pas un audit certifié</li>
+        <li>Il sert de point de départ fiable pour agir</li>
+      </ul>
+    </article>
   </div>
 
-  <p class="criteria-note">
-    Détail complet par critère: <a href="https://github.com/Stan69000/rgaa-audit/blob/main/docs/RGAA-mapping.md" target="_blank" rel="noopener" aria-label="Ouvrir le fichier de mapping RGAA sur GitHub (nouvelle fenêtre)">RGAA-mapping.md</a>.
-    Cette transparence permet de savoir exactement comment interpréter les résultats.
-    Pour une version pédagogique, consultez aussi <a href="/rgaa-audit/criteres.html">le guide des critères RGAA</a>.
-  </p>
 </section>
 
 <!-- INSTALLER -->
