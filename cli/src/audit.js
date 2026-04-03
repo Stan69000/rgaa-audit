@@ -252,15 +252,24 @@ function printSummary(score, title, url, pagesAudited = 1) {
   const bar = '█'.repeat(Math.round(score.taux / 5)) + '░'.repeat(20 - Math.round(score.taux / 5));
   const color = score.taux >= 75 ? '\x1b[32m' : score.taux >= 50 ? '\x1b[33m' : '\x1b[31m';
   const reset = '\x1b[0m';
+  const stripAnsi = (value) => String(value).replace(/\x1B\[[0-9;]*m/g, '');
+
+  const lines = [
+    `  Taux de conformité : ${String(score.taux + '%').padEnd(5)}  ${bar}`,
+    `  Conformes    : ${String(score.conformes).padEnd(4)} critères`,
+    `  Non conformes: ${String(score.nonConformes).padEnd(4)} critères`,
+    `  N/A          : ${String(score.na).padEnd(4)} critères`,
+    `  Pages auditées: ${String(pagesAudited).padEnd(4)}`,
+  ];
+  const innerWidth = Math.max(...lines.map((line) => stripAnsi(line).length));
+  const framed = [
+    `┌${'─'.repeat(innerWidth)}┐`,
+    ...lines.map((line) => `│${line.padEnd(innerWidth)}│`),
+    `└${'─'.repeat(innerWidth)}┘`,
+  ].join('\n');
 
   console.log(`
-${color}┌─────────────────────────────────────────┐
-│  Taux de conformité : ${String(score.taux + '%').padEnd(5)}  ${bar} │
-│  Conformes    : ${String(score.conformes).padEnd(4)} critères             │
-│  Non conformes: ${String(score.nonConformes).padEnd(4)} critères             │
-│  N/A          : ${String(score.na).padEnd(4)} critères             │
-│  Pages auditées: ${String(pagesAudited).padEnd(4)}                    │
-└─────────────────────────────────────────┘${reset}
+${color}${framed}${reset}
   `);
 }
 
