@@ -1,0 +1,14 @@
+# Default owners
+* @Stan69000
+
+# CI and release
+/.github/ @Stan69000
+
+# CLI core
+/cli/ @Stan69000
+
+# Extension
+/extension/ @Stan69000
+
+# Docs
+/docs/ @Stan69000

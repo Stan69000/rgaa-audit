@@ -1,37 +1,69 @@
 name: Audit hebdomadaire
 
-# Workflow dédié aux audits programmés sur vos propres sites
-# Configurer les URLs dans les secrets GitHub : AUDIT_URLS (une URL par ligne)
-
 on:
   schedule:
     - cron: '0 7 * * 1'   # Lundi 7h UTC
   workflow_dispatch:
     inputs:
       urls:
-        description: 'URLs à auditer (une par ligne)'
+        description: 'URLs a auditer (une par ligne)'
         required: false
+      min_score:
+        description: 'Seuil minimal de conformite (0-100)'
+        required: false
+        default: '50'
+
+env:
+  NODE_VERSION: '22'
+
+permissions:
+  contents: read
 
 jobs:
+  resolve-targets:
+    name: Resolve targets
+    runs-on: ubuntu-latest
+    outputs:
+      urls: ${{ steps.targets.outputs.urls }}
+      min_score: ${{ steps.targets.outputs.min_score }}
+    steps:
+      - id: targets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          INPUT_URLS="${{ github.event.inputs.urls || '' }}"
+          SECRET_URLS="${{ secrets.AUDIT_URLS || '' }}"
+          MIN_SCORE="${{ github.event.inputs.min_score || '50' }}"
+
+          if [[ -n "$INPUT_URLS" ]]; then
+            RAW="$INPUT_URLS"
+          elif [[ -n "$SECRET_URLS" ]]; then
+            RAW="$SECRET_URLS"
+          else
+            RAW="https://example.com"
+          fi
+
+          JSON=$(printf '%s\n' "$RAW" | sed '/^\s*$/d' | jq -R -s -c 'split("\n")[:-1]')
+
+          echo "urls=$JSON" >> "$GITHUB_OUTPUT"
+          echo "min_score=$MIN_SCORE" >> "$GITHUB_OUTPUT"
+
   audit-sites:
     name: Audit ${{ matrix.url }}
     runs-on: ubuntu-latest
+    needs: resolve-targets
     strategy:
       fail-fast: false
       matrix:
-        # Modifier cette liste avec vos URLs
-        url:
-          - https://example.com
-          # - https://votre-site.fr
-          # - https://autre-site.fr
-
+        url: ${{ fromJson(needs.resolve-targets.outputs.urls) }}
     steps:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-node@v5
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
           cache-dependency-path: cli/package-lock.json
 
       - name: Install
@@ -40,41 +72,48 @@ jobs:
           npm ci
           npx playwright install chromium --with-deps
 
-      - name: Audit ${{ matrix.url }}
+      - name: Audit target
         working-directory: cli
+        shell: bash
         run: |
-          SAFE_NAME=$(echo "${{ matrix.url }}" | sed 's|https://||;s|/|-|g')
+          set -euo pipefail
+          SAFE_NAME=$(echo "${{ matrix.url }}" | sed 's|https\?://||;s|/|-|g')
 
           node bin/rgaa-audit.js "${{ matrix.url }}" \
             -o html \
             -s "../rapport-${SAFE_NAME}.html" \
             -S
 
-          # Aussi en JSON pour parsing
           node bin/rgaa-audit.js "${{ matrix.url }}" \
             -o json \
             -s "../rapport-${SAFE_NAME}.json" \
             -S false
 
-      - name: Vérifier le seuil minimal
+      - name: Enforce minimum score
+        shell: bash
         run: |
-          SAFE_NAME=$(echo "${{ matrix.url }}" | sed 's|https://||;s|/|-|g')
+          set -euo pipefail
+          SAFE_NAME=$(echo "${{ matrix.url }}" | sed 's|https\?://||;s|/|-|g')
+          SEUIL="${{ needs.resolve-targets.outputs.min_score }}"
+
           node -e "
             const r = require('./rapport-${SAFE_NAME}.json');
             const taux = r.score.taux;
-            const SEUIL = 50; // Modifier selon vos exigences
-            console.log('Taux:', taux + '%', '| Seuil:', SEUIL + '%');
-            if (taux < SEUIL) {
-              console.error('⚠️ Taux sous le seuil de', SEUIL + '%');
-              // Décommenter pour bloquer le CI si sous le seuil :
-              // process.exit(1);
-            } else {
-              console.log('✅ Taux conforme au seuil');
+            const seuil = Number(process.env.SEUIL);
+            console.log('URL:', process.env.URL_TO_AUDIT);
+            console.log('Taux:', taux + '%', '| Seuil:', seuil + '%');
+            if (Number.isNaN(seuil)) throw new Error('Seuil invalide');
+            if (taux < seuil) {
+              throw new Error('Taux sous le seuil minimal');
             }
-          " SAFE_NAME=$(echo "${{ matrix.url }}" | sed 's|https://||;s|/|-|g')
+          "
+        env:
+          SEUIL: ${{ needs.resolve-targets.outputs.min_score }}
+          URL_TO_AUDIT: ${{ matrix.url }}
 
-      - name: Upload rapports
+      - name: Upload reports
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: audit-${{ strategy.job-index }}-${{ github.run_number }}
           path: rapport-*.*

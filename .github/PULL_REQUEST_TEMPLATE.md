@@ -15,20 +15,23 @@
 
 <!-- ex: 9.3 — Listes correctement balisées -->
 
-## Checklist
+## Checklist DoD
 
 - [ ] Mon code suit les conventions du projet (`'use strict'`, commentaires en français)
-- [ ] J'ai testé sur au moins un site réel
 - [ ] J'ai ajouté/mis à jour les tests unitaires si nécessaire
 - [ ] J'ai mis à jour `docs/RGAA-mapping.md` si j'ai ajouté une règle
 - [ ] Aucune dépendance externe inutile ajoutée
 - [ ] `npm test` passe en local
+- [ ] `npm run lint` passe en local
+- [ ] Le comportement est déterministe (pas de dépendance à un site externe dans les tests)
 
 ## Comment tester
 
 ```bash
 # Commandes pour reproduire / vérifier le comportement
-node bin/rgaa-audit.js https://example.com
+cd cli
+npm test
+npm run lint
 ```
 
 ## Screenshots / exemples de sortie
