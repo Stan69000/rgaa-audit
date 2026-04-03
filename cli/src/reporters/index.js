@@ -200,6 +200,7 @@ function generateVulgarized(report) {
       <button type="button" class="btn" onclick="downloadHtmlReport()">Télécharger HTML</button>
       <button type="button" class="btn" onclick="window.print()">Exporter PDF</button>
       ${hasOds ? `<button type="button" class="btn" onclick="downloadOdsReport()">Télécharger ODS</button>` : ''}
+      ${hasOds ? `<a class="btn" href="https://products.aspose.app/cells/fr/viewer/ods" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center;">Lire ODS en ligne</a>` : ''}
     </div>
 
     <div class="grid">

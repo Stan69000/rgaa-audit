@@ -131,6 +131,7 @@ async function runAudit(url, opts = {}) {
     };
 
     if (odsTemplate && odsSave) {
+      const path = require('node:path');
       const perPageReports = buildPerPageReports(report);
       const odsResult = fillRgaaGridFromReports({
         reports: perPageReports,
@@ -138,12 +139,13 @@ async function runAudit(url, opts = {}) {
         outputPath: odsSave,
         replicateToAllSheets: !!odsReplicateAllSheets,
       });
+      const resolvedOdsPath = path.resolve(odsResult.outputPath);
       report.ods = {
-        outputPath: odsResult.outputPath,
+        outputPath: resolvedOdsPath,
         filledSheets: odsResult.filledSheets,
         filledCriteria: odsResult.filledCriteria,
       };
-      success(`📊 Grille ODS sauvegardée : ${odsResult.outputPath}`);
+      success(`📊 Grille ODS sauvegardée : ${resolvedOdsPath}`);
     } else if (odsTemplate || odsSave) {
       warn('   Export ODS ignoré: fournir --ods-template et --ods-save ensemble.');
     }
@@ -216,7 +218,8 @@ function attachOdsDownloadPayload(report) {
         base64: bytes.toString('base64'),
       },
     };
-  } catch {
+  } catch (err) {
+    warn(`   Impossible d’intégrer le téléchargement ODS dans le rapport vulgarisé: ${err.message}`);
     return report;
   }
 }

@@ -9,15 +9,21 @@ const scoreBar = document.getElementById('scoreBar');
 const filters = document.getElementById('filters');
 const footer = document.getElementById('footer');
 const urlDisplay = document.getElementById('urlDisplay');
+const scoreExplain = document.getElementById('scoreExplain');
+const modeSelect = document.getElementById('modeSelect');
+const depthInput = document.getElementById('depthInput');
 
 // ── LANCEMENT AUDIT ──────────────────────────
 
 btnAudit.addEventListener('click', () => {
+  const mode = modeSelect.value === 'multi' ? 'multi' : 'single';
+  const depth = Math.max(2, Math.min(20, Number(depthInput.value) || 5));
+
   btnAudit.disabled = true;
   btnAudit.textContent = '⏳ Analyse en cours…';
-  resultsEl.innerHTML = '<div style="text-align:center;padding:32px;color:#445;font-family:\'DM Mono\',monospace;font-size:12px;">Scan DOM en cours…</div>';
+  resultsEl.innerHTML = '<div style="text-align:center;padding:32px;color:#445;font-family:\'DM Mono\',monospace;font-size:12px;">Scan en cours…</div>';
 
-  chrome.runtime.sendMessage({ action: 'getAuditResults' }, response => {
+  chrome.runtime.sendMessage({ action: 'getAuditResults', mode, depth }, response => {
     btnAudit.disabled = false;
     btnAudit.textContent = '↻ Relancer l\'audit';
 
@@ -31,6 +37,7 @@ btnAudit.addEventListener('click', () => {
     renderResults(currentReport.results, currentFilter);
     urlDisplay.textContent = currentReport.url;
     scoreBar.style.display = 'flex';
+    scoreExplain.style.display = 'block';
     filters.style.display = 'flex';
     footer.style.display = 'flex';
   });
@@ -52,6 +59,9 @@ function renderScore(score) {
   document.getElementById('statC').textContent = score.conformes;
   document.getElementById('statNA').textContent = score.na;
   document.getElementById('statTotal').textContent = score.total;
+
+  const pagesCount = Number(currentReport?.pagesAudited || (currentReport?.pages?.length || 1));
+  scoreExplain.textContent = `Conformité: ${score.taux}% · Critères non conformes: ${score.nonConformes} · Critères conformes: ${score.conformes} · Critères non applicables: ${score.na} · Pages auditées: ${pagesCount}`;
 }
 
 // ── RÉSULTATS ────────────────────────────────
@@ -79,6 +89,7 @@ function renderResults(results, filter) {
       <span class="result-badge badge-${r.status}">${r.status}</span>
       <div class="result-text">
         ${escHtml(r.message)}
+        ${r.pageUrl ? `<div class="result-snippet" title="${escHtml(r.pageUrl)}">Page: ${escHtml(r.pageUrl)}</div>` : ''}
         ${r.snippet ? `<div class="result-snippet">${escHtml(r.snippet)}</div>` : ''}
       </div>
     </div>
@@ -112,3 +123,91 @@ document.getElementById('btnExport').addEventListener('click', () => {
   a.click();
   URL.revokeObjectURL(url);
 });
+
+document.getElementById('btnExportHtml').addEventListener('click', () => {
+  if (!currentReport) return;
+  const html = buildVulgarizedHtml(currentReport);
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  chrome.tabs.create({ url });
+});
+
+modeSelect.addEventListener('change', () => {
+  depthInput.disabled = modeSelect.value !== 'multi';
+});
+depthInput.disabled = modeSelect.value !== 'multi';
+
+function buildVulgarizedHtml(report) {
+  const score = report.score || { taux: 0, nonConformes: 0, conformes: 0, na: 0, total: 0 };
+  const pages = Array.isArray(report.pages) && report.pages.length
+    ? report.pages
+    : [{ url: report.url || '', title: report.title || report.url || 'Page', score }];
+  const skipped = Array.isArray(report.pagesSkipped) ? report.pagesSkipped : [];
+  const results = Array.isArray(report.results) ? report.results : [];
+  const topNc = results.filter((r) => r.status === 'NC').slice(0, 20);
+
+  const pageRows = pages.map((p) => {
+    const pScore = p.score || {};
+    const taux = Number(pScore.taux ?? 0);
+    const nc = Number(pScore.nonConformes ?? p.nonConformes ?? 0);
+    const c = Number(pScore.conformes ?? p.conformes ?? 0);
+    const url = escHtml(p.url || '');
+    return `<li><strong>${escHtml(p.title || p.url || 'Page')}</strong><br><a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a><br>Conformité: <strong>${taux}%</strong> · Critères non conformes: <strong>${nc}</strong> · Critères conformes: <strong>${c}</strong></li>`;
+  }).join('');
+
+  const skippedRows = skipped.map((p) =>
+    `<li>${escHtml(p.url || '')} — ${escHtml(p.reason || 'erreur')}</li>`
+  ).join('');
+
+  const ncRows = topNc.map((r) => `
+    <li><strong>${escHtml(r.id || '')}</strong> — ${escHtml(r.message || '')}${r.pageUrl ? `<br><span style="color:#475569">Page: ${escHtml(r.pageUrl)}</span>` : ''}</li>
+  `).join('');
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport vulgarisé — ${escHtml(report.title || report.url || 'Audit RGAA')}</title>
+  <style>
+    body { margin:0; font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif; background:#f7f8fc; color:#1d2433; }
+    .wrap { max-width:980px; margin:0 auto; padding:28px 20px 40px; }
+    h1 { margin:0 0 6px; font-size:28px; }
+    .sub { color:#5b6476; margin-bottom:20px; }
+    .grid { display:grid; grid-template-columns:repeat(4,minmax(140px,1fr)); gap:12px; margin:18px 0 24px; }
+    .kpi { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:12px 14px; }
+    .kpi .v { font-size:30px; font-weight:700; line-height:1.05; }
+    .kpi .l { font-size:12px; color:#5b6476; margin-top:4px; }
+    .box { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:14px; margin-bottom:16px; }
+    ul { margin: 8px 0 0 18px; }
+    li { margin: 6px 0; line-height:1.45; }
+    a { color:#0f4fbf; word-break:break-all; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Rapport vulgarisé d’accessibilité</h1>
+    <div class="sub">${escHtml(report.title || report.url || '')} · ${new Date(report.timestamp || Date.now()).toLocaleString('fr-FR')}</div>
+
+    <div class="grid">
+      <div class="kpi"><div class="v">${score.taux}%</div><div class="l">Niveau global</div></div>
+      <div class="kpi"><div class="v">${score.nonConformes}</div><div class="l">Critères non conformes</div></div>
+      <div class="kpi"><div class="v">${score.conformes}</div><div class="l">Critères conformes</div></div>
+      <div class="kpi"><div class="v">${pages.length}</div><div class="l">Pages auditées</div></div>
+    </div>
+
+    <div class="box">
+      <strong>Pages auditées (${pages.length})</strong>
+      <ul>${pageRows}</ul>
+    </div>
+
+    ${skipped.length ? `<div class="box"><strong>Pages non auditées (${skipped.length})</strong><ul>${skippedRows}</ul></div>` : ''}
+
+    <div class="box">
+      <strong>Principales non-conformités détectées (${topNc.length})</strong>
+      <ul>${ncRows || '<li>Aucune non-conformité détectée.</li>'}</ul>
+    </div>
+  </div>
+</body>
+</html>`;
+}

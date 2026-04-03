@@ -127,6 +127,8 @@ function fillRgaaGridFromReports({
   if (!templatePath || !outputPath) {
     throw new Error('Paramètres manquants: templatePath et outputPath sont requis.');
   }
+  const resolvedTemplatePath = path.resolve(templatePath);
+  const resolvedOutputPath = path.resolve(outputPath);
 
   const normalized = reports.map((report, idx) => {
     if (!report || !Array.isArray(report.results)) {
@@ -166,7 +168,7 @@ function fillRgaaGridFromReports({
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rgaa-grid-'));
 
   try {
-    execFileSync('unzip', ['-q', templatePath, '-d', tempDir], { stdio: 'pipe' });
+    execFileSync('unzip', ['-q', resolvedTemplatePath, '-d', tempDir], { stdio: 'pipe' });
 
     const contentXmlPath = path.join(tempDir, 'content.xml');
     const xml = fs.readFileSync(contentXmlPath, 'utf8');
@@ -194,13 +196,13 @@ function fillRgaaGridFromReports({
 
     fs.writeFileSync(contentXmlPath, updatedXml, 'utf8');
 
-    if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+    if (fs.existsSync(resolvedOutputPath)) fs.unlinkSync(resolvedOutputPath);
 
-    execFileSync('zip', ['-X', '-0', outputPath, 'mimetype'], { cwd: tempDir, stdio: 'pipe' });
-    execFileSync('zip', ['-X', '-r', outputPath, '.', '-x', 'mimetype'], { cwd: tempDir, stdio: 'pipe' });
+    execFileSync('zip', ['-X', '-0', resolvedOutputPath, 'mimetype'], { cwd: tempDir, stdio: 'pipe' });
+    execFileSync('zip', ['-X', '-r', resolvedOutputPath, '.', '-x', 'mimetype'], { cwd: tempDir, stdio: 'pipe' });
 
     return {
-      outputPath,
+      outputPath: resolvedOutputPath,
       filledSheets: pageEntries.filter(p => p.criterionMap).length,
       filledCriteria: pageEntries.reduce((acc, p) => acc + (p.criterionMap ? p.criterionMap.size : 0), 0),
     };
