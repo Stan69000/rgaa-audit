@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RGAA Audit</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;600;700;800&display=swap');
+    :root {
+      --font-sans: "Avenir Next", Avenir, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -15,7 +18,7 @@
       max-height: 600px;
       background: #07071A;
       color: #E8E8FF;
-      font-family: 'DM Sans', sans-serif;
+      font-family: var(--font-sans);
       font-size: 13px;
       overflow: hidden;
       display: flex;
@@ -40,7 +43,7 @@
     }
     .header-text { flex: 1; }
     .header-text h1 { font-size: 14px; font-weight: 800; }
-    .header-text p { font-size: 10px; color: #445; font-family: 'DM Mono', monospace; }
+    .header-text p { font-size: 10px; color: #445; font-family: var(--font-mono); }
 
     /* SCORE BAR */
     .score-bar {
@@ -56,11 +59,11 @@
     .score-value {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      font-family: 'DM Mono', monospace; font-weight: 800; font-size: 13px;
+      font-family: var(--font-mono); font-weight: 800; font-size: 13px;
     }
     .score-stats { display: flex; gap: 16px; flex: 1; }
     .stat { text-align: center; }
-    .stat-val { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 800; }
+    .stat-val { font-family: var(--font-mono); font-size: 18px; font-weight: 800; }
     .stat-lbl { font-size: 10px; color: #445; margin-top: 1px; }
     .score-explain {
       font-size: 11px;
@@ -78,7 +81,7 @@
       background: linear-gradient(135deg, #FF6B35, #E74C3C);
       border: none; border-radius: 10px;
       color: #fff; font-weight: 700; font-size: 13px;
-      cursor: pointer; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; font-family: var(--font-sans);
       transition: opacity .2s;
     }
     .btn-audit:hover { opacity: .9; }
@@ -92,7 +95,7 @@
     }
     .filter-btn {
       padding: 4px 10px; border-radius: 999px; border: 1px solid transparent;
-      font-size: 11px; font-family: 'DM Mono', monospace; cursor: pointer;
+      font-size: 11px; font-family: var(--font-mono); cursor: pointer;
       background: #1A1A2E; color: #556; transition: all .15s;
     }
     .filter-btn.active { border-color: currentColor; }
@@ -126,12 +129,12 @@
     .result-item:hover { background: #0D0D1A; border-radius: 6px; padding-left: 6px; }
 
     .result-id {
-      font-family: 'DM Mono', monospace; font-size: 10px;
+      font-family: var(--font-mono); font-size: 10px;
       color: #FF6B35; font-weight: 700; min-width: 30px; margin-top: 2px;
     }
     .result-badge {
       font-size: 10px; padding: 2px 6px; border-radius: 4px;
-      font-family: 'DM Mono', monospace; font-weight: 700;
+      font-family: var(--font-mono); font-weight: 700;
       min-width: 28px; text-align: center; flex-shrink: 0; margin-top: 1px;
     }
     .badge-NC { background: #FF444425; color: #FF4444; }
@@ -140,7 +143,7 @@
 
     .result-text { flex: 1; font-size: 12px; color: #A8A8C8; line-height: 1.5; }
     .result-snippet {
-      font-family: 'DM Mono', monospace; font-size: 10px;
+      font-family: var(--font-mono); font-size: 10px;
       color: #445; margin-top: 4px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       max-width: 340px;
@@ -155,7 +158,7 @@
     }
     .btn-sm {
       padding: 6px 12px; border-radius: 8px; border: 1px solid;
-      font-size: 11px; font-family: 'DM Mono', monospace;
+      font-size: 11px; font-family: var(--font-mono);
       cursor: pointer; font-weight: 600; background: none;
       transition: all .15s;
     }
@@ -192,7 +195,7 @@
     }
     .ai-panel.visible { display: block; }
     .ai-label {
-      font-family: 'DM Mono', monospace; font-size: 10px;
+      font-family: var(--font-mono); font-size: 10px;
       color: #A855F7; margin-bottom: 6px;
     }
     #aiText h1, #aiText h2, #aiText h3 {
@@ -208,7 +211,7 @@
     #aiText li { margin: 4px 0; }
     #aiText strong { color: #FFF7D6; font-weight: 700; }
     #aiText code {
-      font-family: 'DM Mono', monospace;
+      font-family: var(--font-mono);
       background: #171230;
       border: 1px solid #2D2650;
       color: #C9B8FF;
@@ -254,7 +257,7 @@
       overflow: auto;
     }
     .privacy-note {
-      font-family: 'DM Mono', monospace;
+      font-family: var(--font-mono);
       font-size: 10px;
       color: #8E98C7;
       padding: 0 16px 8px;
