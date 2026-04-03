@@ -149,8 +149,6 @@ function buildVulgarizedHtml(report) {
   const skipped = Array.isArray(report.pagesSkipped) ? report.pagesSkipped : [];
   const results = Array.isArray(report.results) ? report.results : [];
   const topNc = results.filter((r) => r.status === 'NC').slice(0, 20);
-  const ods = report.odsDownload || null;
-  const hasOds = Boolean(ods?.base64 && ods?.fileName);
 
   const pageRows = pages.map((p) => {
     const pScore = p.score || {};
@@ -204,10 +202,7 @@ function buildVulgarizedHtml(report) {
     <div class="tools">
       <button class="btn" type="button" onclick="window.print()">Exporter PDF</button>
       <button class="btn" type="button" onclick="downloadJson()">Télécharger JSON</button>
-      <button class="btn" type="button" onclick="downloadOds()" ${hasOds ? '' : 'disabled'}>Télécharger ODS</button>
-      <a class="btn" href="https://products.aspose.app/cells/fr/viewer/ods" target="_blank" rel="noopener noreferrer">Lire ODS en ligne</a>
     </div>
-    ${hasOds ? '' : '<div class="hint">ODS non généré depuis l’extension. Utiliser le CLI pour produire la grille ODS.</div>'}
 
     <div class="grid">
       <div class="kpi"><div class="v">${score.taux}%</div><div class="l">Niveau global</div></div>
@@ -230,28 +225,12 @@ function buildVulgarizedHtml(report) {
   </div>
   <script>
     const REPORT_DATA = ${JSON.stringify(report)};
-    const ODS_DOWNLOAD = ${JSON.stringify(hasOds ? ods : null)};
     function downloadJson() {
       const blob = new Blob([JSON.stringify(REPORT_DATA, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'rgaa-audit.json';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-    function downloadOds() {
-      if (!ODS_DOWNLOAD || !ODS_DOWNLOAD.base64) return;
-      const bin = atob(ODS_DOWNLOAD.base64);
-      const bytes = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      const blob = new Blob([bytes], { type: ODS_DOWNLOAD.mimeType || 'application/vnd.oasis.opendocument.spreadsheet' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = ODS_DOWNLOAD.fileName || 'rgaa-grille.ods';
       document.body.appendChild(a);
       a.click();
       a.remove();
