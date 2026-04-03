@@ -114,15 +114,19 @@ document.getElementById('btnExport').addEventListener('click', () => {
 });
 
 // ── ANALYSE IA ───────────────────────────────
+// L'appel API passe via le background pour éviter les limites CORS du popup.
 
 document.getElementById('btnAI').addEventListener('click', async () => {
   if (!currentReport) return;
 
-  const apiKey = await getApiKey();
+  let apiKey = await getApiKey();
   if (!apiKey) {
     const key = prompt('Entrez votre clé API Anthropic (stockée localement uniquement) :');
-    if (!key) return;
-    chrome.storage.local.set({ anthropicKey: key });
+    if (!key || !key.startsWith('sk-ant-')) {
+      return;
+    }
+    await chrome.storage.local.set({ anthropicKey: key });
+    apiKey = key;
   }
 
   const btnAI = document.getElementById('btnAI');
@@ -134,42 +138,33 @@ document.getElementById('btnAI').addEventListener('click', async () => {
   aiPanel.classList.add('visible');
   aiText.textContent = 'Connexion à Claude…';
 
-  const key = apiKey || (await getApiKey());
   const ncList = currentReport.results
     .filter(r => r.status === 'NC')
     .map(r => `${r.id}: ${r.message}`)
     .slice(0, 20)
     .join('\n');
 
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 600,
-        messages: [{
-          role: 'user',
-          content: `Expert RGAA 4.1. Site audité : ${currentReport.url}. Taux : ${currentReport.score.taux}%.
+  const promptText = `Expert RGAA 4.1. Site audité : ${currentReport.url}. Taux : ${currentReport.score.taux}%.
 Non-conformités détectées :\n${ncList || 'Aucune'}\n
-En 3-4 phrases : synthèse, 2-3 priorités absolues à corriger, impact utilisateur principal. Sois direct.`
-        }]
-      })
-    });
+En 3-4 phrases : synthèse, 2-3 priorités absolues à corriger, impact utilisateur principal. Sois direct.`;
 
-    const data = await res.json();
-    const text = data.content?.find(b => b.type === 'text')?.text;
-    aiText.textContent = text || 'Réponse vide.';
-  } catch (e) {
-    aiText.textContent = `Erreur API : ${e.message}`;
-  }
+  chrome.runtime.sendMessage(
+    { action: 'callClaude', apiKey, prompt: promptText },
+    response => {
+      if (chrome.runtime.lastError) {
+        aiText.textContent = `Erreur extension : ${chrome.runtime.lastError.message}`;
+      } else if (response?.error) {
+        aiText.textContent = `Erreur API : ${response.error}`;
+      } else if (response?.text) {
+        aiText.textContent = response.text;
+      } else {
+        aiText.textContent = 'Réponse inattendue du service IA.';
+      }
 
-  btnAI.disabled = false;
-  btnAI.textContent = '✨ Analyse IA';
+      btnAI.disabled = false;
+      btnAI.textContent = '✨ Analyse IA';
+    }
+  );
 });
 
 function getApiKey() {
