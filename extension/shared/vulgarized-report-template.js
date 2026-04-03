@@ -49,7 +49,7 @@
     body { margin:0; font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif; background:#f7f8fc; color:#1d2433; }
     .wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 40px; }
     h1 { margin: 0 0 6px; font-size: 28px; }
-    .sub { color:#5b6476; margin-bottom:20px; }
+    .sub { color:#5b6476; margin-bottom:20px; overflow-wrap:anywhere; }
     .grid { display:grid; grid-template-columns: repeat(4, minmax(140px,1fr)); gap:12px; margin:18px 0 24px; }
     .kpi { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:12px 14px; }
     .kpi .v { font-size:30px; font-weight:700; line-height:1.05; }
@@ -57,6 +57,7 @@
     .box { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:14px; margin-bottom:16px; }
     .cards { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:12px; }
     .card { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:14px; }
+    .card p, .card li, .where, .where li { overflow-wrap:anywhere; word-break:break-word; }
     .chip { display:inline-block; font-size:11px; font-weight:700; border-radius:999px; padding:4px 8px; margin-bottom:8px; }
     .chip-p1 { background:#ffdfe0; color:#a3181f; }
     .chip-p2 { background:#fff1d6; color:#9b5d00; }
@@ -86,10 +87,10 @@
     <div class="disclaimer"><strong>Projet associatif vibe codé —</strong> Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.</div>
 
     <div class="tools">
-      <button type="button" class="btn" onclick="downloadHtmlReport()">Télécharger HTML</button>
-      <button type="button" class="btn" onclick="window.print()">Exporter PDF</button>
-      <button type="button" class="btn" onclick="downloadJson()">Télécharger JSON</button>
-      ${hasOds ? '<button type="button" class="btn" onclick="downloadOdsReport()">Télécharger ODS</button>' : ''}
+      <button type="button" class="btn" id="btnDownloadHtml">Télécharger HTML</button>
+      <button type="button" class="btn" id="btnExportPdf">Exporter PDF</button>
+      <button type="button" class="btn" id="btnDownloadJson">Télécharger JSON</button>
+      ${hasOds ? '<button type="button" class="btn" id="btnDownloadOds">Télécharger ODS</button>' : ''}
       ${hasOds ? '<a class="btn" href="https://products.aspose.app/cells/fr/viewer/ods" target="_blank" rel="noopener noreferrer">Lire ODS en ligne</a>' : ''}
       ${includeCliLink ? '<a class="btn" href="https://stan69000.github.io/rgaa-audit/" target="_blank" rel="noopener noreferrer">Audit complet CLI</a>' : ''}
     </div>
@@ -145,6 +146,16 @@
   <script>
     const REPORT_DATA = ${reportDataScript};
     const ODS_DOWNLOAD = ${odsDataScript};
+
+    const btnHtml = document.getElementById('btnDownloadHtml');
+    const btnPdf = document.getElementById('btnExportPdf');
+    const btnJson = document.getElementById('btnDownloadJson');
+    const btnOds = document.getElementById('btnDownloadOds');
+
+    if (btnHtml) btnHtml.addEventListener('click', downloadHtmlReport);
+    if (btnPdf) btnPdf.addEventListener('click', () => window.print());
+    if (btnJson) btnJson.addEventListener('click', downloadJson);
+    if (btnOds) btnOds.addEventListener('click', downloadOdsReport);
 
     function downloadHtmlReport() {
       const html = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
