@@ -584,15 +584,16 @@
     <div class="install-card">
       <div class="install-header">
         <span class="install-icon" aria-hidden="true">⚙️</span>
-        <div><p class="install-title">CLI (recommandé)</p><p class="install-sub">Audit automatisé, CI/CD, rapports</p></div>
+        <div><p class="install-title">CLI (recommandé)</p><p class="install-sub">Audit automatisé, CI/CD, rapports + vulgarisation</p></div>
       </div>
       <div class="install-body">
         <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">git clone https://github.com/Stan69000/rgaa-audit</span></div>
-        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">cd rgaa-audit/cli && npm install</span></div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">cd rgaa-audit/cli</span></div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">npm install</span></div>
         <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">npx playwright install chromium</span></div>
         <div style="height:8px"></div>
         <div class="code-comment"># Lancer un audit</div>
-        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">node bin/rgaa-audit.js https://mon-site.fr -o json -s rapport.json --vulgarized-save rapport-vulgarise.html</span></div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">node bin/rgaa-audit.js https://mon-site.fr -o json -s ./rapport.json --vulgarized-save ./rapport-vulgarise.html</span></div>
       </div>
     </div>
     <div class="install-card">
