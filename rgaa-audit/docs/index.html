@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Emprunt de matériel</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #181c27;
+      --surface2: #1e2335;
+      --border: #2a2f45;
+      --accent: #5b8cff;
+      --accent2: #3dffa0;
+      --text: #e8eaf2;
+      --text-muted: #7a80a0;
+      --danger: #ff5b5b;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      padding: 40px 16px 80px;
+    }
+
+    .grain {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.5;
+    }
+
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      position: relative; z-index: 1;
+    }
+
+    header {
+      margin-bottom: 40px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(91,140,255,0.12);
+      border: 1px solid rgba(91,140,255,0.3);
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 12px; font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .badge::before {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent2);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.4); }
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(28px, 5vw, 42px);
+      line-height: 1.15;
+      color: var(--text);
+    }
+
+    h1 span { color: var(--accent); }
+
+    .subtitle {
+      margin-top: 10px;
+      color: var(--text-muted);
+      font-size: 15px;
+      font-weight: 300;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 16px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .card:nth-child(2) { animation-delay: 0.05s; }
+    .card:nth-child(3) { animation-delay: 0.1s; }
+    .card:nth-child(4) { animation-delay: 0.15s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .card-title::before {
+      content: '';
+      display: block; width: 20px; height: 2px;
+      background: var(--accent);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 520px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    input, textarea, select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91,140,255,0.15);
+    }
+
+    textarea { resize: vertical; min-height: 90px; }
+
+    select option { background: var(--surface2); }
+
+    /* ---- Sélecteur de matériel ---- */
+    .materiel-section { margin-top: 4px; }
+
+    .tabs {
+      display: flex; gap: 8px; margin-bottom: 16px;
+    }
+
+    .tab {
+      flex: 1; padding: 9px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer; text-align: center;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: rgba(91,140,255,0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .materiel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .mat-item {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+
+    .mat-item:hover { border-color: var(--accent); }
+
+    .mat-item.selected {
+      border-color: var(--accent2);
+      background: rgba(61,255,160,0.07);
+    }
+
+    .mat-item.indispo {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .mat-name { font-size: 14px; font-weight: 500; }
+    .mat-qty  { font-size: 12px; color: var(--text-muted); }
+
+    .mat-badge {
+      display: inline-block;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+      padding: 2px 8px; border-radius: 999px;
+      margin-top: 2px;
+    }
+    .mat-badge.ok { background: rgba(61,255,160,0.15); color: var(--accent2); }
+    .mat-badge.indispo { background: rgba(255,91,91,0.15); color: var(--danger); }
+
+    .qty-ctrl {
+      display: flex; align-items: center; gap: 8px; margin-top: 6px;
+    }
+
+    .qty-btn {
+      width: 26px; height: 26px;
+      border-radius: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .qty-btn:hover { background: var(--border); }
+
+    .qty-val { font-size: 14px; font-weight: 600; min-width: 20px; text-align: center; }
+
+    /* ---- Loading ---- */
+    .loader {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--text-muted); font-size: 14px;
+      padding: 20px 0;
+    }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- Résumé ---- */
+    .recap {
+      background: rgba(91,140,255,0.07);
+      border: 1px solid rgba(91,140,255,0.2);
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 16px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .recap.visible { display: block; }
+
+    .recap-title { font-weight: 600; margin-bottom: 10px; color: var(--accent); }
+    .recap-line { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .recap-line:last-child { border: none; }
+    .recap-label { color: var(--text-muted); }
+
+    /* ---- Submit ---- */
+    .btn-submit {
+      width: 100%; padding: 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none; border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      margin-top: 8px;
+      position: relative; overflow: hidden;
+    }
+
+    .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ---- Success ---- */
+    .success-screen {
+      text-align: center; padding: 60px 20px;
+      display: none; flex-direction: column; align-items: center; gap: 16px;
+    }
+    .success-screen.visible { display: flex; }
+
+    .success-icon {
+      width: 72px; height: 72px;
+      background: rgba(61,255,160,0.1);
+      border: 2px solid var(--accent2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+    }
+
+    .success-screen h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+    }
+
+    .success-screen p { color: var(--text-muted); font-size: 15px; max-width: 360px; }
+
+    .btn-new {
+      margin-top: 8px; padding: 12px 28px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .btn-new:hover { border-color: var(--accent); color: var(--accent); }
+
+    .error-msg {
+      background: rgba(255,91,91,0.1);
+      border: 1px solid rgba(255,91,91,0.3);
+      border-radius: 8px; padding: 12px 16px;
+      color: var(--danger); font-size: 13px;
+      margin-top: 12px; display: none;
+    }
+    .error-msg.visible { display: block; }
+
+    .dispo-notice {
+      font-size: 12px; color: var(--text-muted);
+      margin-top: 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+  </style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="wrap">
+
+  <!-- ======= FORMULAIRE ======= -->
+  <div id="formView">
+
+    <header>
+      <div class="badge">Studio · Emprunt matériel</div>
+      <h1>Réserver du <span>matériel</span></h1>
+      <p class="subtitle">Remplissez le formulaire — un email de confirmation vous sera envoyé.</p>
+    </header>
+
+    <!-- 1. Identité -->
+    <div class="card">
+      <div class="card-title">Vos informations</div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="prenom">Prénom</label>
+          <input id="prenom" type="text" placeholder="Ex : Marie"/>
+        </div>
+        <div class="field">
+          <label for="nom">Nom</label>
+          <input id="nom" type="text" placeholder="Ex : Dupont"/>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="marie@example.com"/>
+        </div>
+        <div class="field">
+          <label for="tel">Téléphone</label>
+          <input id="tel" type="tel" placeholder="06 00 00 00 00"/>
+        </div>
+      </div>
+      <div class="field" style="margin-top:16px;">
+        <label for="description">Description de la prestation</label>
+        <textarea id="description" placeholder="Ex : Concert acoustique le 22 mars à la salle des fêtes de Fleurieux…"></textarea>
+      </div>
+    </div>
+
+    <!-- 2. Dates -->
+    <div class="card">
+      <div class="card-title">Période d'emprunt</div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="dateDebut">Date de départ</label>
+          <input id="dateDebut" type="date"/>
+        </div>
+        <div class="field">
+          <label for="dateFin">Date de retour</label>
+          <input id="dateFin" type="date"/>
+        </div>
+      </div>
+      <p class="dispo-notice">⚡ La disponibilité du matériel sera vérifiée dès que vous choisissez vos dates.</p>
+    </div>
+
+    <!-- 3. Matériel -->
+    <div class="card" id="materielCard" style="display:none;">
+      <div class="card-title">Matériel souhaité</div>
+
+      <div class="tabs">
+        <div class="tab active" id="tabPieces" onclick="switchTab('pieces')">Pièces individuelles</div>
+        <div class="tab" id="tabKits" onclick="switchTab('kits')">Kits prédéfinis</div>
+      </div>
+
+      <!-- Pièces -->
+      <div id="panelPieces" class="materiel-section">
+        <div id="loadingPieces" class="loader" style="display:none;">
+          <div class="spinner"></div> Vérification des disponibilités…
+        </div>
+        <div class="materiel-grid" id="gridPieces"></div>
+      </div>
+
+      <!-- Kits -->
+      <div id="panelKits" class="materiel-section" style="display:none;">
+        <div id="loadingKits" class="loader" style="display:none;">
+          <div class="spinner"></div> Chargement des kits…
+        </div>
+        <div class="materiel-grid" id="gridKits"></div>
+      </div>
+
+      <!-- Récapitulatif sélection -->
+      <div class="recap" id="recap">
+        <div class="recap-title">📦 Sélection en cours</div>
+        <div id="recapLines"></div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div id="submitZone" style="display:none;">
+      <button class="btn-submit" id="btnSubmit" onclick="soumettreFormulaire()">
+        Confirmer l'emprunt →
+      </button>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+  </div>
+
+  <!-- ======= SUCCÈS ======= -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">✓</div>
+    <h2>Emprunt enregistré !</h2>
+    <p>Un email de confirmation a été envoyé à votre adresse. Le responsable a été notifié.</p>
+    <button class="btn-new" onclick="resetForm()">Faire une nouvelle demande</button>
+  </div>
+
+</div>
+
+<script>
+  // ---- État global ----
+  let selection = {}; // { id: { nom, quantite, type } }
+  let materielData = [];
+  let kitsData = [];
+  let currentTab = 'pieces';
+  let datesValides = false;
+
+  // ---- Init dates ----
+  const today = new Date();
+  const fmt = d => d.toISOString().split('T')[0];
+  document.getElementById('dateDebut').value = fmt(today);
+  const demain = new Date(today); demain.setDate(today.getDate() + 1);
+  document.getElementById('dateFin').value = fmt(demain);
+
+  document.getElementById('dateDebut').addEventListener('change', onDatesChange);
+  document.getElementById('dateFin').addEventListener('change', onDatesChange);
+
+  // Déclencher au chargement avec les dates pré-remplies
+  onDatesChange();
+
+  function onDatesChange() {
+    const d1 = document.getElementById('dateDebut').value;
+    const d2 = document.getElementById('dateFin').value;
+    if (!d1 || !d2 || d2 < d1) return;
+    datesValides = true;
+    selection = {};
+    document.getElementById('materielCard').style.display = 'block';
+    document.getElementById('submitZone').style.display = 'block';
+    chargerMateriel(d1, d2);
+    chargerKits();
+    updateRecap();
+  }
+
+  // ---- Chargement matériel ----
+  function chargerMateriel(d1, d2) {
+    document.getElementById('loadingPieces').style.display = 'flex';
+    document.getElementById('gridPieces').innerHTML = '';
+    google.script.run
+      .withSuccessHandler(renderMateriel)
+      .withFailureHandler(err => console.error(err))
+      .getMaterielDisponible(d1, d2);
+  }
+
+  function chargerKits() {
+    document.getElementById('loadingKits').style.display = 'flex';
+    document.getElementById('gridKits').innerHTML = '';
+    google.script.run
+      .withSuccessHandler(renderKits)
+      .withFailureHandler(err => console.error(err))
+      .getKits();
+  }
+
+  function renderMateriel(data) {
+    materielData = data;
+    document.getElementById('loadingPieces').style.display = 'none';
+    const grid = document.getElementById('gridPieces');
+    grid.innerHTML = '';
+    if (!data.length) {
+      grid.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Aucun matériel disponible pour ces dates.</p>';
+      return;
+    }
+    data.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'mat-item' + (item.dispo === 0 ? ' indispo' : '');
+      el.id = 'mat_' + item.id;
+      el.innerHTML = `
+        <div class="mat-name">${item.nom}</div>
+        <div class="mat-qty">${item.dispo} disponible${item.dispo > 1 ? 's' : ''}</div>
+        <span class="mat-badge ${item.dispo > 0 ? 'ok' : 'indispo'}">${item.dispo > 0 ? 'Dispo' : 'Indispo'}</span>
+        ${item.dispo > 0 ? `
+        <div class="qty-ctrl" style="display:none" id="qc_${item.id}">
+          <button class="qty-btn" onclick="changeQty('${item.id}', -1, event)">−</button>
+          <span class="qty-val" id="qv_${item.id}">0</span>
+          <button class="qty-btn" onclick="changeQty('${item.id}', 1, event)">+</button>
+        </div>` : ''}
+      `;
+      if (item.dispo > 0) {
+        el.addEventListener('click', () => togglePiece(item.id, item.nom, item.dispo));
+      }
+      grid.appendChild(el);
+    });
+  }
+
+  function renderKits(data) {
+    kitsData = data;
+    document.getElementById('loadingKits').style.display = 'none';
+    const grid = document.getElementById('gridKits');
+    grid.innerHTML = '';
+    if (!data.length) {
+      grid.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Aucun kit configuré.</p>';
+      return;
+    }
+    data.forEach(kit => {
+      const el = document.createElement('div');
+      el.className = 'mat-item' + (kit.disponible ? '' : ' indispo');
+      el.id = 'kit_' + kit.id;
+      el.innerHTML = `
+        <div class="mat-name">${kit.nom}</div>
+        <div class="mat-qty">${kit.contenu}</div>
+        <span class="mat-badge ${kit.disponible ? 'ok' : 'indispo'}">${kit.disponible ? 'Dispo' : 'Indispo'}</span>
+      `;
+      if (kit.disponible) {
+        el.addEventListener('click', () => toggleKit(kit.id, kit.nom));
+      }
+      grid.appendChild(el);
+    });
+  }
+
+  // ---- Interactions sélection ----
+  function togglePiece(id, nom, maxQty) {
+    const el = document.getElementById('mat_' + id);
+    const qc = document.getElementById('qc_' + id);
+    if (selection[id]) {
+      delete selection[id];
+      el.classList.remove('selected');
+      qc.style.display = 'none';
+      document.getElementById('qv_' + id).textContent = '0';
+    } else {
+      selection[id] = { nom, quantite: 1, type: 'piece', max: maxQty };
+      el.classList.add('selected');
+      qc.style.display = 'flex';
+      document.getElementById('qv_' + id).textContent = '1';
+    }
+    updateRecap();
+  }
+
+  function changeQty(id, delta, e) {
+    e.stopPropagation();
+    if (!selection[id]) return;
+    const newQ = selection[id].quantite + delta;
+    if (newQ <= 0) {
+      togglePiece(id, selection[id].nom, selection[id].max);
+      return;
+    }
+    if (newQ > selection[id].max) return;
+    selection[id].quantite = newQ;
+    document.getElementById('qv_' + id).textContent = newQ;
+    updateRecap();
+  }
+
+  function toggleKit(id, nom) {
+    const el = document.getElementById('kit_' + id);
+    if (selection['kit_' + id]) {
+      delete selection['kit_' + id];
+      el.classList.remove('selected');
+    } else {
+      selection['kit_' + id] = { nom, quantite: 1, type: 'kit' };
+      el.classList.add('selected');
+    }
+    updateRecap();
+  }
+
+  // ---- Récapitulatif ----
+  function updateRecap() {
+    const recap = document.getElementById('recap');
+    const lines = document.getElementById('recapLines');
+    const keys = Object.keys(selection);
+    if (!keys.length) { recap.classList.remove('visible'); return; }
+    recap.classList.add('visible');
+    lines.innerHTML = keys.map(k => `
+      <div class="recap-line">
+        <span class="recap-label">${selection[k].nom}</span>
+        <span>${selection[k].quantite > 1 ? '×' + selection[k].quantite : (selection[k].type === 'kit' ? 'Kit' : '1')}</span>
+      </div>`).join('');
+  }
+
+  // ---- Tabs ----
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tabPieces').classList.toggle('active', tab === 'pieces');
+    document.getElementById('tabKits').classList.toggle('active', tab === 'kits');
+    document.getElementById('panelPieces').style.display = tab === 'pieces' ? 'block' : 'none';
+    document.getElementById('panelKits').style.display  = tab === 'kits'   ? 'block' : 'none';
+  }
+
+  // ---- Soumission ----
+  function soumettreFormulaire() {
+    const prenom = document.getElementById('prenom').value.trim();
+    const nom    = document.getElementById('nom').value.trim();
+    const email  = document.getElementById('email').value.trim();
+    const tel    = document.getElementById('tel').value.trim();
+    const desc   = document.getElementById('description').value.trim();
+    const d1     = document.getElementById('dateDebut').value;
+    const d2     = document.getElementById('dateFin').value;
+    const errEl  = document.getElementById('errorMsg');
+
+    errEl.classList.remove('visible');
+
+    if (!prenom || !nom || !email || !tel || !desc) {
+      errEl.textContent = 'Merci de remplir tous les champs.';
+      errEl.classList.add('visible'); return;
+    }
+    if (!Object.keys(selection).length) {
+      errEl.textContent = 'Veuillez sélectionner au moins un article.';
+      errEl.classList.add('visible'); return;
+    }
+
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours…';
+
+    const payload = {
+      prenom, nom, email, tel, description: desc,
+      dateDebut: d1, dateFin: d2,
+      selection: Object.entries(selection).map(([id, v]) => ({
+        id, nom: v.nom, quantite: v.quantite, type: v.type
+      }))
+    };
+
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res.ok) {
+          document.getElementById('formView').style.display = 'none';
+          document.getElementById('successScreen').classList.add('visible');
+        } else {
+          errEl.textContent = res.message || 'Une erreur est survenue.';
+          errEl.classList.add('visible');
+          btn.disabled = false;
+          btn.textContent = 'Confirmer l\'emprunt →';
+        }
+      })
+      .withFailureHandler(() => {
+        errEl.textContent = 'Erreur de connexion. Réessayez.';
+        errEl.classList.add('visible');
+        btn.disabled = false;
+        btn.textContent = 'Confirmer l\'emprunt →';
+      })
+      .soumettreEmprunt(payload);
+  }
+
+  function resetForm() {
+    window.location.reload();
+  }
+</script>
+</body>
+</html>
