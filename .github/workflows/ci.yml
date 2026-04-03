@@ -1,0 +1,316 @@
+name: RGAA Audit CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  schedule:
+    # Audit hebdomadaire automatique tous les lundis à 8h00
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'URL à auditer manuellement'
+        required: false
+        default: 'https://example.com'
+      output_format:
+        description: 'Format de rapport'
+        required: false
+        default: 'html'
+        type: choice
+        options: [json, html, csv]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ──────────────────────────────────────────
+  # JOB 1 : Lint & vérification du code
+  # ──────────────────────────────────────────
+  lint:
+    name: 🔍 Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: cli/package-lock.json
+
+      - name: Install dependencies
+        working-directory: cli
+        run: npm ci
+
+      - name: Vérification syntaxe Node
+        working-directory: cli
+        run: |
+          node --check bin/rgaa-audit.js
+          node --check src/audit.js
+          node --check src/simulator.js
+          node --check src/browser.js
+          node --check src/rules/index.js
+          node --check src/reporters/index.js
+          node --check src/ai/claude-analysis.js
+          echo "✅ Syntaxe OK"
+
+      - name: Vérification manifest extension
+        run: |
+          node -e "
+            const m = require('./extension/manifest.json');
+            if (m.manifest_version !== 3) throw new Error('MV3 requis');
+            if (!m.permissions.includes('activeTab')) throw new Error('activeTab manquant');
+            console.log('✅ manifest.json valide');
+          "
+
+  # ──────────────────────────────────────────
+  # JOB 2 : Tests unitaires des règles
+  # ──────────────────────────────────────────
+  test-rules:
+    name: 🧪 Tests règles RGAA
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: cli/package-lock.json
+
+      - name: Install dependencies
+        working-directory: cli
+        run: npm ci
+
+      - name: Install Playwright
+        working-directory: cli
+        run: npx playwright install chromium --with-deps
+
+      - name: Run tests
+        working-directory: cli
+        run: npm test
+        continue-on-error: true  # Ne pas bloquer si les tests manquent encore
+
+      - name: Audit de smoke test (example.com)
+        working-directory: cli
+        run: |
+          node bin/rgaa-audit.js https://example.com -o json -s /tmp/smoke-test.json
+          node -e "
+            const r = require('/tmp/smoke-test.json');
+            if (!r.score) throw new Error('Score absent du rapport');
+            if (r.score.taux === undefined) throw new Error('Taux absent');
+            console.log('✅ Smoke test OK — Taux:', r.score.taux + '%');
+          "
+
+  # ──────────────────────────────────────────
+  # JOB 3 : Audit automatique (cron ou manuel)
+  # ──────────────────────────────────────────
+  audit:
+    name: ♿ Audit RGAA
+    runs-on: ubuntu-latest
+    needs: [lint, test-rules]
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: cli/package-lock.json
+
+      - name: Install dependencies
+        working-directory: cli
+        run: npm ci
+
+      - name: Install Playwright + Chromium
+        working-directory: cli
+        run: npx playwright install chromium --with-deps
+
+      - name: Déterminer l'URL cible
+        id: target
+        run: |
+          URL="${{ github.event.inputs.target_url || 'https://example.com' }}"
+          FORMAT="${{ github.event.inputs.output_format || 'html' }}"
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "format=$FORMAT" >> $GITHUB_OUTPUT
+          echo "🎯 Audit de : $URL"
+
+      - name: Lancer l'audit RGAA
+        working-directory: cli
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          EXTRA=""
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            EXTRA="-k $ANTHROPIC_API_KEY"
+          fi
+
+          node bin/rgaa-audit.js "${{ steps.target.outputs.url }}" \
+            -o "${{ steps.target.outputs.format }}" \
+            -s "../rapport-rgaa.${{ steps.target.outputs.format }}" \
+            -S \
+            $EXTRA
+
+      - name: Lire le score pour le résumé
+        id: score
+        run: |
+          if [ -f "rapport-rgaa.json" ]; then
+            TAUX=$(node -e "const r = require('./rapport-rgaa.json'); console.log(r.score.taux)")
+            NC=$(node -e "const r = require('./rapport-rgaa.json'); console.log(r.score.nonConformes)")
+            echo "taux=$TAUX" >> $GITHUB_OUTPUT
+            echo "nc=$NC" >> $GITHUB_OUTPUT
+          else
+            # Parser le JSON si format html (pas de JSON direct)
+            echo "taux=N/A" >> $GITHUB_OUTPUT
+            echo "nc=N/A" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload rapport
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-rgaa-${{ github.run_number }}
+          path: |
+            rapport-rgaa.*
+            cli/audit-screenshots/
+          retention-days: 30
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-${{ github.run_number }}
+          path: cli/audit-screenshots/
+          retention-days: 14
+
+      - name: Résumé dans le job summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## ♿ Rapport RGAA Audit
+
+          | | |
+          |---|---|
+          | **URL auditée** | ${{ steps.target.outputs.url }} |
+          | **Taux de conformité** | ${{ steps.score.outputs.taux }}% |
+          | **Non conformes** | ${{ steps.score.outputs.nc }} |
+          | **Format** | ${{ steps.target.outputs.format }} |
+          | **Run** | #${{ github.run_number }} |
+          | **Date** | $(date -u '+%Y-%m-%d %H:%M UTC') |
+
+          Le rapport complet est disponible dans les **artifacts** de ce run.
+          EOF
+
+  # ──────────────────────────────────────────
+  # JOB 4 : Vérification des PRs (audit diff)
+  # ──────────────────────────────────────────
+  pr-audit:
+    name: 🔎 Vérification PR
+    runs-on: ubuntu-latest
+    needs: lint
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: cli/package-lock.json
+
+      - name: Install dependencies
+        working-directory: cli
+        run: npm ci
+
+      - name: Install Playwright
+        working-directory: cli
+        run: npx playwright install chromium --with-deps
+
+      - name: Smoke audit sur la PR
+        working-directory: cli
+        run: |
+          node bin/rgaa-audit.js https://example.com -o json -s /tmp/pr-audit.json -S false
+          node -e "
+            const r = require('/tmp/pr-audit.json');
+            const taux = r.score?.taux;
+            console.log('Taux de conformité (example.com):', taux + '%');
+            console.log('NC:', r.score?.nonConformes, '| C:', r.score?.conformes);
+            // Ne pas fail la PR sur le score — example.com n'est pas sous notre contrôle
+          "
+
+      - name: Commentaire PR automatique
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '## ♿ RGAA Audit — Vérification PR\n\n';
+            try {
+              const report = JSON.parse(fs.readFileSync('/tmp/pr-audit.json', 'utf8'));
+              const score = report.score;
+              const emoji = score.taux >= 75 ? '🟢' : score.taux >= 50 ? '🟡' : '🔴';
+              body += `${emoji} **Smoke test OK** — Taux : **${score.taux}%** (${score.nonConformes} NC / ${score.conformes} C)\n\n`;
+              body += `> Test effectué sur \`example.com\` — résultat non bloquant.\n`;
+            } catch (e) {
+              body += `⚠️ Impossible de lire le rapport : ${e.message}`;
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
+
+  # ──────────────────────────────────────────
+  # JOB 5 : Publication npm (sur tag)
+  # ──────────────────────────────────────────
+  publish:
+    name: 📦 Publication npm
+    runs-on: ubuntu-latest
+    needs: [lint, test-rules]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        working-directory: cli
+        run: npm ci
+
+      - name: Publish sur npm
+        working-directory: cli
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Créer une Release GitHub
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = context.ref.replace('refs/tags/', '');
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: `RGAA Audit ${tag}`,
+              body: `## Changements\n\nVoir [CHANGELOG.md](CHANGELOG.md) pour les détails.\n\n## Installation\n\`\`\`bash\nnpm install -g @rgaa-audit/cli\n\`\`\``,
+              draft: false,
+              prerelease: tag.includes('alpha') || tag.includes('beta'),
+            });

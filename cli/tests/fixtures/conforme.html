@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Page de test — Conforme RGAA</title>
+</head>
+<body>
+
+  <!-- 12.1 C : lien d'évitement -->
+  <a href="#main">Aller au contenu principal</a>
+
+  <header>
+    <nav aria-label="Navigation principale">
+      <ul>
+        <li><a href="/">Accueil</a></li>
+        <li><a href="/contact">Nous contacter</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+
+    <!-- 9.1 C : h1 unique, hiérarchie cohérente -->
+    <h1>Titre principal de la page</h1>
+    <h2>Section</h2>
+    <h3>Sous-section</h3>
+
+    <!-- 1.1 C : image avec alt -->
+    <img src="photo.jpg" alt="Portrait de Jean Dupont, directeur artistique">
+
+    <!-- 1.2 C : image décorative -->
+    <img src="separateur.png" alt="">
+
+    <!-- 1.1 C : SVG accessible -->
+    <svg width="24" height="24" aria-hidden="true"><circle cx="12" cy="12" r="10"/></svg>
+    <svg width="24" height="24" aria-label="Icône de validation"><circle cx="12" cy="12" r="10"/></svg>
+
+    <!-- 2.1 C : iframe avec title -->
+    <iframe src="https://example.com/embed" title="Vidéo de présentation du produit"></iframe>
+
+    <!-- 5.1 C : tableau avec th et scope -->
+    <table>
+      <caption>Résultats du trimestre</caption>
+      <thead>
+        <tr>
+          <th scope="col">Nom</th>
+          <th scope="col">Prénom</th>
+          <th scope="col">Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Dupont</td><td>Jean</td><td>95</td></tr>
+      </tbody>
+    </table>
+
+    <!-- 6.1 C : liens explicites -->
+    <a href="/article-rgaa">Lire l'article sur le RGAA 4.1</a>
+    <a href="/contact">Nous contacter par formulaire</a>
+
+    <!-- 9.3 C : vraie liste -->
+    <ul>
+      <li>Premier élément</li>
+      <li>Deuxième élément</li>
+    </ul>
+
+    <!-- 11.1 C : champs avec labels -->
+    <form>
+      <label for="nom">Votre nom</label>
+      <input type="text" id="nom" name="nom" required aria-required="true">
+
+      <label for="email">Votre email</label>
+      <input type="email" id="email" name="email" required aria-required="true">
+
+      <button type="submit">Envoyer le formulaire</button>
+    </form>
+
+    <!-- 7.3 C : bouton natif -->
+    <button type="button">Action</button>
+
+  </main>
+
+  <footer>
+    <p>Pied de page du site</p>
+  </footer>
+
+</body>
+</html>
