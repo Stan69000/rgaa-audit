@@ -49,6 +49,9 @@
       return `<li><strong>${escHtml(r.id || '')}</strong> — ${escHtml(r.message || '')}${pageLine}</li>`;
     }).join('');
 
+    const reportDataScript = toInlineJson(report || {});
+    const odsDataScript = toInlineJson(hasOds ? ods : null);
+
     return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -80,7 +83,7 @@
   <div class="wrap">
     <h1>Rapport vulgarisé d’accessibilité</h1>
     <div class="sub">${escHtml((report && (report.title || report.url)) || '')} · ${new Date((report && report.timestamp) || Date.now()).toLocaleString('fr-FR')}</div>
-    <div class="disclaimer"><strong>Avertissement:</strong> ce rapport ne remplace pas un audit professionnel et n'est pas certifiant.</div>
+    <div class="disclaimer"><strong>Projet associatif vibe codé —</strong> Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.</div>
     <div class="tools">
       <button class="btn" type="button" onclick="downloadHtmlReport()">Télécharger HTML</button>
       <button class="btn" type="button" onclick="window.print()">Exporter PDF</button>
@@ -111,8 +114,8 @@
     </div>
   </div>
   <script>
-    const REPORT_DATA = ${JSON.stringify(report || {})};
-    const ODS_DOWNLOAD = ${JSON.stringify(hasOds ? ods : null)};
+    const REPORT_DATA = ${reportDataScript};
+    const ODS_DOWNLOAD = ${odsDataScript};
     function downloadHtmlReport() {
       const html = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
       const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -157,4 +160,13 @@
   }
 
   return { generateVulgarizedReport };
+
+  function toInlineJson(value) {
+    return JSON.stringify(value)
+      .replace(/</g, '\\u003C')
+      .replace(/>/g, '\\u003E')
+      .replace(/&/g, '\\u0026')
+      .replace(/\u2028/g, '\\u2028')
+      .replace(/\u2029/g, '\\u2029');
+  }
 });
