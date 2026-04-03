@@ -1,6 +1,6 @@
 # ♿ RGAA Audit — Outil d'audit d'accessibilité open-source
 
-> Audit automatisé et assisté RGAA 4.1, avec simulation d'actions humaines et analyse IA via Claude API.
+> Audit automatisé et assisté RGAA 4.1, avec simulation d'actions humaines, rapport vulgarisé actionnable et analyse IA via Claude API.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![RGAA 4.1](https://img.shields.io/badge/RGAA-4.1-blue.svg)](https://accessibilite.numerique.gouv.fr/)
@@ -13,6 +13,7 @@
 Un outil **libre, modulaire et composable** pour auditer la conformité RGAA 4.1 de tout site web :
 - **Extension Chrome** : audit en contexte, overlay sur la page, sans installation lourde
 - **CLI Playwright** : simulation d'actions humaines, audit multi-pages, CI/CD friendly
+- **Rapport vulgarisé** : restitution non technique, priorisée et orientée actions
 - **API REST** (roadmap) : intégration dans vos pipelines qualité
 - **Analyse IA** : priorisation intelligente des non-conformités via Claude API
 
@@ -35,7 +36,8 @@ rgaa-audit/
 ├── cli/                          # Outil en ligne de commande
 │   ├── package.json
 │   ├── bin/
-│   │   └── rgaa-audit.js         # Point d'entrée CLI
+│   │   ├── rgaa-audit.js         # Point d'entrée CLI
+│   │   └── rgaa-fill-grid.js     # Pré-remplissage grille ODS RGAA
 │   ├── src/
 │   │   ├── audit.js              # Orchestrateur principal
 │   │   ├── browser.js            # Pilote Playwright
@@ -55,9 +57,8 @@ rgaa-audit/
 │   │   │   ├── 12-navigation.js
 │   │   │   └── 13-consultation.js
 │   │   ├── reporters/
-│   │   │   ├── json.js
-│   │   │   ├── html.js
-│   │   │   └── csv.js
+│   │   │   ├── index.js          # JSON / HTML / CSV / vulgarized
+│   │   │   └── ods-grid.js       # Mapping audit -> grille ODS
 │   │   └── ai/
 │   │       └── claude-analysis.js # Analyse IA via Anthropic API
 │
@@ -84,20 +85,48 @@ rgaa-audit/
 ## 🚀 Installation (CLI)
 
 ```bash
-npm install -g @rgaa-audit/cli
+git clone https://github.com/Stan69000/rgaa-audit
+cd rgaa-audit/cli
+npm install
+npx playwright install chromium
 
 # Audit simple
-rgaa-audit https://mon-site.fr
+node bin/rgaa-audit.js https://mon-site.fr
 
 # Audit avec rapport HTML
-rgaa-audit https://mon-site.fr --output html --save ./rapport.html
+node bin/rgaa-audit.js https://mon-site.fr --output html --save ./rapport.html
+
+# Audit + JSON + rapport vulgarisé (actionnable, non technique)
+node bin/rgaa-audit.js https://mon-site.fr -o json -s ./rapport.json --vulgarized-save ./rapport-vulgarise.html
 
 # Audit avec analyse IA (nécessite ANTHROPIC_API_KEY)
-rgaa-audit https://mon-site.fr --ai --api-key sk-ant-...
+node bin/rgaa-audit.js https://mon-site.fr --api-key "$ANTHROPIC_API_KEY"
 
-# Simulation d'actions humaines
-rgaa-audit https://mon-site.fr --simulate --depth 3
+# Audit multi-pages (crawler)
+node bin/rgaa-audit.js https://mon-site.fr --depth 3
 ```
+
+Le rapport vulgarisé HTML inclut:
+- Une lecture simple (niveau, priorités P1/P2/P3, effort)
+- Les leviers actionnables avec indication de zones à corriger
+- Deux actions de sortie directes: **Télécharger HTML** et **Exporter PDF**
+
+---
+
+## 📄 Pré-remplir la grille ODS RGAA (P01..Pn)
+
+Après avoir audité plusieurs pages (`p01.json`, `p02.json`, etc.), vous pouvez pré-remplir la grille officielle:
+
+```bash
+node bin/rgaa-fill-grid.js \
+  --report ./p01.json \
+  --report ./p02.json \
+  --report ./p03.json \
+  --template "/chemin/rgaa4.1.2.modele-de-grille-d-audit.ods" \
+  --output "./rgaa-grille-prefill.ods"
+```
+
+Note zsh: pour construire dynamiquement plusieurs `--report`, utilisez un tableau (`REPORT_ARGS=(...)`) puis `"\${REPORT_ARGS[@]}"`.
 
 ---
 

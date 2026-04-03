@@ -435,7 +435,7 @@
       <div class="dot dot-g"></div>
       <span class="terminal-title">Terminal — RGAA Audit CLI</span>
     </div>
-    <pre class="terminal-body"><code><span class="t-prompt">$</span> <span class="t-cmd">node bin/rgaa-audit.js https://mon-site.fr -o html -s rapport.html</span>
+    <pre class="terminal-body"><code><span class="t-prompt">$</span> <span class="t-cmd">node bin/rgaa-audit.js https://mon-site.fr -o json -s rapport.json --vulgarized-save rapport-vulgarise.html</span>
 <span class="t-dim">♿  RGAA Audit CLI v0.2.0</span>
 <span class="t-dim">🌐 Chargement de la page…</span>
 <span class="t-dim">⌨️  Simulation navigation clavier (15 éléments)…</span>
@@ -445,7 +445,8 @@
 │  Taux de conformité : <span style="color:var(--green)">89%  ████████████░░░░</span>  │
 │  <span class="t-green">Conformes : 17</span>  <span class="t-yellow">Non conformes : 2</span>         │
 └─────────────────────────────────────────┘
-<span class="t-green">📁 Rapport sauvegardé : rapport.html</span></code></pre>
+<span class="t-green">📁 Rapport sauvegardé : rapport.json</span>
+<span class="t-green">📄 Rapport vulgarisé sauvegardé : rapport-vulgarise.html</span></code></pre>
   </div>
 </div>
 
@@ -484,7 +485,7 @@
     <div class="feature">
       <div class="feature-icon" aria-hidden="true">⚙️</div>
       <h3>CLI Playwright</h3>
-      <p>Automatisation complète depuis le terminal. Audit multi-pages, intégration CI/CD, rapports JSON / HTML / CSV.</p>
+      <p>Automatisation complète depuis le terminal. Audit multi-pages, intégration CI/CD, rapports JSON / HTML / CSV + rapport vulgarisé actionnable.</p>
     </div>
     <div class="feature">
       <div class="feature-icon" aria-hidden="true">⌨️</div>
@@ -524,7 +525,7 @@
       <li class="step"><span class="step-num" aria-hidden="true">05</span><div><h3>Test responsive 320px</h3><p>Redimensionnement à 320px de large — standard mobile WCAG.</p></div></li>
       <li class="step"><span class="step-num" aria-hidden="true">06</span><div><h3>Screenshots automatiques</h3><p>Captures à chaque étape clé pour documenter l'audit.</p></div></li>
       <li class="step"><span class="step-num" aria-hidden="true">07</span><div><h3>Calcul du taux de conformité</h3><p>Score RGAA officiel : conformes / (conformes + non-conformes).</p></div></li>
-      <li class="step"><span class="step-num" aria-hidden="true">08</span><div><h3>Rapport + analyse IA (opt-in)</h3><p>Export HTML/JSON/CSV. Recommandations priorisées si clé Anthropic fournie.</p></div></li>
+      <li class="step"><span class="step-num" aria-hidden="true">08</span><div><h3>Rapport + analyse IA (opt-in)</h3><p>Export JSON/HTML/CSV, rapport vulgarisé avec leviers actionnables, et export PDF depuis le rapport.</p></div></li>
     </ol>
     <div class="steps-visual" aria-hidden="true">
       <div style="color:var(--muted)"># Simulation en cours…</div>
@@ -591,7 +592,7 @@
         <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">npx playwright install chromium</span></div>
         <div style="height:8px"></div>
         <div class="code-comment"># Lancer un audit</div>
-        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">node bin/rgaa-audit.js https://mon-site.fr -o html -s rapport.html</span></div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">node bin/rgaa-audit.js https://mon-site.fr -o json -s rapport.json --vulgarized-save rapport-vulgarise.html</span></div>
       </div>
     </div>
     <div class="install-card">
