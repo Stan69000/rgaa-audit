@@ -1,24 +1,43 @@
-// background.js — v0.2.1
-// Ajout : relai appel Claude API (contourne CORS extension Chrome MV3)
+// background.js — v0.2.2
+// Fix : injection fiable du content script avant runAudit + relai Claude API
 
 'use strict';
 
-chrome.action.onClicked.addListener((tab) => {
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    files: ['content.js']
-  });
-});
+async function getActiveTab() {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  return tabs && tabs.length ? tabs[0] : null;
+}
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-
+  
   // ── Relai audit DOM ──
   if (message.action === 'getAuditResults') {
-    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-      chrome.tabs.sendMessage(tabs[0].id, { action: 'runAudit' }, response => {
-        sendResponse(response);
-      });
-    });
+    (async () => {
+      try {
+        const tab = await getActiveTab();
+        if (!tab?.id) {
+          sendResponse({ success: false, error: 'Aucun onglet actif détecté.' });
+          return;
+        }
+
+        // Toujours (ré)injecter content.js pour éviter "Receiving end does not exist"
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content.js']
+        });
+
+        chrome.tabs.sendMessage(tab.id, { action: 'runAudit' }, response => {
+          if (chrome.runtime.lastError) {
+            sendResponse({ success: false, error: chrome.runtime.lastError.message });
+            return;
+          }
+          sendResponse(response || { success: false, error: 'Réponse vide du content script.' });
+        });
+      } catch (e) {
+        sendResponse({ success: false, error: e.message || String(e) });
+      }
+    })();
+
     return true;
   }
 
@@ -40,11 +59,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         messages: [{ role: 'user', content: prompt }],
       }),
     })
-    .then(res => {
+    .then(async res => {
       if (!res.ok) {
-        return res.json().then(err => {
-          sendResponse({ error: `API ${res.status} : ${err?.error?.message || res.statusText}` });
-        });
+        let err;
+        try {
+          err = await res.json();
+        } catch {
+          err = null;
+        }
+        sendResponse({ error: `API ${res.status} : ${err?.error?.message || res.statusText}` });
+        return null;
       }
       return res.json();
     })
