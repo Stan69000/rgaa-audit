@@ -24,7 +24,7 @@ function generateCsv(report) {
 
 // ── HTML ─────────────────────────────────────
 function generateHtml(report) {
-  const { url, title, timestamp, score, results, simulation, aiAnalysis } = report;
+  const { url, title, timestamp, score, results, simulation } = report;
 
   const ncItems = results.filter(r => r.status === 'NC');
   const cItems  = results.filter(r => r.status === 'C');
@@ -69,9 +69,6 @@ function generateHtml(report) {
   table { width:100%; border-collapse:collapse; background:#0D0D1A; border-radius:12px; overflow:hidden; }
   thead { background:#0A0A18; }
   th { padding:10px 12px; text-align:left; font-size:11px; color:#445; font-family:'DM Mono',monospace; font-weight:500; }
-  .ai-box { background:#0D0A1A; border:1px solid #2A1A3A; border-radius:12px; padding:20px; margin-bottom:24px; }
-  .ai-label { font-family:'DM Mono',monospace; font-size:11px; color:#A855F7; margin-bottom:10px; }
-  .ai-text { font-size:13px; color:#C8C8E8; line-height:1.8; white-space:pre-wrap; }
   .sim-box { background:#0A1A0D; border:1px solid #00C89620; border-radius:12px; padding:16px; margin-bottom:24px; }
   .sim-label { font-family:'DM Mono',monospace; font-size:11px; color:#00C896; margin-bottom:8px; }
   .screenshots { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
@@ -109,12 +106,6 @@ function generateHtml(report) {
     </div>` : ''}
   </div>
 </div>
-
-${aiAnalysis ? `
-<div class="ai-box">
-  <div class="ai-label">✨ Analyse IA — Claude</div>
-  <div class="ai-text">${esc(aiAnalysis)}</div>
-</div>` : ''}
 
 <div style="margin-bottom:16px;display:flex;gap:12px;align-items:center">
   <h2 style="font-size:18px;font-weight:700">Résultats détaillés</h2>

@@ -56,7 +56,6 @@ jobs:
           node --check src/browser.js
           node --check src/rules/index.js
           node --check src/reporters/index.js
-          node --check src/ai/claude-analysis.js
           echo "✅ Syntaxe OK"
 
       - name: Vérification manifest extension
@@ -148,19 +147,11 @@ jobs:
 
       - name: Lancer l'audit RGAA
         working-directory: cli
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          EXTRA=""
-          if [ -n "$ANTHROPIC_API_KEY" ]; then
-            EXTRA="-k $ANTHROPIC_API_KEY"
-          fi
-
           node bin/rgaa-audit.js "${{ steps.target.outputs.url }}" \
             -o "${{ steps.target.outputs.format }}" \
             -s "../rapport-rgaa.${{ steps.target.outputs.format }}" \
-            -S \
-            $EXTRA
+            -S
 
       - name: Lire le score pour le résumé
         id: score

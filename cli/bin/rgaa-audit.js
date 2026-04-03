@@ -17,7 +17,6 @@ const { values, positionals } = parseArgs({
     'vulgarized-save': { type: 'string', default: '' },            // rapport vulgarisé html
     simulate: { type: 'boolean', short: 'S', default: true },      // simulation clavier
     depth:    { type: 'string',  short: 'd', default: '1' },       // nb pages à crawler
-    'api-key':{ type: 'string',  short: 'k', default: '' },        // clé Anthropic (optionnel)
     headless: { type: 'boolean', short: 'H', default: true },      // headless ou visible
     help:     { type: 'boolean', short: 'h', default: false },
   },
@@ -37,7 +36,6 @@ if (values.help || !positionals.length) {
         --vulgarized-save  Génère un rapport vulgarisé HTML (non-technique)
     -S, --simulate Simuler les actions humaines (défaut: true)
     -d, --depth    Nombre de pages à auditer (défaut: 1)
-    -k, --api-key  Clé API Anthropic (analyse IA optionnelle)
     -H, --headless Mode headless (défaut: true)
     -h, --help     Afficher cette aide
 
@@ -45,7 +43,6 @@ if (values.help || !positionals.length) {
     node bin/rgaa-audit.js https://mon-site.fr
     node bin/rgaa-audit.js https://mon-site.fr -o html -s rapport.html
     node bin/rgaa-audit.js https://mon-site.fr -o json -s rapport.json --vulgarized-save rapport-vulgarise.html
-    node bin/rgaa-audit.js https://mon-site.fr -k sk-ant-... -S
   `);
   process.exit(0);
 }
@@ -57,7 +54,6 @@ const opts = {
   vulgarizedSave: values['vulgarized-save'],
   simulate: values.simulate,
   depth:    parseInt(values.depth),
-  apiKey:   values['api-key'],
   headless: values.headless,
 };
 

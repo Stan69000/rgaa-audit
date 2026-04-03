@@ -42,19 +42,13 @@ jobs:
 
       - name: Audit ${{ matrix.url }}
         working-directory: cli
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           SAFE_NAME=$(echo "${{ matrix.url }}" | sed 's|https://||;s|/|-|g')
-          EXTRA=""
-          if [ -n "$ANTHROPIC_API_KEY" ]; then
-            EXTRA="-k $ANTHROPIC_API_KEY"
-          fi
 
           node bin/rgaa-audit.js "${{ matrix.url }}" \
             -o html \
             -s "../rapport-${SAFE_NAME}.html" \
-            -S $EXTRA
+            -S
 
           # Aussi en JSON pour parsing
           node bin/rgaa-audit.js "${{ matrix.url }}" \

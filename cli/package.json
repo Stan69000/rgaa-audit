@@ -1,7 +1,7 @@
 {
   "name": "@rgaa-audit/cli",
   "version": "0.1.0",
-  "description": "Auditeur RGAA 4.1 — CLI avec simulation d'actions humaines et analyse IA",
+  "description": "Auditeur RGAA 4.1 — CLI avec simulation d'actions humaines",
   "main": "src/audit.js",
   "bin": {
     "rgaa-audit": "./bin/rgaa-audit.js",
@@ -11,7 +11,7 @@
     "test": "node --test tests/*.test.js",
     "test:verbose": "node --test --reporter=spec tests/*.test.js",
     "audit:smoke": "node bin/rgaa-audit.js https://example.com -o json -s /tmp/smoke.json -S false",
-    "lint": "node --check bin/rgaa-audit.js bin/rgaa-fill-grid.js src/audit.js src/simulator.js src/browser.js src/rules/index.js src/reporters/index.js src/reporters/ods-grid.js src/ai/claude-analysis.js"
+    "lint": "node --check bin/rgaa-audit.js bin/rgaa-fill-grid.js src/audit.js src/simulator.js src/browser.js src/rules/index.js src/reporters/index.js src/reporters/ods-grid.js"
   },
   "dependencies": {
     "playwright": "^1.44.0"

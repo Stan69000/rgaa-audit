@@ -1,6 +1,6 @@
 # ♿ RGAA Audit — Outil d'audit d'accessibilité open-source
 
-> Audit automatisé et assisté RGAA 4.1, avec simulation d'actions humaines, rapport vulgarisé actionnable et analyse IA via Claude API.
+> Audit automatisé et assisté RGAA 4.1, avec simulation d'actions humaines et rapport vulgarisé actionnable.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![RGAA 4.1](https://img.shields.io/badge/RGAA-4.1-blue.svg)](https://accessibilite.numerique.gouv.fr/)
@@ -15,7 +15,6 @@ Un outil **libre, modulaire et composable** pour auditer la conformité RGAA 4.1
 - **CLI Playwright** : simulation d'actions humaines, audit multi-pages, CI/CD friendly
 - **Rapport vulgarisé** : restitution non technique, priorisée et orientée actions
 - **API REST** (roadmap) : intégration dans vos pipelines qualité
-- **Analyse IA** : priorisation intelligente des non-conformités via Claude API
 
 ---
 
@@ -59,8 +58,6 @@ rgaa-audit/
 │   │   ├── reporters/
 │   │   │   ├── index.js          # JSON / HTML / CSV / vulgarized
 │   │   │   └── ods-grid.js       # Mapping audit -> grille ODS
-│   │   └── ai/
-│   │       └── claude-analysis.js # Analyse IA via Anthropic API
 │
 ├── shared/
 │   ├── rgaa-criteria.js          # Définition complète des 106 critères
@@ -99,9 +96,6 @@ node bin/rgaa-audit.js https://mon-site.fr --output html --save ./rapport.html
 # Audit + JSON + rapport vulgarisé (actionnable, non technique)
 node bin/rgaa-audit.js https://mon-site.fr -o json -s ./rapport.json --vulgarized-save ./rapport-vulgarise.html
 
-# Audit avec analyse IA (nécessite ANTHROPIC_API_KEY)
-node bin/rgaa-audit.js https://mon-site.fr --api-key "$ANTHROPIC_API_KEY"
-
 # Audit multi-pages (crawler)
 node bin/rgaa-audit.js https://mon-site.fr --depth 3
 ```
@@ -139,8 +133,7 @@ Note zsh: pour construire dynamiquement plusieurs `--report`, utilisez un tablea
 
 Sécurité et confidentialité :
 - Les résultats d'audit restent locaux par défaut (analyse DOM + export JSON).
-- L'analyse IA est optionnelle et nécessite un consentement explicite avant tout envoi réseau.
-- La clé API peut être gardée en session uniquement (par défaut) ou persistée explicitement.
+- Aucun envoi externe n'est réalisé par l'outil pendant l'audit standard.
 
 ---
 
@@ -188,7 +181,6 @@ const actions = [
 ## 🔑 Variables d'environnement
 
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...   # Pour l'analyse IA
 RGAA_AUDIT_PORT=3000            # Port de l'interface web (optionnel)
 ```
 
@@ -212,4 +204,4 @@ MIT — Libre d'utilisation, de modification et de distribution.
 
 ---
 
-*Projet initié en 2026 · Construit avec Playwright, Claude API, React*
+*Projet initié en 2026 · Construit avec Playwright, React*

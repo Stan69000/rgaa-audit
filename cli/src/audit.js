@@ -1,6 +1,6 @@
 /**
  * src/audit.js — Orchestrateur principal
- * Coordonne : browser → simulator → rules → AI → reporter
+ * Coordonne : browser → simulator → rules → reporter
  */
 
 'use strict';
@@ -8,9 +8,8 @@
 const { createBrowser, closeBrowser } = require('./browser');
 const { simulateHumanActions }        = require('./simulator');
 const { runDomRules }                  = require('./rules');
-const { analyzeWithClaude }            = require('./ai/claude-analysis');
 const { generateReport }               = require('./reporters');
-const { log, success, warn, error }    = require('./logger');
+const { log, success }                 = require('./logger');
 
 async function runAudit(url, opts = {}) {
   const {
@@ -19,7 +18,6 @@ async function runAudit(url, opts = {}) {
     vulgarizedSave = '',
     simulate = true,
     depth    = 1,
-    apiKey   = '',
     headless = true,
   } = opts;
 
@@ -57,15 +55,7 @@ async function runAudit(url, opts = {}) {
 
     printSummary(score, pageTitle, url);
 
-    // ── 5. ANALYSE IA (OPTIONNELLE) ───────────
-    let aiAnalysis = null;
-    if (apiKey) {
-      log('\n🤖 Analyse IA via Claude…');
-      aiAnalysis = await analyzeWithClaude(apiKey, url, score, allResults);
-      if (aiAnalysis) success('   Recommandations IA générées');
-    }
-
-    // ── 6. RAPPORT ────────────────────────────
+    // ── 5. RAPPORT ────────────────────────────
     const report = {
       url,
       title: pageTitle,
@@ -74,7 +64,6 @@ async function runAudit(url, opts = {}) {
       score,
       results: allResults,
       simulation: simulationResults?.summary || null,
-      aiAnalysis,
     };
 
     const output_str = await generateReport(report, output);
