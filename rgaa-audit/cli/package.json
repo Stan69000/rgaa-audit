@@ -1,0 +1,35 @@
+{
+  "name": "@rgaa-audit/cli",
+  "version": "0.2.0",
+  "description": "Auditeur RGAA 4.1 — CLI avec simulation d'actions humaines et analyse IA",
+  "main": "src/audit.js",
+  "bin": {
+    "rgaa-audit": "./bin/rgaa-audit.js"
+  },
+  "scripts": {
+    "test": "node --test tests/rules.test.js",
+    "test:verbose": "node --test --reporter=spec tests/rules.test.js",
+    "audit:smoke": "node bin/rgaa-audit.js https://example.com -o json -s /tmp/smoke.json -S false",
+    "lint": "node --check bin/rgaa-audit.js src/audit.js src/simulator.js src/browser.js src/rules/index.js src/reporters/index.js src/ai/claude-analysis.js"
+  },
+  "dependencies": {
+    "playwright": "^1.44.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "rgaa",
+    "accessibility",
+    "a11y",
+    "wcag",
+    "audit",
+    "playwright"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ton-user/rgaa-audit"
+  }
+}
