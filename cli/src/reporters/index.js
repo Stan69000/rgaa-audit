@@ -153,6 +153,9 @@ function generateVulgarized(report) {
   const avg = top.length ? Math.round(top.reduce((acc, item) => acc + effortToPoints(item.effort), 0) / top.length) : 0;
   const effortLabel = avg <= 1 ? 'Faible' : avg === 2 ? 'Moyen' : 'Élevé';
 
+  const ods = report.odsDownload || null;
+  const hasOds = Boolean(ods?.base64 && ods?.fileName);
+
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -196,6 +199,7 @@ function generateVulgarized(report) {
     <div class="tools">
       <button type="button" class="btn" onclick="downloadHtmlReport()">Télécharger HTML</button>
       <button type="button" class="btn" onclick="window.print()">Exporter PDF</button>
+      ${hasOds ? `<button type="button" class="btn" onclick="downloadOdsReport()">Télécharger ODS</button>` : ''}
     </div>
 
     <div class="grid">
@@ -245,6 +249,8 @@ function generateVulgarized(report) {
     </div>
   </div>
   <script>
+    const ODS_DOWNLOAD = ${JSON.stringify(hasOds ? ods : null)};
+
     function downloadHtmlReport() {
       const html = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
       const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -252,6 +258,22 @@ function generateVulgarized(report) {
       const a = document.createElement('a');
       a.href = url;
       a.download = 'rapport-vulgarise.html';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadOdsReport() {
+      if (!ODS_DOWNLOAD || !ODS_DOWNLOAD.base64) return;
+      const bin = atob(ODS_DOWNLOAD.base64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: ODS_DOWNLOAD.mimeType || 'application/vnd.oasis.opendocument.spreadsheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = ODS_DOWNLOAD.fileName || 'rgaa-grille.ods';
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -472,7 +494,7 @@ function renderVulgarizedPages(report) {
     const urlLine = href
       ? `<a href="${href}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;">${href}</a>`
       : 'URL indisponible';
-    return `<li><strong>${esc(p.title || p.url || 'Page')}</strong><br>${urlLine} · ${taux}% · ${nc} NC / ${c} C</li>`;
+    return `<li><strong>${esc(p.title || p.url || 'Page')}</strong><br>${urlLine}<br>Conformité: <strong>${taux}%</strong> · Critères non conformes: <strong>${nc}</strong> · Critères conformes: <strong>${c}</strong></li>`;
   }).join('');
 
   return `

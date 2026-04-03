@@ -9,6 +9,7 @@ const { createBrowser, closeBrowser } = require('./browser');
 const { simulateHumanActions }        = require('./simulator');
 const { runDomRules }                  = require('./rules');
 const { generateReport }               = require('./reporters');
+const { fillRgaaGridFromReports }      = require('./reporters/ods-grid');
 const { log, success, warn }           = require('./logger');
 
 async function runAudit(url, opts = {}) {
@@ -16,6 +17,9 @@ async function runAudit(url, opts = {}) {
     output   = 'json',
     save     = '',
     vulgarizedSave = '',
+    odsTemplate = '',
+    odsSave = '',
+    odsReplicateAllSheets = false,
     simulate = true,
     depth    = 1,
     headless = true,
@@ -126,6 +130,24 @@ async function runAudit(url, opts = {}) {
       simulation: simulationResults?.summary || null,
     };
 
+    if (odsTemplate && odsSave) {
+      const perPageReports = buildPerPageReports(report);
+      const odsResult = fillRgaaGridFromReports({
+        reports: perPageReports,
+        templatePath: odsTemplate,
+        outputPath: odsSave,
+        replicateToAllSheets: !!odsReplicateAllSheets,
+      });
+      report.ods = {
+        outputPath: odsResult.outputPath,
+        filledSheets: odsResult.filledSheets,
+        filledCriteria: odsResult.filledCriteria,
+      };
+      success(`📊 Grille ODS sauvegardée : ${odsResult.outputPath}`);
+    } else if (odsTemplate || odsSave) {
+      warn('   Export ODS ignoré: fournir --ods-template et --ods-save ensemble.');
+    }
+
     const output_str = await generateReport(report, output);
     const fs = require('node:fs');
 
@@ -137,7 +159,8 @@ async function runAudit(url, opts = {}) {
     }
 
     if (vulgarizedSave) {
-      const vulgarized = await generateReport(report, 'vulgarized');
+      const reportForVulgarized = attachOdsDownloadPayload(report);
+      const vulgarized = await generateReport(reportForVulgarized, 'vulgarized');
       fs.writeFileSync(vulgarizedSave, vulgarized, 'utf8');
       success(`📄 Rapport vulgarisé sauvegardé : ${vulgarizedSave}`);
     }
@@ -161,6 +184,41 @@ function mergeResults(domResults, simResults, pageUrl, pageTitle) {
     );
   }
   return all;
+}
+
+function buildPerPageReports(report) {
+  const pages = Array.isArray(report.pages) ? report.pages : [];
+  const byPage = new Map();
+  for (const result of report.results || []) {
+    const pageUrl = result?.pageUrl || report.url || '';
+    if (!byPage.has(pageUrl)) byPage.set(pageUrl, []);
+    byPage.get(pageUrl).push(result);
+  }
+
+  return pages.map((p) => ({
+    title: p.title || p.url || 'Page',
+    url: p.url || '',
+    results: byPage.get(p.url || '') || [],
+  })).filter((p) => p.results.length > 0);
+}
+
+function attachOdsDownloadPayload(report) {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  if (!report?.ods?.outputPath) return report;
+  try {
+    const bytes = fs.readFileSync(report.ods.outputPath);
+    return {
+      ...report,
+      odsDownload: {
+        fileName: path.basename(report.ods.outputPath) || 'rgaa-grille.ods',
+        mimeType: 'application/vnd.oasis.opendocument.spreadsheet',
+        base64: bytes.toString('base64'),
+      },
+    };
+  } catch {
+    return report;
+  }
 }
 
 function computeScore(results) {
