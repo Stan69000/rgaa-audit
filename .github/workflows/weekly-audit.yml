@@ -112,7 +112,7 @@ jobs:
           URL_TO_AUDIT: ${{ matrix.url }}
 
       - name: Upload reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: audit-${{ strategy.job-index }}-${{ github.run_number }}
