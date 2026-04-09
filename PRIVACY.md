@@ -1,44 +1,46 @@
-# Privacy Policy (RGAA Audit)
+# Politique de confidentialité – RGAA Audit
 
-Date de mise a jour: 3 avril 2026
+Date de mise à jour : 9 avril 2026
 
-Cette politique couvre le projet RGAA Audit (extension Chrome et CLI).
+## 1. Collecte des données
 
-## 1. Donnees traitees
+L'extension RGAA Audit ne collecte aucune donnée personnelle.
 
-### Extension Chrome
+Aucune information permettant d'identifier un utilisateur (nom, email, adresse, etc.) n'est collectée, stockée ou transmise.
 
-- L'analyse est effectuee localement dans votre navigateur, sur la page auditee.
-- Les resultats (criteres, extraits, URL analysee) sont traites localement pour affichage et export.
-- Aucun envoi automatique de ces donnees vers nos serveurs n'est effectue par l'extension dans sa version actuelle.
+## 2. Traitement des données
 
-### CLI
+Toutes les analyses réalisées par l'extension sont effectuées localement dans le navigateur de l'utilisateur.
 
-- Le CLI analyse les pages que vous lui fournissez et ecrit les rapports localement sur votre machine (selon les options de commande).
-- Aucune collecte centralisee n'est effectuee par defaut par l'equipe du projet.
+Cela signifie que :
 
-## 2. Partage des donnees
+- aucune donnée n'est envoyée à un serveur externe ;
+- aucune donnée n'est stockée à distance ;
+- aucune donnée n'est partagée avec des tiers.
 
-- Nous ne revendons pas vos donnees.
-- Nous n'exploitons pas de pipeline serveur de collecte pour les rapports d'audit dans la version actuelle.
-- Si vous partagez volontairement un rapport (ex: ticket, issue, email), ce partage releve de votre initiative.
+## 3. Utilisation des autorisations
 
-## 3. Stockage et retention
+L'extension utilise uniquement les autorisations suivantes :
 
-- Les rapports sont stockes localement chez vous, selon vos actions (export JSON/HTML/CSV).
-- La duree de conservation depend de vos propres pratiques de stockage.
+- `activeTab` : permet d'accéder temporairement à la page active afin d'effectuer un audit d'accessibilité ;
+- `scripting` : permet d'exécuter un script local pour analyser la structure de la page.
 
-## 4. Securite
+Ces autorisations sont utilisées uniquement lorsque l'utilisateur déclenche un audit.
 
-Nous appliquons un principe de moindre privilege dans l'extension et corrigeons les failles signalees selon notre politique de securite.
+## 4. Services tiers
 
-Voir: `SECURITY.md`
+L'extension n'utilise aucun service tiers, outil de tracking ou solution d'analyse.
 
-## 5. Vos obligations
+## 5. Sécurité
 
-Vous etes responsable de l'usage des rapports et de la conformite de votre organisation (RGPD, obligations sectorielles, etc.).
+Aucune donnée n'étant collectée ni transmise, les risques liés à la sécurité des données sont inexistants.
 
-## 6. Evolution de cette politique
+## 6. Évolution
 
-Cette politique peut evoluer si les fonctionnalites changent (ex: ajout d'une API distante). En cas d'evolution, la politique sera mise a jour avant ou au moment de la mise en production.
+Cette politique de confidentialité peut être mise à jour en cas d'évolution de l'extension.
 
+## 7. Contact
+
+Pour toute question :
+
+- https://stan69000.github.io/rgaa-audit/
