@@ -94,6 +94,26 @@ Voir [CONTRIBUTING.md](CONTRIBUTING.md).
 Documentation publique: [https://stan69000.github.io/rgaa-audit/](https://stan69000.github.io/rgaa-audit/)
 Guide critères vulgarisé: [https://stan69000.github.io/rgaa-audit/criteres.html](https://stan69000.github.io/rgaa-audit/criteres.html)
 
+## Securite automatisee (CI/CD)
+
+- Mises a jour dependances via `Dependabot` (`.github/dependabot.yml`)
+- Auto-merge uniquement pour MAJ `patch`/`minor` Dependabot (workflow `Dependabot auto-merge (safe updates)`)
+- Scans obligatoires: `npm audit`, `Dependency review`, `CodeQL`, `gitleaks`
+- Monitoring periodique du site public (workflow `Site security monitoring`)
+- Durcissement page statique via meta-politiques (`Content-Security-Policy`, `Referrer-Policy`, `Permissions-Policy`)
+
+### Rollback rapide en cas de probleme
+
+Si une release casse le site public, lancer le workflow `Rollback GitHub Pages` et redeployer un `tag` ou un `commit SHA` stable.
+
+### WAF (one-shot)
+
+Pour un WAF complet avec tres peu d'interaction, placer le domaine derriere Cloudflare (ou equivalent) une seule fois, puis activer:
+
+- Managed WAF rules
+- Bot protection
+- Rate limiting
+
 ## Licence
 
 MIT

@@ -1,0 +1,52 @@
+name: Rollback GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      rollback_ref:
+        description: 'Tag, commit SHA, ou branche a redeployer (ex: v0.2.0 ou a1b2c3d)'
+        required: true
+      reason:
+        description: 'Raison du rollback (optionnel)'
+        required: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Redeploy docs from selected ref
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout selected ref
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.rollback_ref }}
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload docs artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs
+
+      - name: Deploy rollback
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+      - name: Rollback summary
+        run: |
+          echo "## Rollback effectue" >> $GITHUB_STEP_SUMMARY
+          echo "- Ref redeployee: \`${{ inputs.rollback_ref }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Raison: \`${{ inputs.reason || 'non renseignee' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- URL: ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
