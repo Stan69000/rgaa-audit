@@ -29,9 +29,67 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  chrome-store-republish-signal:
+    name: Chrome Store republish signal
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect extension changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          PUSH_AFTER_SHA: ${{ github.sha }}
+        run: |
+          set -eu
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            BASE="$PR_BASE_SHA"
+            HEAD="$PR_HEAD_SHA"
+          else
+            BASE="$PUSH_BEFORE_SHA"
+            HEAD="$PUSH_AFTER_SHA"
+          fi
+
+          if [ -z "${BASE:-}" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            BASE="$(git rev-parse HEAD~1)"
+          fi
+
+          CHANGED="$(git diff --name-only "$BASE" "$HEAD" -- extension/ || true)"
+
+          if [ -n "$CHANGED" ]; then
+            echo "::warning title=Chrome Web Store::Des fichiers dans extension/ ont change. Une republication Chrome Web Store est necessaire apres merge/deploiement."
+            {
+              echo "## Chrome Web Store"
+              echo ""
+              echo ":warning: Des changements ont ete detectes dans \`extension/\`."
+              echo ""
+              echo "Action requise: incrementer \`extension/manifest.json\` (\`version\`) et republier l'extension sur Chrome Web Store."
+              echo ""
+              echo "Fichiers detectes:"
+              echo "$CHANGED" | sed 's/^/- /'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::notice title=Chrome Web Store::Aucun changement dans extension/. Pas de republication Chrome Web Store requise pour cette PR."
+            {
+              echo "## Chrome Web Store"
+              echo ""
+              echo ":white_check_mark: Aucun changement dans \`extension/\`."
+              echo ""
+              echo "Aucune republication Chrome Web Store requise pour cette livraison."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    needs: chrome-store-republish-signal
     timeout-minutes: 10
     steps:
       - name: Checkout
