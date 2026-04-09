@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), interest-cohort=()">
+  <meta name="description" content="Politique de confidentialité de RGAA Audit.">
+  <title>Politique de confidentialité — RGAA Audit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0C0F;
+      --bg2: #111318;
+      --bg3: #181B22;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text: #E8EAF0;
+      --muted: #9CA3AF;
+      --accent: #C63F1D;
+      --accent2: #FF8C6B;
+      --sans: 'Geist', sans-serif;
+      --serif: 'Instrument Serif', serif;
+      --mono: 'Geist Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+    .disclaimer {
+      background: rgba(234,179,8,0.08);
+      border-bottom: 1px solid rgba(234,179,8,0.2);
+      padding: 12px 24px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .disclaimer a { color: var(--accent2); }
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(11,12,15,0.92);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      padding: 0 24px;
+      height: 60px;
+    }
+    .nav-logo { text-decoration: none; color: var(--text); font-family: var(--mono); font-size: 14px; }
+    .nav-links { display: flex; gap: 18px; align-items: center; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 13px; }
+    .nav-links a:hover, .nav-links a:focus { color: var(--text); text-decoration: underline; }
+    main { max-width: 920px; margin: 0 auto; padding: 56px 24px 96px; }
+    .hero h1 { font-family: var(--serif); font-size: clamp(34px, 6vw, 62px); font-weight: 400; line-height: 1.05; margin-bottom: 14px; }
+    .hero h1 em { color: var(--accent); font-style: italic; }
+    .hero p { color: var(--muted); font-size: 17px; margin-bottom: 30px; }
+    .updated { display: inline-flex; align-items: center; font-family: var(--mono); font-size: 12px; color: var(--accent2); background: rgba(255,140,107,0.10); border: 1px solid rgba(255,140,107,0.25); border-radius: 999px; padding: 4px 12px; margin-bottom: 24px; }
+    .policy { display: grid; gap: 16px; }
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card h2 { font-size: 20px; font-weight: 500; margin-bottom: 10px; }
+    .card p { color: var(--muted); font-size: 15px; }
+    .card ul { margin: 10px 0 0 18px; color: var(--muted); font-size: 15px; }
+    .card li + li { margin-top: 4px; }
+    .link-inline { color: var(--accent2); text-decoration: underline; }
+    footer { border-top: 1px solid var(--border); padding: 28px 24px 42px; color: var(--muted); font-size: 13px; }
+    footer a { color: var(--accent2); }
+    @media (max-width: 900px) {
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <aside aria-label="Avertissement important">
+    <div class="disclaimer">
+      <strong>⚠️ Projet associatif vibe codé</strong> — Cet outil est développé bénévolement par
+      <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener">Le Singe Du Numérique</a>
+      dans une démarche d'ouverture de l'accessibilité au plus grand nombre.
+    </div>
+  </aside>
+
+  <nav aria-label="Navigation principale">
+    <a class="nav-logo" href="/rgaa-audit/">♿ rgaa-audit</a>
+    <div class="nav-links">
+      <a href="/rgaa-audit/">Accueil</a>
+      <a href="/rgaa-audit/criteres.html">Guide accessibilité</a>
+      <a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <h1><em>Politique de confidentialité</em> — RGAA Audit</h1>
+      <div class="updated" aria-label="Date de mise à jour">Mise à jour : 9 avril 2026</div>
+      <p>
+        Cette politique décrit le traitement des données pour l'extension RGAA Audit.
+      </p>
+    </section>
+
+    <section class="policy" aria-label="Contenu de la politique de confidentialité">
+      <article class="card">
+        <h2>1. Collecte des données</h2>
+        <p>L'extension RGAA Audit ne collecte aucune donnée personnelle.</p>
+        <p>Aucune information permettant d'identifier un utilisateur (nom, email, adresse, etc.) n'est collectée, stockée ou transmise.</p>
+      </article>
+
+      <article class="card">
+        <h2>2. Traitement des données</h2>
+        <p>Toutes les analyses réalisées par l'extension sont effectuées localement dans le navigateur de l'utilisateur.</p>
+        <ul>
+          <li>Aucune donnée n'est envoyée à un serveur externe.</li>
+          <li>Aucune donnée n'est stockée à distance.</li>
+          <li>Aucune donnée n'est partagée avec des tiers.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>3. Utilisation des autorisations</h2>
+        <p>L'extension utilise uniquement les autorisations suivantes :</p>
+        <ul>
+          <li><code>activeTab</code> : permet d'accéder temporairement à la page active afin d'effectuer un audit d'accessibilité.</li>
+          <li><code>scripting</code> : permet d'exécuter un script local pour analyser la structure de la page.</li>
+        </ul>
+        <p>Ces autorisations sont utilisées uniquement lorsque l'utilisateur déclenche un audit.</p>
+      </article>
+
+      <article class="card">
+        <h2>4. Services tiers</h2>
+        <p>L'extension n'utilise aucun service tiers, outil de tracking ou solution d'analyse.</p>
+      </article>
+
+      <article class="card">
+        <h2>5. Sécurité</h2>
+        <p>Aucune donnée n'étant collectée ni transmise, les risques liés à la sécurité des données sont inexistants.</p>
+      </article>
+
+      <article class="card">
+        <h2>6. Évolution</h2>
+        <p>Cette politique de confidentialité peut être mise à jour en cas d'évolution de l'extension.</p>
+      </article>
+
+      <article class="card">
+        <h2>7. Contact</h2>
+        <p>Pour toute question : <a class="link-inline" href="https://stan69000.github.io/rgaa-audit/">https://stan69000.github.io/rgaa-audit/</a></p>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    ⚠️ Projet associatif vibe codé — Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.
+  </footer>
+</body>
+</html>

@@ -93,6 +93,7 @@ Voir [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Documentation publique: [https://stan69000.github.io/rgaa-audit/](https://stan69000.github.io/rgaa-audit/)
 Guide critères vulgarisé: [https://stan69000.github.io/rgaa-audit/criteres.html](https://stan69000.github.io/rgaa-audit/criteres.html)
+Politique de confidentialité (site): [https://stan69000.github.io/rgaa-audit/privacy.html](https://stan69000.github.io/rgaa-audit/privacy.html)
 
 ## Securite automatisee (CI/CD)
 
