@@ -42,9 +42,9 @@ jobs:
       - name: Validate in-page security policies
         run: |
           set -euo pipefail
-          grep -q 'Content-Security-Policy' /tmp/site-body.html
-          grep -q 'Referrer-Policy' /tmp/site-body.html
-          grep -q 'Permissions-Policy' /tmp/site-body.html
+          grep -Eiq 'http-equiv=["'"'"']Content-Security-Policy["'"'"']|content-security-policy' /tmp/site-body.html
+          grep -Eiq 'meta[^>]*name=["'"'"']referrer["'"'"']' /tmp/site-body.html
+          grep -Eiq 'http-equiv=["'"'"']Permissions-Policy["'"'"']|permissions-policy' /tmp/site-body.html
 
       - name: Alert by opening issue on failure
         if: failure() && github.event_name != 'pull_request'
