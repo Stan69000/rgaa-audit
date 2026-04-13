@@ -184,7 +184,7 @@ jobs:
           "
 
       - name: Comment PR
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         if: always() && github.event.pull_request.head.repo.fork == false
         with:
           script: |
@@ -276,7 +276,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub release
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const tag = context.ref.replace('refs/tags/', '');
