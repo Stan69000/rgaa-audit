@@ -36,6 +36,7 @@
 
     const ods = safeReport.odsDownload || null;
     const hasOds = Boolean(ods && ods.base64 && ods.fileName);
+    const newWindowHint = '<span class="sr-only"> (ouvre dans une nouvelle fenêtre)</span>';
 
     const reportDataScript = toInlineJson(safeReport);
     const odsDataScript = toInlineJson(hasOds ? ods : null);
@@ -47,72 +48,195 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rapport vulgarisé — ${esc(safeReport.title || safeReport.url || 'Audit RGAA')}</title>
   <style>
-    body { margin:0; font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif; background:#f7f8fc; color:#1d2433; }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 40px; }
-    h1 { margin: 0 0 6px; font-size: 28px; }
-    .sub { color:#5b6476; margin-bottom:20px; overflow-wrap:anywhere; }
+    :root {
+      --bg-1:#f5f8ff;
+      --bg-2:#eef8f3;
+      --panel:#ffffff;
+      --border:#d8e1ee;
+      --ink:#142033;
+      --muted:#4f5e74;
+      --brand:#0f4fbf;
+      --brand-dark:#0d3f97;
+      --ok-bg:#e6f5ee;
+      --ok-fg:#085a3a;
+      --warn-bg:#fff4df;
+      --warn-fg:#9b5d00;
+      --high-bg:#ffe5e6;
+      --high-fg:#9f1d1d;
+      --shadow:0 12px 28px rgba(15, 37, 74, 0.08);
+    }
+    body {
+      margin:0;
+      font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      line-height:1.5;
+      background:
+        radial-gradient(circle at 0 0, #dce9ff 0, transparent 42%),
+        radial-gradient(circle at 100% 15%, #d9f3e5 0, transparent 36%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      color:var(--ink);
+    }
+    .skip-link {
+      position:absolute;
+      left:8px;
+      top:8px;
+      transform:translateY(-140%);
+      padding:8px 12px;
+      border-radius:8px;
+      background:#0f4fbf;
+      color:#fff;
+      font-weight:700;
+      z-index:1000;
+      transition:transform .2s ease;
+    }
+    .skip-link:focus { transform:translateY(0); }
+    .wrap { max-width: 1020px; margin: 0 auto; padding: 28px 20px 40px; }
+    h1 { margin: 0 0 8px; font-size: 34px; line-height:1.1; letter-spacing:-0.02em; }
+    h2 { font-size: 24px; letter-spacing: -0.01em; }
+    .sub { color:var(--muted); margin-bottom:18px; overflow-wrap:anywhere; }
+    .hero {
+      background:linear-gradient(120deg, #11284f 0%, #0f4fbf 58%, #2f7fff 100%);
+      color:#fff;
+      border-radius:16px;
+      padding:18px 18px 16px;
+      margin-bottom:16px;
+      box-shadow:var(--shadow);
+    }
+    .hero p { margin:6px 0 0; color:#e9f0ff; }
+    .badge {
+      display:inline-block;
+      padding:5px 9px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.16);
+      border:1px solid rgba(255,255,255,0.25);
+      font-size:12px;
+      font-weight:700;
+    }
     .grid { display:grid; grid-template-columns: repeat(4, minmax(140px,1fr)); gap:12px; margin:18px 0 24px; }
-    .kpi { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:12px 14px; }
+    .kpi { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px 14px; box-shadow:0 8px 18px rgba(15, 37, 74, 0.05); transition:transform .25s ease, box-shadow .25s ease; }
+    .kpi:hover { transform:translateY(-2px); box-shadow:0 14px 24px rgba(15, 37, 74, 0.09); }
     .kpi .v { font-size:30px; font-weight:700; line-height:1.05; }
-    .kpi .l { font-size:12px; color:#5b6476; margin-top:4px; }
-    .box { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:14px; margin-bottom:16px; }
+    .kpi .l { font-size:12px; color:var(--muted); margin-top:4px; }
+    .box { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:16px; box-shadow:0 8px 18px rgba(15, 37, 74, 0.04); }
     .cards { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:12px; }
-    .card { background:#fff; border:1px solid #dfe4ef; border-radius:12px; padding:14px; }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 8px 18px rgba(15, 37, 74, 0.04); transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+    .card:hover { transform:translateY(-3px); box-shadow:0 18px 28px rgba(15, 37, 74, 0.1); border-color:#c6d7f0; }
     .card p, .card li, .where, .where li { overflow-wrap:anywhere; word-break:break-word; }
     .chip { display:inline-block; font-size:11px; font-weight:700; border-radius:999px; padding:4px 8px; margin-bottom:8px; }
-    .chip-p1 { background:#ffdfe0; color:#a3181f; }
-    .chip-p2 { background:#fff1d6; color:#9b5d00; }
-    .chip-p3 { background:#dff6ff; color:#0a5271; }
-    .meta { font-size:12px; color:#5b6476; margin-top:8px; }
+    .chip-p1 { background:var(--high-bg); color:var(--high-fg); }
+    .chip-p2 { background:var(--warn-bg); color:var(--warn-fg); }
+    .chip-p3 { background:#def3ff; color:#0b5470; }
+    .meta { font-size:12px; color:var(--muted); margin-top:8px; }
     ul { margin: 8px 0 0 18px; }
     li { margin: 4px 0; }
     .tools { display:flex; flex-wrap:wrap; gap:10px; margin: 8px 0 14px; }
-    .btn { border:1px solid #c9d4ea; background:#fff; color:#1f2a44; border-radius:10px; padding:8px 12px; font-weight:600; cursor:pointer; text-decoration:none; }
-    .btn:hover { background:#f3f7ff; }
-    .where { margin-top:8px; font-size:13px; color:#334155; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px; }
-    .hint { margin-top:8px; color:#5b6476; font-size:12px; }
-    .disclaimer { margin-bottom:16px; padding:10px 12px; border-radius:10px; background:#fff7e6; border:1px solid #f5c96a; color:#7a4a00; font-size:12px; }
-    a { color:#0f4fbf; word-break:break-all; }
+    .btn { border:1px solid #bfd0eb; background:var(--panel); color:#19315a; border-radius:10px; padding:8px 12px; font-weight:700; cursor:pointer; text-decoration:none; transition:all .2s ease; }
+    .btn:hover { background:#eef4ff; border-color:#a8c1e8; transform:translateY(-1px); }
+    .btn:focus-visible, a:focus-visible, button:focus-visible { outline:3px solid #0f4fbf; outline-offset:2px; }
+    .where { margin-top:8px; font-size:13px; color:#334155; background:#f8fbff; border:1px solid #dfebfb; border-radius:10px; padding:8px; }
+    .hint { margin-top:8px; color:var(--muted); font-size:12px; }
+    .disclaimer { margin-bottom:16px; padding:10px 12px; border-radius:12px; background:var(--warn-bg); border:1px solid #f2c066; color:#6a4200; font-size:12px; }
+    .intro-impact { font-size:16px; margin:0; }
+    .pillars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px; }
+    .pillar { background:#f8fbff; border:1px solid #dbe7f8; border-radius:10px; padding:10px; font-size:13px; }
+    .pillar strong { display:block; margin-bottom:3px; color:#17325f; }
+    .punchline { margin:10px 0 0; font-weight:700; color:#17325f; }
+    .resources a { margin-right:12px; }
+    .transparency-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin-top:10px; }
+    .transparency-item { border-radius:10px; padding:10px; border:1px solid #d8e4f8; background:#f6faff; transition:transform .2s ease, border-color .2s ease; }
+    .transparency-item:hover { transform:translateY(-2px); border-color:#bad0f2; }
+    .transparency-item strong { display:block; color:#16335f; margin-bottom:3px; }
+    .transparency-score { margin-top:10px; padding:10px; border-radius:10px; border:1px solid #dce7f8; background:#f9fbff; }
+    .sr-only {
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0, 0, 0, 0);
+      white-space:nowrap;
+      border:0;
+    }
+    a { color:var(--brand); overflow-wrap:anywhere; word-break:normal; }
+    a:hover { color:var(--brand-dark); }
+    .reveal {
+      opacity:0;
+      transform:translateY(12px);
+      animation:fadeLift .55s ease forwards;
+    }
+    .delay-1 { animation-delay:.06s; }
+    .delay-2 { animation-delay:.12s; }
+    .delay-3 { animation-delay:.18s; }
+    .delay-4 { animation-delay:.24s; }
+    @keyframes fadeLift {
+      from { opacity:0; transform:translateY(12px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: repeat(2, minmax(120px,1fr)); }
+      .pillars { grid-template-columns:1fr; }
+      h1 { font-size:30px; }
+    }
+    @media (max-width: 520px) {
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size:28px; }
+      .hero { padding:14px; }
+    }
     @media print {
       .tools { display:none; }
       body { background:#fff; }
       .wrap { max-width: none; }
       .box, .kpi, .card { break-inside: avoid; }
     }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation:none !important; transition:none !important; }
+      .reveal { opacity:1; transform:none; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Rapport vulgarisé d’accessibilité</h1>
-    <div class="sub">${esc(safeReport.title || safeReport.url || '')} · ${new Date(safeReport.timestamp || Date.now()).toLocaleString('fr-FR')}</div>
-    <div class="disclaimer"><strong>Projet associatif vibe codé —</strong> Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.</div>
+  <a href="#main-content" class="skip-link">Aller au contenu principal</a>
+  <main id="main-content" class="wrap" tabindex="-1">
+    <div class="hero reveal">
+      <span class="badge">Pré-audit RGAA vulgarisé</span>
+      <h1>Votre accessibilité, en version claire et actionnable</h1>
+      <p class="intro-impact">En moins de 3 minutes, vous savez quoi corriger d’abord pour débloquer le plus d’utilisateurs.</p>
+    </div>
+    <div class="sub reveal delay-1">${esc(safeReport.title || safeReport.url || '')} · ${new Date(safeReport.timestamp || Date.now()).toLocaleString('fr-FR')}</div>
+    <div class="disclaimer reveal delay-1"><strong>Projet associatif vibe codé —</strong> Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.</div>
 
-    <div class="tools">
+    <div class="tools reveal delay-2">
       <button type="button" class="btn" id="btnDownloadHtml">Télécharger HTML</button>
       <button type="button" class="btn" id="btnExportPdf">Exporter PDF</button>
       <button type="button" class="btn" id="btnDownloadJson">Télécharger JSON</button>
       ${hasOds ? '<button type="button" class="btn" id="btnDownloadOds">Télécharger ODS</button>' : ''}
-      ${hasOds ? '<a class="btn" href="https://products.aspose.app/cells/fr/viewer/ods" target="_blank" rel="noopener noreferrer">Lire ODS en ligne</a>' : ''}
-      ${includeCliLink ? '<a class="btn" href="https://stan69000.github.io/rgaa-audit/" target="_blank" rel="noopener noreferrer">Audit complet CLI</a>' : ''}
+      ${hasOds ? `<a class="btn" href="https://products.aspose.app/cells/fr/viewer/ods" target="_blank" rel="noopener noreferrer">Lire ODS en ligne${newWindowHint}</a>` : ''}
+      ${includeCliLink ? `<a class="btn" href="https://stan69000.github.io/rgaa-audit/" target="_blank" rel="noopener noreferrer">Site du projet RGAA Audit${newWindowHint}</a>` : ''}
+      <a class="btn" href="https://lesingedunumerique.fr/" target="_blank" rel="noopener noreferrer">Le Singe Du Numérique${newWindowHint}</a>
     </div>
     ${!hasOds ? '<div class="hint">ODS non disponible dans ce rapport.</div>' : ''}
 
-    <div class="grid">
+    <div class="grid reveal delay-2">
       <div class="kpi"><div class="v">${score.taux}%</div><div class="l">Score technique auto</div></div>
       <div class="kpi"><div class="v">${score.nonConformes}</div><div class="l">Points bloquants</div></div>
       <div class="kpi"><div class="v">${score.conformes}</div><div class="l">Points conformes</div></div>
       <div class="kpi"><div class="v">${effortLabel}</div><div class="l">Effort moyen estimé</div></div>
     </div>
 
-    <div class="box">
+    <div class="box reveal delay-3">
       <strong>Lecture rapide</strong>
       <ul>
-        <li>L’outil automatise la collecte de preuves techniques; la validation complète RGAA reste humaine.</li>
-        <li>Le score est un indicateur de progression technique détectable automatiquement.</li>
-        <li>Ce score n’est pas équivalent à une conformité RGAA certifiée.</li>
-        <li>Les priorités ci-dessous sont orientées impact utilisateur (navigation clavier, lisibilité, compréhension).</li>
-        <li>Objectif: corriger d’abord les points P1, puis sécuriser P2/P3.</li>
+        <li>Ce rapport montre où des personnes peuvent être bloquées dès maintenant.</li>
+        <li>Le score vous aide à mesurer la progression, pas à certifier une conformité RGAA.</li>
+        <li>Les priorités P1 sont les corrections qui ont le plus d’impact utilisateur immédiat.</li>
+        <li>La validation finale reste humaine, surtout sur la compréhension et le sens des contenus.</li>
       </ul>
+      <div class="pillars">
+        <div class="pillar"><strong>P1</strong>Blocages forts. À corriger en premier.</div>
+        <div class="pillar"><strong>P2</strong>Gêne réelle. À traiter juste après.</div>
+        <div class="pillar"><strong>P3</strong>Amélioration utile. À planifier ensuite.</div>
+      </div>
+      <p class="punchline">Logique recommandée: P1 d’abord, puis stabilisation P2/P3.</p>
     </div>
     ${transparencyBox}
 
@@ -145,7 +269,13 @@
         <li>Vérification des contenus/processus non couverts automatiquement.</li>
       </ul>
     </div>
-  </div>
+    <div class="box resources reveal delay-4">
+      <strong>Ressources utiles</strong>
+      <p><a href="https://stan69000.github.io/rgaa-audit/" target="_blank" rel="noopener noreferrer">Site du projet${newWindowHint}</a></p>
+      <p><a href="https://lesingedunumerique.fr/" target="_blank" rel="noopener noreferrer">Site de l'association${newWindowHint}</a></p>
+      <p><a href="https://stan-bouchet.com/" target="_blank" rel="noopener noreferrer">Le créateur${newWindowHint}</a></p>
+    </div>
+  </main>
 
   <script>
     const REPORT_DATA = ${reportDataScript};
@@ -424,20 +554,31 @@
 
     return `
       <div class="box">
-        <strong>Transparence des contrôles</strong>
-        <ul>
-          <li><strong>Vérifications automatiques:</strong> signaux techniques détectables dans le code/DOM.</li>
-          <li><strong>Alertes heuristiques:</strong> indices plausibles à confirmer humainement.</li>
-          <li><strong>Contrôles manuels:</strong> points non attestables automatiquement (pertinence, contexte, usages réels).</li>
-        </ul>
-        <ul>
-          <li>Erreurs probables: <strong>${byType.probable_error}</strong></li>
-          <li>Alertes heuristiques: <strong>${byType.heuristic_warning}</strong></li>
-          <li>Signaux positifs: <strong>${byType.good_signal}</strong></li>
-          <li>Manuel uniquement: <strong>${byType.manual_only}</strong></li>
-          <li>Confiance haute/moyenne/basse: <strong>${byConfidence.high}</strong>/<strong>${byConfidence.medium}</strong>/<strong>${byConfidence.low}</strong></li>
-          <li>Vérification manuelle recommandée: <strong>${manualRecommended}</strong> résultat(s)</li>
-        </ul>
+        <strong>Transparence des contrôles: comment lire ces chiffres</strong>
+        <p style="margin:8px 0 0;color:#44556f;">Objectif: vous dire clairement ce qui est quasi certain, ce qui est probable, et ce qui doit être confirmé par un humain.</p>
+        <div class="transparency-grid">
+          <div class="transparency-item">
+            <strong>Erreurs probables (${byType.probable_error})</strong>
+            Le code montre un problème technique très plausible à corriger.
+          </div>
+          <div class="transparency-item">
+            <strong>Alertes heuristiques (${byType.heuristic_warning})</strong>
+            Indices de risque. La piste est utile, mais nécessite une vérification.
+          </div>
+          <div class="transparency-item">
+            <strong>Signaux positifs (${byType.good_signal})</strong>
+            Points où un comportement accessible a été détecté automatiquement.
+          </div>
+          <div class="transparency-item">
+            <strong>Manuel uniquement (${byType.manual_only})</strong>
+            Sujets impossibles à certifier automatiquement (sens, contexte, compréhension).
+          </div>
+        </div>
+        <div class="transparency-score">
+          <strong>Niveau de confiance de la détection</strong>
+          <p style="margin:6px 0 0;">Haute: <strong>${byConfidence.high}</strong> · Moyenne: <strong>${byConfidence.medium}</strong> · Basse: <strong>${byConfidence.low}</strong></p>
+          <p style="margin:6px 0 0;">Vérification manuelle recommandée: <strong>${manualRecommended}</strong> résultat(s).</p>
+        </div>
       </div>
     `;
   }
