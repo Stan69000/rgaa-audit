@@ -44,12 +44,16 @@ try {
       reports.push(...parsed);
       continue;
     }
-    if (Array.isArray(parsed.pages)) {
-      reports.push(...parsed.pages);
+    if (parsed && Array.isArray(parsed.results)) {
+      reports.push(parsed);
       continue;
     }
     if (Array.isArray(parsed.reports)) {
       reports.push(...parsed.reports);
+      continue;
+    }
+    if (Array.isArray(parsed.pages) && parsed.pages.every((p) => p && Array.isArray(p.results))) {
+      reports.push(...parsed.pages);
       continue;
     }
     reports.push(parsed);
