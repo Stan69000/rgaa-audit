@@ -7,39 +7,41 @@
 
 const { log } = require('../logger');
 
+let RULE_BUNDLE_SOURCE = '';
+
 async function runDomRules(page) {
   log('   Thème 1 — Images…');
-  const images = await page.evaluate(auditImagesAdvanced);
+  const images = await evaluateRuleInPage(page, 'auditImagesAdvanced');
 
   log('   Thème 2 — Cadres…');
-  const frames = await page.evaluate(auditFrames);
+  const frames = await evaluateRuleInPage(page, 'auditFrames');
 
   log('   Thème 3 — Couleurs…');
-  const colors = await page.evaluate(auditColors);
+  const colors = await evaluateRuleInPage(page, 'auditColors');
 
   log('   Thème 5 — Tableaux…');
-  const tables = await page.evaluate(auditTablesAdvanced);
+  const tables = await evaluateRuleInPage(page, 'auditTablesAdvanced');
 
   log('   Thème 6 — Liens…');
-  const links = await page.evaluate(auditLinksAndButtons);
+  const links = await evaluateRuleInPage(page, 'auditLinksAndButtons');
 
   log('   Thème 8 — Éléments obligatoires…');
-  const mandatory = await page.evaluate(auditMandatory);
+  const mandatory = await evaluateRuleInPage(page, 'auditMandatory');
 
   log('   Thème 9 — Structure…');
-  const structure = await page.evaluate(auditHeadingsAdvanced);
+  const structure = await evaluateRuleInPage(page, 'auditHeadingsAdvanced');
 
   log('   Thème 11 — Formulaires…');
-  const forms = await page.evaluate(auditFormsAdvanced);
+  const forms = await evaluateRuleInPage(page, 'auditFormsAdvanced');
 
   log('   Thème 12 — Navigation…');
-  const navigation = await page.evaluate(auditNavigation);
+  const navigation = await evaluateRuleInPage(page, 'auditNavigation');
 
   log('   Thème 4 — Multimédia…');
-  const multimedia = await page.evaluate(auditMultimedia);
+  const multimedia = await evaluateRuleInPage(page, 'auditMultimedia');
 
   log('   Thème 7 — Scripts ARIA…');
-  const scripts = await page.evaluate(auditScripts);
+  const scripts = await evaluateRuleInPage(page, 'auditScripts');
 
   const all = [
     ...images, ...frames, ...colors, ...tables, ...links,
@@ -52,6 +54,50 @@ async function runDomRules(page) {
   log(`   → ${all.length} résultats (${nc} NC, ${c} C)`);
 
   return all;
+}
+
+async function evaluateRuleInPage(page, functionName) {
+  return page.evaluate(({ source, target }) => {
+    const execute = new Function(
+      `${source}
+if (typeof ${target} !== 'function') return [];
+return ${target}();`,
+    );
+    return execute();
+  }, { source: getRuleBundleSource(), target: functionName });
+}
+
+function getRuleBundleSource() {
+  if (RULE_BUNDLE_SOURCE) return RULE_BUNDLE_SOURCE;
+
+  RULE_BUNDLE_SOURCE = [
+    createResult,
+    probableError,
+    heuristicWarning,
+    goodSignal,
+    manualOnly,
+    shortSnippet,
+    normalizedText,
+    getAccessibleLabel,
+    isIconOnlyElement,
+    looksInformativeImage,
+    normalizeForCompare,
+    stripFileExt,
+    isGenericAlt,
+    auditImagesAdvanced,
+    auditFrames,
+    auditColors,
+    auditTablesAdvanced,
+    auditLinksAndButtons,
+    auditMandatory,
+    auditHeadingsAdvanced,
+    auditFormsAdvanced,
+    auditNavigation,
+    auditMultimedia,
+    auditScripts,
+  ].map((fn) => fn.toString()).join('\n\n');
+
+  return RULE_BUNDLE_SOURCE;
 }
 
 function createResult(payload) {
