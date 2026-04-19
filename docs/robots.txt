@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://stan69000.github.io/rgaa-audit/sitemap.xml
