@@ -5,49 +5,97 @@
 
 'use strict';
 
+const fs = require('node:fs');
+const path = require('node:path');
+
 const { createBrowser, closeBrowser } = require('./browser');
-const { simulateHumanActions }        = require('./simulator');
-const { runDomRules }                  = require('./rules');
-const { generateReport }               = require('./reporters');
-const { fillRgaaGridFromReports }      = require('./reporters/ods-grid');
-const { log, success, warn }           = require('./logger');
+const { simulateHumanActions } = require('./simulator');
+const { runDomRules } = require('./rules');
+const { generateReport } = require('./reporters');
+const { fillRgaaGridFromReports } = require('./reporters/ods-grid');
+const { log, success, warn } = require('./logger');
+
+const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
+const EXPLICITLY_BLOCKED_PROTOCOLS = new Set(['file:', 'data:', 'javascript:']);
+const TRACKING_PARAM_PREFIXES = ['utm_'];
+const TRACKING_PARAMS = new Set(['gclid', 'fbclid', 'mc_cid', 'mc_eid', '_hsenc', '_hsmi', 'pk_campaign', 'pk_kwd']);
+const PARASITIC_PATH_PATTERNS = [/(?:^|\/)cdn-cgi\//i, /(?:^|\/)track(?:ing)?(?:\/|$)/i, /(?:^|\/)analytics(?:\/|$)/i];
+
+const DEFAULT_MAX_PAGES = 100;
+const SAFE_CRAWL_MAX_PAGES = 20;
+const MAX_LINK_CANDIDATES = 2500;
+const MAX_SITEMAP_BYTES = 2 * 1024 * 1024;
 
 async function runAudit(url, opts = {}) {
   const {
-    output   = 'json',
-    save     = '',
+    output = 'json',
+    save = '',
     vulgarizedSave = '',
     odsTemplate = '',
     odsSave = '',
     odsReplicateAllSheets = false,
     simulate = true,
-    depth    = 1,
+    depth = 1,
     headless = true,
+    outputDir = '',
+    debug = false,
+    verbose = false,
+    safeCrawl = false,
+    strictSecurity = false,
   } = opts;
 
-  log(`\n♿  RGAA Audit CLI — ${url}\n`);
+  const debugEnabled = Boolean(debug || verbose);
+  const safeCrawlEnabled = Boolean(safeCrawl || strictSecurity);
+  const debugLog = createDebugLogger(debugEnabled);
+
+  const auditedUrl = validateAuditUrl(url, { safeCrawl: safeCrawlEnabled });
+  const resolvedSave = resolveOutputPath(save, { outputDir });
+  const resolvedVulgarizedSave = resolveOutputPath(vulgarizedSave, { outputDir });
+  const resolvedOdsTemplate = odsTemplate ? path.resolve(odsTemplate) : '';
+  const resolvedOdsSave = resolveOutputPath(odsSave, { outputDir });
+
+  log(`\n♿  RGAA Audit CLI — ${auditedUrl}\n`);
 
   const startTime = Date.now();
-  let browser, page;
+  let browser;
+  let page;
   const navigationProfile = {
     preferDomContentLoadedOrigins: new Set(),
     warnedOrigins: new Set(),
   };
+  const browserDebugEvents = [];
 
   try {
     // ── 1. NAVIGATEUR ────────────────────────
     log('🌐 Lancement du navigateur…');
-    ({ browser, page } = await createBrowser({ headless }));
+    ({ browser, page } = await createBrowser({
+      headless,
+      debug: debugEnabled,
+      onDebugEvent: (event) => {
+        if (browserDebugEvents.length >= 200) return;
+        browserDebugEvents.push(event);
+      },
+    }));
 
-    log(`📄 Chargement de ${url}…`);
-    await navigateWithFallback(page, url, navigationProfile);
+    log(`📄 Chargement de ${auditedUrl}…`);
+    await navigateWithFallback(page, auditedUrl, navigationProfile, debugLog);
     await page.waitForTimeout(1000);
 
     const rootTitle = await page.title();
     success(`   Titre : "${rootTitle}"`);
 
     // ── 2. SÉLECTION DES PAGES À AUDITER ─────
-    const targets = await buildAuditTargets(page, url, depth);
+    const targetPlan = await buildAuditTargets(page, auditedUrl, {
+      depth,
+      safeCrawl: safeCrawlEnabled,
+      debugLog,
+    });
+
+    if (targetPlan.requestedDepth > targetPlan.maxPages) {
+      debugLog(`Profondeur demandée (${targetPlan.requestedDepth}) limitée à ${targetPlan.maxPages}`);
+    }
+
+    const targets = targetPlan.targets;
     if (targets.length > 1) {
       success(`   Pages retenues pour audit : ${targets.length}`);
     }
@@ -65,7 +113,7 @@ async function runAudit(url, opts = {}) {
 
       try {
         if (i > 0) {
-          await navigateWithFallback(page, targetUrl, navigationProfile);
+          await navigateWithFallback(page, targetUrl, navigationProfile, debugLog);
           await page.waitForTimeout(500);
         }
       } catch (e) {
@@ -113,11 +161,11 @@ async function runAudit(url, opts = {}) {
 
     // ── 4. SCORE GLOBAL ───────────────────────
     const score = computeScore(allResults);
-    printSummary(score, rootTitle, url, pages.length);
+    printSummary(score, rootTitle, auditedUrl, pages.length);
 
     // ── 5. RAPPORT ────────────────────────────
     const report = {
-      url,
+      url: auditedUrl,
       title: rootTitle,
       timestamp: new Date().toISOString(),
       duration: Math.round((Date.now() - startTime) / 1000),
@@ -130,13 +178,20 @@ async function runAudit(url, opts = {}) {
       simulation: simulationResults?.summary || null,
     };
 
-    if (odsTemplate && odsSave) {
-      const path = require('node:path');
+    if (debugEnabled) {
+      report.debug = {
+        browserEvents: browserDebugEvents,
+        crawlIgnored: targetPlan.ignored,
+        safeCrawl: safeCrawlEnabled,
+      };
+    }
+
+    if (resolvedOdsTemplate && resolvedOdsSave) {
       const perPageReports = buildPerPageReports(report);
       const odsResult = fillRgaaGridFromReports({
         reports: perPageReports,
-        templatePath: odsTemplate,
-        outputPath: odsSave,
+        templatePath: resolvedOdsTemplate,
+        outputPath: resolvedOdsSave,
         replicateToAllSheets: !!odsReplicateAllSheets,
       });
       const resolvedOdsPath = path.resolve(odsResult.outputPath);
@@ -146,29 +201,27 @@ async function runAudit(url, opts = {}) {
         filledCriteria: odsResult.filledCriteria,
       };
       success(`📊 Grille ODS sauvegardée : ${resolvedOdsPath}`);
-    } else if (odsTemplate || odsSave) {
+    } else if (resolvedOdsTemplate || resolvedOdsSave) {
       warn('   Export ODS ignoré: fournir --ods-template et --ods-save ensemble.');
     }
 
-    const output_str = await generateReport(report, output);
-    const fs = require('node:fs');
+    const outputStr = await generateReport(report, output);
 
-    if (save) {
-      fs.writeFileSync(save, output_str, 'utf8');
-      success(`\n📁 Rapport sauvegardé : ${save}`);
+    if (resolvedSave) {
+      safeWriteReport(resolvedSave, outputStr);
+      success(`\n📁 Rapport sauvegardé : ${resolvedSave}`);
     } else {
-      console.log('\n' + output_str);
+      console.log('\n' + outputStr);
     }
 
-    if (vulgarizedSave) {
+    if (resolvedVulgarizedSave) {
       const reportForVulgarized = attachOdsDownloadPayload(report);
       const vulgarized = await generateReport(reportForVulgarized, 'vulgarized');
-      fs.writeFileSync(vulgarizedSave, vulgarized, 'utf8');
-      success(`📄 Rapport vulgarisé sauvegardé : ${vulgarizedSave}`);
+      safeWriteReport(resolvedVulgarizedSave, vulgarized);
+      success(`📄 Rapport vulgarisé sauvegardé : ${resolvedVulgarizedSave}`);
     }
 
     return report;
-
   } finally {
     if (browser) await closeBrowser(browser);
   }
@@ -197,16 +250,16 @@ function buildPerPageReports(report) {
     byPage.get(pageUrl).push(result);
   }
 
-  return pages.map((p) => ({
-    title: p.title || p.url || 'Page',
-    url: p.url || '',
-    results: byPage.get(p.url || '') || [],
-  })).filter((p) => p.results.length > 0);
+  return pages
+    .map((p) => ({
+      title: p.title || p.url || 'Page',
+      url: p.url || '',
+      results: byPage.get(p.url || '') || [],
+    }))
+    .filter((p) => p.results.length > 0);
 }
 
 function attachOdsDownloadPayload(report) {
-  const fs = require('node:fs');
-  const path = require('node:path');
   if (!report?.ods?.outputPath) return report;
   try {
     const bytes = fs.readFileSync(report.ods.outputPath);
@@ -226,15 +279,17 @@ function attachOdsDownloadPayload(report) {
 
 function computeScore(results) {
   const byCriterion = {};
-  results.forEach(r => {
+  results.forEach((r) => {
     if (!byCriterion[r.id]) byCriterion[r.id] = [];
     byCriterion[r.id].push(r.status);
   });
 
-  let conformes = 0, nonConformes = 0, na = 0;
+  let conformes = 0;
+  let nonConformes = 0;
+  let na = 0;
   Object.entries(byCriterion).forEach(([, statuses]) => {
     if (statuses.includes('NC')) nonConformes++;
-    else if (statuses.every(s => s === 'NA')) na++;
+    else if (statuses.every((s) => s === 'NA')) na++;
     else conformes++;
   });
 
@@ -262,103 +317,282 @@ function printSummary(score, title, url, pagesAudited = 1) {
     `  Pages auditées: ${String(pagesAudited).padEnd(4)}`,
   ];
   const innerWidth = Math.max(...lines.map((line) => stripAnsi(line).length));
-  const framed = [
-    `┌${'─'.repeat(innerWidth)}┐`,
-    ...lines.map((line) => `│${line.padEnd(innerWidth)}│`),
-    `└${'─'.repeat(innerWidth)}┘`,
-  ].join('\n');
+  const framed = [`┌${'─'.repeat(innerWidth)}┐`, ...lines.map((line) => `│${line.padEnd(innerWidth)}│`), `└${'─'.repeat(innerWidth)}┘`].join('\n');
 
   console.log(`
 ${color}${framed}${reset}
   `);
 }
 
-async function buildAuditTargets(page, startUrl, depth) {
-  const maxPages = Math.max(1, Number(depth) || 1);
-  if (maxPages === 1) return [startUrl];
+function createDebugLogger(enabled, sink = log) {
+  return (message) => {
+    if (!enabled) return;
+    sink(`   [debug] ${message}`);
+  };
+}
+
+function isAllowedProtocol(protocol) {
+  return ALLOWED_PROTOCOLS.has(String(protocol || '').toLowerCase());
+}
+
+function validateAuditUrl(input, { safeCrawl = false } = {}) {
+  let parsed;
+  try {
+    parsed = new URL(String(input || '').trim());
+  } catch {
+    throw new Error('URL invalide: fournir une URL absolue (http:// ou https://).');
+  }
+
+  const protocol = parsed.protocol.toLowerCase();
+  if (EXPLICITLY_BLOCKED_PROTOCOLS.has(protocol)) {
+    throw new Error(`Schéma interdit pour des raisons de sécurité: ${protocol}`);
+  }
+  if (!isAllowedProtocol(protocol)) {
+    throw new Error(`Schéma non supporté: ${protocol}. Seuls http: et https: sont autorisés.`);
+  }
+
+  if (!parsed.hostname) {
+    throw new Error('URL invalide: hôte manquant.');
+  }
+  if (parsed.username || parsed.password) {
+    throw new Error('URL invalide: identifiants dans l’URL non autorisés.');
+  }
+
+  if (safeCrawl && parsed.search) {
+    throw new Error('Mode safe-crawl: URL de départ avec paramètres de requête non autorisée.');
+  }
+
+  parsed.hash = '';
+  return parsed.href;
+}
+
+function resolveDepthLimit(depth, { safeCrawl = false } = {}) {
+  const requested = Math.max(1, Number(depth) || 1);
+  const hardLimit = safeCrawl ? SAFE_CRAWL_MAX_PAGES : DEFAULT_MAX_PAGES;
+  return Math.min(requested, hardLimit);
+}
+
+function resolveOutputPath(targetPath, { outputDir = '' } = {}) {
+  if (!targetPath) return '';
+
+  const candidate = String(targetPath);
+  if (candidate.includes('\0')) {
+    throw new Error('Chemin de sortie invalide.');
+  }
+
+  const baseDir = outputDir ? path.resolve(String(outputDir)) : process.cwd();
+  return path.isAbsolute(candidate) ? path.resolve(candidate) : path.resolve(baseDir, candidate);
+}
+
+function safeWriteReport(filePath, content) {
+  const dirPath = path.dirname(filePath);
+
+  // Crée l’arborescence de sortie pour éviter les erreurs d’écriture implicites.
+  fs.mkdirSync(dirPath, { recursive: true, mode: 0o750 });
+  fs.writeFileSync(filePath, content, {
+    encoding: 'utf8',
+    mode: 0o600,
+  });
+}
+
+async function buildAuditTargets(page, startUrl, options = {}) {
+  const { depth = 1, safeCrawl = false, debugLog = () => {} } = options;
+
+  const requestedDepth = Math.max(1, Number(depth) || 1);
+  const maxPages = resolveDepthLimit(requestedDepth, { safeCrawl });
+  if (maxPages === 1) {
+    return {
+      targets: [startUrl],
+      ignored: [],
+      requestedDepth,
+      maxPages,
+    };
+  }
 
   const base = new URL(startUrl);
   const sectionPrefix = detectSectionPrefix(base.pathname);
-  const sameOrigin = (u) => {
-    try {
-      const parsed = new URL(u);
-      return parsed.origin === base.origin;
-    } catch {
-      return false;
-    }
-  };
-  const inSameSection = (u) => {
-    if (!sectionPrefix) return true;
-    try {
-      const parsed = new URL(u);
-      const path = parsed.pathname || '/';
-      return path === sectionPrefix || path.startsWith(`${sectionPrefix}/`);
-    } catch {
-      return false;
-    }
+  const unique = new Set([startUrl]);
+  const ignored = [];
+
+  const noteIgnored = (source, raw, reason) => {
+    if (ignored.length >= 500) return;
+    const entry = {
+      source,
+      reason,
+      url: typeof raw === 'string' ? raw : String(raw || ''),
+    };
+    ignored.push(entry);
+    debugLog(`URL ignorée [${source}] (${reason}) : ${entry.url}`);
   };
 
-  const normalize = (u) => {
-    try {
-      const parsed = new URL(u, base.href);
-      parsed.hash = '';
-      if (parsed.pathname.endsWith('/')) parsed.pathname = parsed.pathname.slice(0, -1) || '/';
-      return parsed.href;
-    } catch {
-      return '';
-    }
-  };
-
-  const isPageLike = (u) => !/\.(pdf|jpg|jpeg|png|gif|svg|webp|mp4|mp3|zip|xml)$/i.test(u);
-  const unique = new Set([normalize(startUrl)]);
-  const addMany = (urls = []) => {
+  const addMany = (urls = [], source = 'unknown') => {
     for (const raw of urls) {
-      const n = normalize(raw);
-      if (!n || unique.size >= maxPages) continue;
-      if (!sameOrigin(n) || !inSameSection(n) || !isPageLike(n)) continue;
-      unique.add(n);
+      if (unique.size >= maxPages) break;
+      const normalized = normalizeAuditTargetUrl(raw, {
+        base,
+        sectionPrefix,
+        safeCrawl,
+      });
+
+      if (!normalized.ok) {
+        noteIgnored(source, raw, normalized.reason);
+        continue;
+      }
+
+      if (unique.has(normalized.value)) {
+        continue;
+      }
+      unique.add(normalized.value);
     }
   };
 
-  addMany(await fetchSitemapUrls(base));
-  if (unique.size < maxPages) addMany(await collectInternalLinks(page));
+  addMany(await fetchSitemapUrls(base, { safeCrawl, debugLog }), 'sitemap');
+  if (unique.size < maxPages) addMany(await collectInternalLinks(page), 'dom-links');
 
-  return Array.from(unique).slice(0, maxPages);
+  return {
+    targets: Array.from(unique).slice(0, maxPages),
+    ignored,
+    requestedDepth,
+    maxPages,
+  };
+}
+
+function normalizeAuditTargetUrl(rawUrl, { base, sectionPrefix = '', safeCrawl = false } = {}) {
+  const raw = typeof rawUrl === 'string' ? rawUrl.trim() : '';
+  if (!raw) return { ok: false, reason: 'url vide' };
+
+  let parsed;
+  try {
+    parsed = new URL(raw, base.href);
+  } catch {
+    return { ok: false, reason: 'url invalide' };
+  }
+
+  const protocol = parsed.protocol.toLowerCase();
+  if (!isAllowedProtocol(protocol)) {
+    return { ok: false, reason: `schéma non autorisé (${protocol})` };
+  }
+
+  if (parsed.origin !== base.origin) {
+    return { ok: false, reason: 'origine externe' };
+  }
+
+  const pathname = parsed.pathname || '/';
+  if (sectionPrefix && pathname !== sectionPrefix && !pathname.startsWith(`${sectionPrefix}/`)) {
+    return { ok: false, reason: 'hors section cible' };
+  }
+
+  if (parsed.username || parsed.password) {
+    return { ok: false, reason: 'identifiants dans url' };
+  }
+
+  if (isPageAsset(pathname)) {
+    return { ok: false, reason: 'ressource non auditée' };
+  }
+
+  if (PARASITIC_PATH_PATTERNS.some((pattern) => pattern.test(pathname))) {
+    return { ok: false, reason: 'chemin parasite/tracking' };
+  }
+
+  parsed.hash = '';
+  stripTrackingParams(parsed.searchParams);
+
+  if (safeCrawl && parsed.search) {
+    return { ok: false, reason: 'query refusée en safe-crawl' };
+  }
+
+  if (parsed.pathname.endsWith('/')) {
+    parsed.pathname = parsed.pathname.slice(0, -1) || '/';
+  }
+
+  const normalized = parsed.href;
+  if (normalized.length > 2048) {
+    return { ok: false, reason: 'url trop longue' };
+  }
+
+  return { ok: true, value: normalized };
+}
+
+function stripTrackingParams(searchParams) {
+  for (const key of Array.from(searchParams.keys())) {
+    const lower = key.toLowerCase();
+    const isTrackingPrefix = TRACKING_PARAM_PREFIXES.some((prefix) => lower.startsWith(prefix));
+    if (isTrackingPrefix || TRACKING_PARAMS.has(lower)) {
+      searchParams.delete(key);
+    }
+  }
+}
+
+function isPageAsset(urlPath) {
+  return /\.(?:pdf|jpg|jpeg|png|gif|svg|webp|mp4|mp3|zip|xml|webm|ico|woff2?|ttf|eot|css|js)(?:$|\?)/i.test(urlPath);
 }
 
 function detectSectionPrefix(pathname) {
-  const path = String(pathname || '/');
-  const segments = path.split('/').filter(Boolean);
+  const urlPath = String(pathname || '/');
+  const segments = urlPath.split('/').filter(Boolean);
   if (!segments.length) return '';
   return `/${segments[0]}`;
 }
 
-async function fetchSitemapUrls(baseUrl) {
+async function fetchSitemapUrls(baseUrl, { safeCrawl = false, debugLog = () => {} } = {}) {
   const sitemapUrl = `${baseUrl.origin}/sitemap.xml`;
+  const timeoutMs = safeCrawl ? 3000 : 6000;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    const res = await fetch(sitemapUrl, { method: 'GET' });
-    if (!res.ok) return [];
+    const res = await fetch(sitemapUrl, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        Accept: 'application/xml,text/xml;q=0.9,*/*;q=0.1',
+      },
+    });
+
+    if (!res.ok) {
+      debugLog(`Sitemap ignoré (${res.status}) : ${sitemapUrl}`);
+      return [];
+    }
+
     const xml = await res.text();
+    if (xml.length > MAX_SITEMAP_BYTES) {
+      debugLog(`Sitemap trop volumineux (${xml.length} octets) : ${sitemapUrl}`);
+      return [];
+    }
+
     const urls = [];
     const re = /<loc>(.*?)<\/loc>/gims;
-    let m;
-    while ((m = re.exec(xml)) !== null) {
-      urls.push((m[1] || '').trim());
+    const maxEntries = safeCrawl ? 300 : 1200;
+    let match;
+    while ((match = re.exec(xml)) !== null && urls.length < maxEntries) {
+      urls.push((match[1] || '').trim());
     }
+
     return urls;
-  } catch {
+  } catch (err) {
+    debugLog(`Sitemap inaccessible : ${sitemapUrl} (${String(err?.message || err)})`);
     return [];
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
 async function collectInternalLinks(page) {
   try {
-    return await page.evaluate(() =>
+    return await page.evaluate((maxCandidates) =>
       Array.from(document.querySelectorAll('a[href]'))
         .map((a) => a.getAttribute('href') || '')
         .filter(Boolean)
-        .map((href) => new URL(href, location.href).href),
-    );
+        .slice(0, maxCandidates)
+        .map((href) => {
+          try {
+            return new URL(href, location.href).href;
+          } catch {
+            return '';
+          }
+        })
+        .filter(Boolean),
+    MAX_LINK_CANDIDATES);
   } catch {
     return [];
   }
@@ -373,13 +607,15 @@ async function safePageTitle(page, fallback) {
 }
 
 function normalizeSkipReason(err) {
-  const msg = String(err?.message || err || '').replace(/\s+/g, ' ').trim();
+  const msg = String(err?.message || err || '')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (/Timeout/i.test(msg)) return 'timeout';
   if (/ERR_|net::|Navigation/i.test(msg)) return 'navigation error';
   return 'unexpected error';
 }
 
-async function navigateWithFallback(page, url, profile = {}) {
+async function navigateWithFallback(page, url, profile = {}, debugLog = () => {}) {
   const origin = safeOrigin(url);
   const preferDomContentLoadedOrigins = profile.preferDomContentLoadedOrigins || new Set();
   const warnedOrigins = profile.warnedOrigins || new Set();
@@ -401,6 +637,7 @@ async function navigateWithFallback(page, url, profile = {}) {
       warn('   networkidle instable sur ce domaine, navigation basculée en domcontentloaded');
       warnedOrigins.add(origin);
     }
+    debugLog(`Fallback navigation domcontentloaded activée pour ${url}`);
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
   }
 }
@@ -413,4 +650,18 @@ function safeOrigin(url) {
   }
 }
 
-module.exports = { runAudit, computeScore };
+module.exports = {
+  runAudit,
+  computeScore,
+  _internals: {
+    createDebugLogger,
+    isAllowedProtocol,
+    validateAuditUrl,
+    resolveDepthLimit,
+    resolveOutputPath,
+    safeWriteReport,
+    normalizeAuditTargetUrl,
+    stripTrackingParams,
+    isPageAsset,
+  },
+};
