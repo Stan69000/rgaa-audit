@@ -48,7 +48,10 @@ async function runAudit(url, opts = {}) {
   const safeCrawlEnabled = Boolean(safeCrawl || strictSecurity);
   const debugLog = createDebugLogger(debugEnabled);
 
-  const auditedUrl = validateAuditUrl(url, { safeCrawl: safeCrawlEnabled });
+  const auditedUrl = validateAuditUrl(url, {
+    safeCrawl: safeCrawlEnabled,
+    allowFileProtocol: !safeCrawlEnabled,
+  });
   const resolvedSave = resolveOutputPath(save, { outputDir });
   const resolvedVulgarizedSave = resolveOutputPath(vulgarizedSave, { outputDir });
   const resolvedOdsTemplate = odsTemplate ? path.resolve(odsTemplate) : '';
@@ -393,7 +396,7 @@ function isAllowedProtocol(protocol) {
   return ALLOWED_PROTOCOLS.has(String(protocol || '').toLowerCase());
 }
 
-function validateAuditUrl(input, { safeCrawl = false } = {}) {
+function validateAuditUrl(input, { safeCrawl = false, allowFileProtocol = false } = {}) {
   let parsed;
   try {
     parsed = new URL(String(input || '').trim());
@@ -403,6 +406,13 @@ function validateAuditUrl(input, { safeCrawl = false } = {}) {
 
   const protocol = parsed.protocol.toLowerCase();
   if (EXPLICITLY_BLOCKED_PROTOCOLS.has(protocol)) {
+    if (protocol === 'file:' && allowFileProtocol) {
+      if (safeCrawl) {
+        throw new Error('Mode safe-crawl: schéma file: interdit.');
+      }
+      parsed.hash = '';
+      return parsed.href;
+    }
     throw new Error(`Schéma interdit pour des raisons de sécurité: ${protocol}`);
   }
   if (!isAllowedProtocol(protocol)) {

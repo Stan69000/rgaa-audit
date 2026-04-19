@@ -30,6 +30,17 @@ test('validateAuditUrl rejette explicitement les schémas interdits', () => {
   assert.throws(() => validateAuditUrl('ftp://example.com'), /Schéma non supporté/);
 });
 
+test('validateAuditUrl peut autoriser file:// hors mode safe-crawl', () => {
+  assert.equal(
+    validateAuditUrl('file:///tmp/test.html#frag', { allowFileProtocol: true }),
+    'file:///tmp/test.html',
+  );
+  assert.throws(
+    () => validateAuditUrl('file:///tmp/test.html', { allowFileProtocol: true, safeCrawl: true }),
+    /safe-crawl/,
+  );
+});
+
 test('validateAuditUrl safe-crawl refuse une URL de départ avec query', () => {
   assert.throws(
     () => validateAuditUrl('https://example.com/?page=2', { safeCrawl: true }),
