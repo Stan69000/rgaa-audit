@@ -18,6 +18,7 @@
     const positives = buildPositiveSignals(safeReport);
     const encouragement = buildEncouragement(score);
     const actionLevers = buildActionLevers(top, summary.byCriterion);
+    const transparencyBox = renderTransparency(safeReport);
 
     const cards = top.map((item) => `
       <div class="card">
@@ -97,7 +98,7 @@
     ${!hasOds ? '<div class="hint">ODS non disponible dans ce rapport.</div>' : ''}
 
     <div class="grid">
-      <div class="kpi"><div class="v">${score.taux}%</div><div class="l">Niveau global</div></div>
+      <div class="kpi"><div class="v">${score.taux}%</div><div class="l">Score technique auto</div></div>
       <div class="kpi"><div class="v">${score.nonConformes}</div><div class="l">Points bloquants</div></div>
       <div class="kpi"><div class="v">${score.conformes}</div><div class="l">Points conformes</div></div>
       <div class="kpi"><div class="v">${effortLabel}</div><div class="l">Effort moyen estimé</div></div>
@@ -107,10 +108,13 @@
       <strong>Lecture rapide</strong>
       <ul>
         <li>L’outil automatise la collecte de preuves techniques; la validation complète RGAA reste humaine.</li>
+        <li>Le score est un indicateur de progression technique détectable automatiquement.</li>
+        <li>Ce score n’est pas équivalent à une conformité RGAA certifiée.</li>
         <li>Les priorités ci-dessous sont orientées impact utilisateur (navigation clavier, lisibilité, compréhension).</li>
         <li>Objectif: corriger d’abord les points P1, puis sécuriser P2/P3.</li>
       </ul>
     </div>
+    ${transparencyBox}
 
     <div class="box">
       <strong>Ce qui fonctionne déjà</strong>
@@ -398,6 +402,42 @@
       <div class="box" style="margin-top:16px;">
         <strong>Pages auditées (${data.length})</strong>
         <ul>${rows}</ul>
+      </div>
+    `;
+  }
+
+  function renderTransparency(report) {
+    const findings = Array.isArray(report?.results) ? report.results : [];
+    const byType = { probable_error: 0, heuristic_warning: 0, good_signal: 0, manual_only: 0, unknown: 0 };
+    const byConfidence = { high: 0, medium: 0, low: 0, unknown: 0 };
+    let manualRecommended = 0;
+
+    for (const item of findings) {
+      const type = String(item?.resultType || 'unknown');
+      const confidence = String(item?.confidence || 'unknown');
+      if (Object.prototype.hasOwnProperty.call(byType, type)) byType[type]++;
+      else byType.unknown++;
+      if (Object.prototype.hasOwnProperty.call(byConfidence, confidence)) byConfidence[confidence]++;
+      else byConfidence.unknown++;
+      if (item?.manualReviewRecommended) manualRecommended++;
+    }
+
+    return `
+      <div class="box">
+        <strong>Transparence des contrôles</strong>
+        <ul>
+          <li><strong>Vérifications automatiques:</strong> signaux techniques détectables dans le code/DOM.</li>
+          <li><strong>Alertes heuristiques:</strong> indices plausibles à confirmer humainement.</li>
+          <li><strong>Contrôles manuels:</strong> points non attestables automatiquement (pertinence, contexte, usages réels).</li>
+        </ul>
+        <ul>
+          <li>Erreurs probables: <strong>${byType.probable_error}</strong></li>
+          <li>Alertes heuristiques: <strong>${byType.heuristic_warning}</strong></li>
+          <li>Signaux positifs: <strong>${byType.good_signal}</strong></li>
+          <li>Manuel uniquement: <strong>${byType.manual_only}</strong></li>
+          <li>Confiance haute/moyenne/basse: <strong>${byConfidence.high}</strong>/<strong>${byConfidence.medium}</strong>/<strong>${byConfidence.low}</strong></li>
+          <li>Vérification manuelle recommandée: <strong>${manualRecommended}</strong> résultat(s)</li>
+        </ul>
       </div>
     `;
   }

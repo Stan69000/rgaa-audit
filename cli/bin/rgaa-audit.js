@@ -14,6 +14,7 @@ const { values, positionals } = parseArgs({
   options: {
     output:   { type: 'string',  short: 'o', default: 'json' },   // json | html | csv | vulgarized
     save:     { type: 'string',  short: 's', default: '' },        // chemin fichier
+    'output-dir': { type: 'string', default: '' },                 // dossier de sortie
     'vulgarized-save': { type: 'string', default: '' },            // rapport vulgarisé html
     'ods-template': { type: 'string', default: '' },               // modèle ODS RGAA
     'ods-save': { type: 'string', default: '' },                   // sortie ODS pré-remplie
@@ -21,6 +22,10 @@ const { values, positionals } = parseArgs({
     simulate: { type: 'boolean', short: 'S', default: true },      // simulation clavier
     depth:    { type: 'string',  short: 'd', default: '1' },       // nb pages à crawler
     headless: { type: 'boolean', short: 'H', default: true },      // headless ou visible
+    verbose:  { type: 'boolean', short: 'v', default: false },     // logs debug
+    debug:    { type: 'boolean', default: false },                 // alias verbose
+    'safe-crawl': { type: 'boolean', default: false },             // crawl défensif
+    'strict-security': { type: 'boolean', default: false },        // alias safe-crawl
     help:     { type: 'boolean', short: 'h', default: false },
   },
   allowPositionals: true,
@@ -36,6 +41,7 @@ if (values.help || !positionals.length) {
   Options:
     -o, --output   Format de sortie : json (défaut) | html | csv | vulgarized
     -s, --save     Chemin du fichier de sortie
+        --output-dir       Dossier racine de sortie pour les rapports (optionnel)
         --vulgarized-save  Génère un rapport vulgarisé HTML (non-technique)
         --ods-template      Modèle ODS RGAA (pour export grille)
         --ods-save          Chemin du fichier ODS de sortie pré-rempli
@@ -43,6 +49,10 @@ if (values.help || !positionals.length) {
     -S, --simulate Simuler les actions humaines (défaut: true)
     -d, --depth    Nombre de pages à auditer (défaut: 1)
     -H, --headless Mode headless (défaut: true)
+    -v, --verbose  Active les logs debug de crawl/navigateur
+        --debug            Alias de --verbose
+        --safe-crawl       Crawl défensif (validation/filtrage renforcés)
+        --strict-security  Alias de --safe-crawl
     -h, --help     Afficher cette aide
 
   Exemples:
@@ -58,6 +68,7 @@ const url = positionals[0];
 const opts = {
   output:   values.output,
   save:     values.save,
+  outputDir: values['output-dir'],
   vulgarizedSave: values['vulgarized-save'],
   odsTemplate: values['ods-template'],
   odsSave: values['ods-save'],
@@ -65,6 +76,10 @@ const opts = {
   simulate: values.simulate,
   depth:    parseInt(values.depth),
   headless: values.headless,
+  verbose: values.verbose,
+  debug: values.debug,
+  safeCrawl: values['safe-crawl'],
+  strictSecurity: values['strict-security'],
 };
 
 (async () => {

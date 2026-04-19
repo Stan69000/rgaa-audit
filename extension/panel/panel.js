@@ -16,7 +16,13 @@ const scoreExplain = document.getElementById('scoreExplain');
 btnAudit.addEventListener('click', () => {
   btnAudit.disabled = true;
   btnAudit.textContent = '⏳ Analyse en cours…';
-  resultsEl.innerHTML = '<div style="text-align:center;padding:32px;color:#445;font-family:\'DM Mono\',monospace;font-size:12px;">Scan en cours…</div>';
+  resultsEl.replaceChildren(createStatusMessage('Scan en cours…', {
+    textAlign: 'center',
+    padding: '32px',
+    color: '#445',
+    fontFamily: '\'DM Mono\', monospace',
+    fontSize: '12px',
+  }));
 
   chrome.runtime.sendMessage({ action: 'getAuditResults' }, response => {
     btnAudit.disabled = false;
@@ -63,7 +69,12 @@ function renderResults(results, filter) {
   const filtered = filter === 'all' ? results : results.filter(r => r.status === filter);
 
   if (!filtered.length) {
-    resultsEl.innerHTML = `<div style="text-align:center;padding:24px;color:#445;font-size:12px;">Aucun résultat pour ce filtre.</div>`;
+    resultsEl.replaceChildren(createStatusMessage('Aucun résultat pour ce filtre.', {
+      textAlign: 'center',
+      padding: '24px',
+      color: '#445',
+      fontSize: '12px',
+    }));
     return;
   }
 
@@ -76,30 +87,54 @@ function renderResults(results, filter) {
     return true;
   });
 
-  resultsEl.innerHTML = deduped.map(r => `
-    <div class="result-item" title="${r.xpath || ''}">
-      <span class="result-id">${r.id}</span>
-      <span class="result-badge badge-${r.status}">${r.status}</span>
-      <div class="result-text">
-        ${escHtml(r.message)}
-        ${r.snippet ? `<div class="result-snippet">${escHtml(r.snippet)}</div>` : ''}
-      </div>
-    </div>
-  `).join('');
+  const items = deduped.map(renderResultItem);
+  resultsEl.replaceChildren(...items);
 }
 
-function escHtml(str) {
-  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function renderResultItem(result) {
+  const item = document.createElement('div');
+  item.setAttribute('class', 'result-item');
+  item.setAttribute('title', result.xpath || '');
+
+  const idEl = document.createElement('span');
+  idEl.setAttribute('class', 'result-id');
+  idEl.textContent = result.id || '';
+
+  const badgeEl = document.createElement('span');
+  badgeEl.setAttribute('class', `result-badge badge-${result.status}`);
+  badgeEl.textContent = result.status || '';
+
+  const textEl = document.createElement('div');
+  textEl.setAttribute('class', 'result-text');
+  textEl.textContent = result.message || '';
+
+  if (result.snippet) {
+    const snippetEl = document.createElement('div');
+    snippetEl.setAttribute('class', 'result-snippet');
+    snippetEl.textContent = result.snippet;
+    textEl.appendChild(snippetEl);
+  }
+
+  item.appendChild(idEl);
+  item.appendChild(badgeEl);
+  item.appendChild(textEl);
+  return item;
+}
+
+function createStatusMessage(message, styles) {
+  const container = document.createElement('div');
+  Object.assign(container.style, styles);
+  container.textContent = message;
+  return container;
 }
 
 function renderError(message) {
-  resultsEl.innerHTML = '';
   const container = document.createElement('div');
   container.style.color = '#FF4444';
   container.style.padding = '16px';
   container.style.fontSize = '12px';
   container.textContent = `Erreur : ${message || 'Impossible de communiquer avec la page.'}`;
-  resultsEl.appendChild(container);
+  resultsEl.replaceChildren(container);
 }
 
 // ── FILTRES ──────────────────────────────────
@@ -146,4 +181,11 @@ function buildVulgarizedHtml(report) {
     throw new Error("Template partagé indisponible.");
   }
   return shared.generateVulgarizedReport(report, { includeCliLink: true });
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    renderResultItem,
+    createStatusMessage,
+  };
 }
