@@ -24,7 +24,11 @@ function withDom(doc, fn) {
 
   global.document = doc;
   global.window = { getComputedStyle: () => ({}) };
-  global.CSS = { escape: (v) => String(v).replace(/"/g, '\\"') };
+  global.CSS = {
+    escape: (v) => String(v)
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"'),
+  };
 
   try {
     return fn();

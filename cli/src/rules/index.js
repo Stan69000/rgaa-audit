@@ -819,7 +819,9 @@ function auditFormsAdvanced() {
     const id = field.getAttribute('id');
     const safeId = typeof CSS !== 'undefined' && CSS && typeof CSS.escape === 'function'
       ? CSS.escape(id || '')
-      : String(id || '').replace(/"/g, '\\"');
+      : String(id || '')
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"');
     const label = (id && document.querySelector(`label[for="${safeId}"]`)) || field.closest('label');
     const ariaLabel = normalizedText(field.getAttribute('aria-label'));
     const ariaLabelledby = normalizedText(field.getAttribute('aria-labelledby'));
