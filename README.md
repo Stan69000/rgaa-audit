@@ -20,10 +20,10 @@ Il ne délivre pas une conformité légale: il prépare le terrain avant un audi
 
 - 106 critères RGAA 4.1 pris en compte dans le référentiel
 - Couverture actuelle:
-  - `~26%` automatisés
-  - `~17%` partiellement automatisés
-  - `~36%` manuels uniquement
-  - `~21%` automatisables mais pas encore implémentés
+  - `26.4%` automatisés
+  - `14.2%` partiellement automatisés
+  - `38.7%` manuels uniquement
+  - `20.8%` automatisables mais pas encore implémentés
 
 Détail par critère et par thème: [docs/RGAA-mapping.md](docs/RGAA-mapping.md)
 
@@ -66,6 +66,27 @@ node bin/rgaa-fill-grid.js \
   --output "./rgaa-grille-prefill.ods"
 ```
 
+## Comparer deux rapports (CLI vs extension)
+
+```bash
+node bin/rgaa-compare-reports.js ./cli-report.json ./extension-report.json --json
+```
+
+## Options CLI utiles (production / CI)
+
+- `--output-dir`: dossier racine de sortie (rapports, artefacts)
+- `--dom-only`: exécute uniquement les règles DOM (sans simulation)
+- `--safe-crawl`: crawl défensif (validation/filtrage renforcés)
+- `--strict-security`: alias de `--safe-crawl`
+- `--ods-template` + `--ods-save`: export direct vers grille ODS
+- `--ods-replicate-all-sheets`: duplique le premier rapport sur `P01..P20`
+
+## Artefacts générés
+
+- Rapports: JSON / HTML / CSV / HTML vulgarisé
+- Captures d'étapes d'audit: `audit-screenshots/`
+- Grille RGAA pré-remplie: `rgaa-grille-prefill.ods` (ou chemin de sortie custom)
+
 ## Extension Chrome
 
 1. Ouvrir `chrome://extensions/`
@@ -88,6 +109,11 @@ node bin/rgaa-fill-grid.js \
 ## Contribuer
 
 Voir [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Changelog
+
+Historique des évolutions: [CHANGELOG.md](CHANGELOG.md)
+Checklist de synchro docs/release: [docs/RELEASE-DOCS-CHECKLIST.md](docs/RELEASE-DOCS-CHECKLIST.md)
 
 ## Site du projet
 

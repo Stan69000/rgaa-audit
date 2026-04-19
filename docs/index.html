@@ -321,6 +321,21 @@
     .section-title { font-family: var(--serif); font-size: clamp(32px,4vw,52px); font-weight: 400; line-height: 1.1; margin-bottom: 16px; }
     .section-title em { font-style: italic; color: var(--accent); }
     .section-sub { font-size: 16px; color: var(--muted); max-width: 500px; line-height: 1.7; margin-bottom: 56px; }
+    .updates {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 40px 0;
+    }
+    .updates-box {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .updates-box h3 { font-size: 16px; margin-bottom: 8px; }
+    .updates-box p { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .updates-box ul { margin-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.7; }
 
     /* ── FEATURES ── */
     .features { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
@@ -394,6 +409,7 @@
       nav { padding: 0 20px; }
       nav ul { display: none; }
       section { padding: 64px 20px; }
+      .updates { padding: 20px 20px 0; }
       .stats { grid-template-columns: 1fr 1fr; }
       .features { grid-template-columns: 1fr; }
       .features .feature:last-child { grid-column: auto; }
@@ -434,6 +450,7 @@
       <li><a href="#fonctionnalites">Fonctionnalités</a></li>
       <li><a href="#comment">Comment ça marche</a></li>
       <li><a href="#criteres">Critères</a></li>
+      <li><a href="#nouveautes">Nouveautés</a></li>
       <li><a href="/rgaa-audit/criteres.html">Guide accessibilité</a></li>
       <li><a href="#installer">Installer</a></li>
       <li><a href="https://github.com/Stan69000/rgaa-audit" target="_blank" rel="noopener" aria-label="Voir le code source sur GitHub (nouvelle fenêtre)">GitHub</a></li>
@@ -452,9 +469,9 @@
 <div class="hero">
   <div class="hero-glow" aria-hidden="true"></div>
 
-  <div class="hero-badge" aria-label="Version 0.2.0, statut Alpha, RGAA 4.1">
+  <div class="hero-badge" aria-label="Version 0.1.0, statut Alpha, RGAA 4.1">
     <div class="badge-dot" aria-hidden="true"></div>
-    v0.2.0 — Alpha · RGAA 4.1
+    v0.1.0 — Alpha · RGAA 4.1
   </div>
 
   <h1>
@@ -484,7 +501,7 @@
       <span class="terminal-title">Terminal — RGAA Audit CLI</span>
     </div>
     <pre class="terminal-body"><code><span class="t-prompt">$</span> <span class="t-cmd">node bin/rgaa-audit.js https://mon-site.fr -o json -s rapport-home.json --vulgarized-save rapport-home-vulgarise.html</span>
-<span class="t-dim">♿  RGAA Audit CLI v0.2.0</span>
+<span class="t-dim">♿  RGAA Audit CLI v0.1.0</span>
 <span class="t-dim">🌐 Chargement de la page…</span>
 <span class="t-dim">⌨️  Simulation navigation clavier (15 éléments)…</span>
 <span class="t-dim">🔍 Audit DOM — 13 thèmes RGAA 4.1…</span>
@@ -503,18 +520,30 @@
     <p class="stat-label">Règles d'accessibilité (RGAA 4.1)</p>
   </div>
   <div class="stat-box">
-    <p class="stat-num"><em>~26%</em></p>
+    <p class="stat-num"><em>26.4%</em></p>
     <p class="stat-label">Automatisés aujourd'hui</p>
   </div>
   <div class="stat-box">
-    <p class="stat-num"><em>~17%</em></p>
+    <p class="stat-num"><em>14.2%</em></p>
     <p class="stat-label">Partiels (à confirmer)</p>
   </div>
   <div class="stat-box">
-    <p class="stat-num"><em>~36%</em></p>
+    <p class="stat-num"><em>38.7%</em></p>
     <p class="stat-label">Manuels uniquement</p>
   </div>
 </div>
+
+<section id="nouveautes" class="updates" aria-label="Nouveautés récentes">
+  <div class="updates-box">
+    <h3>Nouveautés récentes (19 avril 2026)</h3>
+    <p>Documentation synchronisée avec les commandes et la couverture actuelle du projet.</p>
+    <ul>
+      <li>Statistiques alignées sur le mapping RGAA officiel du repo (`docs/RGAA-mapping.md`).</li>
+      <li>Parcours CLI clarifié: audit simple, multipages, export ODS et comparaison CLI vs extension.</li>
+      <li>Options avancées mises en avant: `--output-dir`, `--dom-only`, `--safe-crawl`, `--strict-security`.</li>
+    </ul>
+  </div>
+</section>
 
 <!-- FONCTIONNALITÉS -->
 <section id="fonctionnalites" aria-labelledby="titre-fonctionnalites">
@@ -632,7 +661,7 @@
 <section id="installer" style="border-top:1px solid var(--border)" aria-labelledby="titre-installer">
   <p class="section-tag">Installation</p>
   <h2 class="section-title" id="titre-installer">Commandes simples,<br><em>rapports immédiats</em></h2>
-  <p class="section-sub">Deux usages fréquents côté CLI: auditer une home page, puis élargir à plusieurs pages.</p>
+  <p class="section-sub">Parcours CLI recommandé: home page, multipages, export ODS, puis comparaison CLI vs extension.</p>
 
   <div class="install-grid">
     <div class="install-card">
@@ -651,6 +680,14 @@
         <div style="height:8px"></div>
         <div class="code-comment"># 2) Rapport multi-pages</div>
         <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">node bin/rgaa-audit.js https://mon-site.fr --depth 8 -o json -s ./rapport-multipages.json --vulgarized-save ./rapport-multipages-vulgarise.html</span></div>
+        <div style="height:8px"></div>
+        <div class="code-comment"># 3) Export grille ODS pré-remplie</div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">node bin/rgaa-audit.js https://mon-site.fr -d 8 --ods-template ./grille.ods --ods-save ./grille-remplie.ods</span></div>
+        <div style="height:8px"></div>
+        <div class="code-comment"># 4) Comparer CLI vs extension</div>
+        <div class="code-line"><span class="code-prompt" aria-hidden="true">$</span><span class="code-cmd">node bin/rgaa-compare-reports.js ./cli-report.json ./extension-report.json --json</span></div>
+        <div style="height:8px"></div>
+        <div class="code-comment"># Options utiles: --output-dir --dom-only --safe-crawl --strict-security</div>
       </div>
     </div>
     <div class="install-card">
@@ -681,7 +718,7 @@
       Un projet associatif de <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener" aria-label="Visiter le site de Le Singe Du Numérique (nouvelle fenêtre)">Le Singe Du Numérique</a>
       — ouverture de l'accessibilité numérique au plus grand nombre.<br>
       ⚠️ Projet associatif vibe codé — Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.<br>
-      MIT License · RGAA 4.1 · v0.2.0 · Construit avec Playwright
+      MIT License · RGAA 4.1 · v0.1.0 · Construit avec Playwright
     </p>
   </div>
   <nav class="footer-links" aria-label="Liens utiles">
