@@ -13,11 +13,31 @@ async function generateReport(report, format = 'json') {
 
 // ── CSV ──────────────────────────────────────
 function generateCsv(report) {
-  const headers = ['Page', 'Critère', 'Statut', 'Message', 'Source', 'Extrait'];
+  const headers = [
+    'Page',
+    'Critère',
+    'Statut',
+    'Type résultat',
+    'Gravité',
+    'Confiance',
+    'Revue manuelle',
+    'Message',
+    'Rationale',
+    'Remédiation',
+    'Source',
+    'Extrait',
+  ];
   const rows = report.results.map(r => [
     `"${(r.pageUrl || report.url || '').replace(/"/g, '""')}"`,
-    r.id, r.status,
+    r.id,
+    r.status,
+    r.resultType || '',
+    r.severity || '',
+    r.confidence || '',
+    r.manualReviewRecommended ? 'oui' : 'non',
     `"${(r.message || '').replace(/"/g, '""')}"`,
+    `"${(r.rationale || '').replace(/"/g, '""')}"`,
+    `"${(r.remediationHint || '').replace(/"/g, '""')}"`,
     r.source || 'dom',
     `"${(r.snippet || '').replace(/"/g, '""').replace(/\n/g, ' ').slice(0, 100)}"`,
   ]);

@@ -161,7 +161,8 @@ async function runAudit(url, opts = {}) {
 
     // ── 4. SCORE GLOBAL ───────────────────────
     const score = computeScore(allResults);
-    printSummary(score, rootTitle, auditedUrl, pages.length);
+    const transparency = summarizeResultQualification(allResults);
+    printSummary(score, rootTitle, auditedUrl, pages.length, transparency);
 
     // ── 5. RAPPORT ────────────────────────────
     const report = {
@@ -174,6 +175,7 @@ async function runAudit(url, opts = {}) {
       pages,
       pagesSkipped,
       score,
+      transparency,
       results: allResults,
       simulation: simulationResults?.summary || null,
     };
@@ -281,7 +283,7 @@ function computeScore(results) {
   const byCriterion = {};
   results.forEach((r) => {
     if (!byCriterion[r.id]) byCriterion[r.id] = [];
-    byCriterion[r.id].push(r.status);
+    byCriterion[r.id].push(r.status || statusFromResultType(r.resultType));
   });
 
   let conformes = 0;
@@ -303,14 +305,47 @@ function computeScore(results) {
   };
 }
 
-function printSummary(score, title, url, pagesAudited = 1) {
+function summarizeResultQualification(results = []) {
+  const output = {
+    method: {
+      automaticChecks: 'Contrôles techniques automatiques sur le DOM et quelques interactions.',
+      heuristicChecks: 'Signaux probables mais contextuels. Ils peuvent contenir des faux positifs.',
+      manualChecks: 'Points nécessitant une vérification humaine (contexte, pertinence, parcours réels).',
+    },
+    disclaimers: [
+      'Ce rapport est un pré-audit automatique basé sur le RGAA 4.1.',
+      'Le score est un indicateur de progression technique, non une conformité RGAA certifiée.',
+    ],
+    resultTypeCounts: {},
+    confidenceCounts: {},
+    severityCounts: {},
+    manualReviewRecommendedCount: 0,
+    totalFindings: 0,
+  };
+
+  for (const result of results) {
+    output.totalFindings++;
+    const resultType = String(result?.resultType || 'unknown');
+    const confidence = String(result?.confidence || 'unknown');
+    const severity = String(result?.severity || 'unknown');
+
+    output.resultTypeCounts[resultType] = (output.resultTypeCounts[resultType] || 0) + 1;
+    output.confidenceCounts[confidence] = (output.confidenceCounts[confidence] || 0) + 1;
+    output.severityCounts[severity] = (output.severityCounts[severity] || 0) + 1;
+    if (result?.manualReviewRecommended) output.manualReviewRecommendedCount++;
+  }
+
+  return output;
+}
+
+function printSummary(score, title, url, pagesAudited = 1, transparency = null) {
   const bar = '█'.repeat(Math.round(score.taux / 5)) + '░'.repeat(20 - Math.round(score.taux / 5));
   const color = score.taux >= 75 ? '\x1b[32m' : score.taux >= 50 ? '\x1b[33m' : '\x1b[31m';
   const reset = '\x1b[0m';
   const stripAnsi = (value) => String(value).replace(/\x1B\[[0-9;]*m/g, '');
 
   const lines = [
-    `  Taux de conformité : ${String(score.taux + '%').padEnd(5)}  ${bar}`,
+    `  Score technique détectable : ${String(score.taux + '%').padEnd(5)}  ${bar}`,
     `  Conformes    : ${String(score.conformes).padEnd(4)} critères`,
     `  Non conformes: ${String(score.nonConformes).padEnd(4)} critères`,
     `  N/A          : ${String(score.na).padEnd(4)} critères`,
@@ -321,7 +356,30 @@ function printSummary(score, title, url, pagesAudited = 1) {
 
   console.log(`
 ${color}${framed}${reset}
+  Indicateur technique automatique (non équivalent à une conformité RGAA).
   `);
+
+  if (!transparency) return;
+
+  const typeCounts = transparency.resultTypeCounts || {};
+  const confidenceCounts = transparency.confidenceCounts || {};
+  const severityCounts = transparency.severityCounts || {};
+
+  const formatCounts = (counts) => Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([key, value]) => `${key}:${value}`)
+    .join(' · ') || 'aucun';
+
+  console.log(`  Types de résultats : ${formatCounts(typeCounts)}`);
+  console.log(`  Niveaux confiance  : ${formatCounts(confidenceCounts)}`);
+  console.log(`  Gravité            : ${formatCounts(severityCounts)}`);
+  console.log(`  Vérif. manuelle recommandée: ${transparency.manualReviewRecommendedCount}/${transparency.totalFindings}`);
+}
+
+function statusFromResultType(resultType) {
+  if (resultType === 'good_signal') return 'C';
+  if (resultType === 'manual_only') return 'NA';
+  return 'NC';
 }
 
 function createDebugLogger(enabled, sink = log) {
