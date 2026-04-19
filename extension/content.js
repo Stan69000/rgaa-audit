@@ -59,6 +59,19 @@ function rgbToHex(rgb) {
   return '#' + [m[1], m[2], m[3]].map(n => parseInt(n).toString(16).padStart(2, '0')).join('');
 }
 
+function escapeCssIdentifier(value) {
+  const input = String(value ?? '');
+  if (typeof CSS !== 'undefined' && CSS && typeof CSS.escape === 'function') {
+    return CSS.escape(input);
+  }
+  // Fallback défensif simple si CSS.escape est indisponible.
+  return input.replace(/\u0000/g, '\uFFFD').replace(/([ !"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, '\\$1');
+}
+
+function buildLabelForSelectorById(id) {
+  return `label[for="${escapeCssIdentifier(id)}"]`;
+}
+
 // ─────────────────────────────────────────────
 // THÈME 1 — IMAGES
 // ─────────────────────────────────────────────
@@ -369,40 +382,44 @@ function auditForms() {
   if (!inputs.length) { flag('11.1', 'NA', null, 'Aucun champ de formulaire trouvé'); return; }
 
   inputs.forEach(input => {
-    const id = input.getAttribute('id');
-    const ariaLabel = input.getAttribute('aria-label');
-    const ariaLabelledby = input.getAttribute('aria-labelledby');
-    const title = input.getAttribute('title');
-    const placeholder = input.getAttribute('placeholder');
+    try {
+      const id = input.getAttribute('id');
+      const ariaLabel = input.getAttribute('aria-label');
+      const ariaLabelledby = input.getAttribute('aria-labelledby');
+      const title = input.getAttribute('title');
+      const placeholder = input.getAttribute('placeholder');
 
-    // Label associé via for/id
-    let associatedLabel = null;
-    if (id) {
-      associatedLabel = document.querySelector(`label[for="${id}"]`);
-    }
-    // Label parent
-    const parentLabel = input.closest('label');
-
-    const hasLabel = associatedLabel || parentLabel;
-    const hasAriaLabel = ariaLabel || ariaLabelledby;
-
-    // 11.1 — Étiquette présente
-    if (!hasLabel && !hasAriaLabel && !title) {
-      if (placeholder) {
-        flag('11.1', 'NC', input,
-          `Champ sans label (placeholder "${placeholder}" seul n'est pas suffisant)`
-        );
-      } else {
-        flag('11.1', 'NC', input, `Champ sans aucune étiquette (id="${id || 'absent'}")`);
+      // Label associé via for/id
+      let associatedLabel = null;
+      if (id) {
+        associatedLabel = document.querySelector(buildLabelForSelectorById(id));
       }
-    } else {
-      const labelText = (associatedLabel?.innerText || parentLabel?.innerText || ariaLabel || title || '').trim();
-      flag('11.1', 'C', input, `Champ étiqueté : "${labelText.slice(0, 60)}"`);
-    }
+      // Label parent
+      const parentLabel = input.closest('label');
 
-    // Champs required sans aria-required
-    if (input.hasAttribute('required') && !input.hasAttribute('aria-required')) {
-      flag('11.10', 'NC', input, 'Champ required sans aria-required (accessibilité AT dégradée)');
+      const hasLabel = associatedLabel || parentLabel;
+      const hasAriaLabel = ariaLabel || ariaLabelledby;
+
+      // 11.1 — Étiquette présente
+      if (!hasLabel && !hasAriaLabel && !title) {
+        if (placeholder) {
+          flag('11.1', 'NC', input,
+            `Champ sans label (placeholder "${placeholder}" seul n'est pas suffisant)`
+          );
+        } else {
+          flag('11.1', 'NC', input, `Champ sans aucune étiquette (id="${id || 'absent'}")`);
+        }
+      } else {
+        const labelText = (associatedLabel?.innerText || parentLabel?.innerText || ariaLabel || title || '').trim();
+        flag('11.1', 'C', input, `Champ étiqueté : "${labelText.slice(0, 60)}"`);
+      }
+
+      // Champs required sans aria-required
+      if (input.hasAttribute('required') && !input.hasAttribute('aria-required')) {
+        flag('11.10', 'NC', input, 'Champ required sans aria-required (accessibilité AT dégradée)');
+      }
+    } catch {
+      // Erreur isolée sur un champ: on continue l'audit de la boucle.
     }
   });
 
@@ -578,22 +595,40 @@ function computeScore(results) {
 
 function runAudit() {
   results.length = 0; // reset
+  const report = {
+    results,
+    score: null,
+    url: location.href,
+    timestamp: new Date().toISOString(),
+    internalErrors: [],
+  };
 
-  auditImages();
-  auditFrames();
-  auditColors();
-  auditTables();
-  auditLinks();
-  auditMandatory();
-  auditStructure();
-  auditForms();
-  auditNavigation();
-  auditPresentation();
-  auditMultimedia();
-  auditScripts();
+  safeRunAuditSection('images', auditImages, report);
+  safeRunAuditSection('frames', auditFrames, report);
+  safeRunAuditSection('colors', auditColors, report);
+  safeRunAuditSection('tables', auditTables, report);
+  safeRunAuditSection('links', auditLinks, report);
+  safeRunAuditSection('mandatory', auditMandatory, report);
+  safeRunAuditSection('structure', auditStructure, report);
+  safeRunAuditSection('forms', auditForms, report);
+  safeRunAuditSection('navigation', auditNavigation, report);
+  safeRunAuditSection('presentation', auditPresentation, report);
+  safeRunAuditSection('multimedia', auditMultimedia, report);
+  safeRunAuditSection('scripts', auditScripts, report);
 
-  const score = computeScore(results);
-  return { results, score, url: location.href, timestamp: new Date().toISOString() };
+  report.score = computeScore(results);
+  return report;
+}
+
+function safeRunAuditSection(name, fn, report) {
+  try {
+    fn();
+  } catch (error) {
+    report.internalErrors.push({
+      section: name,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -624,3 +659,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Auto-run si demandé via badge
 console.log('[RGAA Audit] content.js chargé sur', location.href);
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    escapeCssIdentifier,
+    buildLabelForSelectorById,
+    safeRunAuditSection,
+    auditForms,
+    runAudit,
+    _results: results,
+  };
+}

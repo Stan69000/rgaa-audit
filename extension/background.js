@@ -16,6 +16,28 @@ function isSafeAction(action) {
   return action === 'getAuditResults';
 }
 
+function isValidReportShape(report) {
+  return Boolean(isPlainObject(report)
+    && Array.isArray(report.results)
+    && isPlainObject(report.score));
+}
+
+function createFallbackReport(report) {
+  return {
+    results: [],
+    score: { taux: 0, conformes: 0, nonConformes: 0, na: 0, total: 0 },
+    url: typeof report?.url === 'string' ? report.url : '',
+    timestamp: typeof report?.timestamp === 'string' ? report.timestamp : new Date().toISOString(),
+    internalErrors: [
+      ...(Array.isArray(report?.internalErrors) ? report.internalErrors : []),
+      {
+        section: 'background-validation',
+        message: 'Structure de rapport invalide reçue depuis content.js',
+      },
+    ],
+  };
+}
+
 async function injectAndRunAudit(tabId) {
   await chrome.scripting.executeScript({
     target: { tabId },
@@ -32,7 +54,7 @@ async function injectAndRunAudit(tabId) {
         reject(new Error(response?.error || 'Réponse vide du content script.'));
         return;
       }
-      resolve(response.report);
+      resolve(isValidReportShape(response.report) ? response.report : createFallbackReport(response.report));
     });
   });
 }
@@ -64,3 +86,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    isPlainObject,
+    isSafeAction,
+    isValidReportShape,
+    createFallbackReport,
+  };
+}
