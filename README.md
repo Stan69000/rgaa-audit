@@ -89,9 +89,9 @@ node bin/rgaa-compare-reports.js ./cli-report.json ./extension-report.json --jso
 
 ## Extension Chrome
 
-1. Ouvrir `chrome://extensions/`
-2. Activer le mode développeur
-3. Charger le dossier `extension/`
+L'extension est publiée sur le Chrome Web Store:
+
+- https://chromewebstore.google.com/detail/rgaa-audit/aiaiblaemmjcfeeobpjagdajbgbcabai?authuser=2&hl=fr
 
 ## Transparence
 
