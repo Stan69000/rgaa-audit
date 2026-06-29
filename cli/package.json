@@ -14,7 +14,7 @@
     "lint": "node --check bin/rgaa-audit.js bin/rgaa-fill-grid.js src/audit.js src/simulator.js src/browser.js src/rules/index.js src/reporters/index.js src/reporters/ods-grid.js"
   },
   "dependencies": {
-    "playwright": "^1.61.0"
+    "playwright": "^1.61.1"
   },
   "devDependencies": {},
   "engines": {
