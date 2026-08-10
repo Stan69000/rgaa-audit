@@ -48,7 +48,7 @@ jobs:
 
       - name: Alert by opening issue on failure
         if: failure() && github.event_name != 'pull_request'
-        uses: actions/github-script@v9
+        uses: actions/github-script@373c709c69115d41ff229c7e5df9f8788daa9553 # v9
         with:
           script: |
             const owner = context.repo.owner;
