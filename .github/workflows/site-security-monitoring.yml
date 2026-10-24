@@ -22,22 +22,34 @@ jobs:
     steps:
       - name: Resolve target URL
         id: target
+        env:
+          TARGET_URL: ${{ inputs.target_url || 'https://stan69000.github.io/rgaa-audit/' }}
         run: |
-          URL="${{ inputs.target_url || 'https://stan69000.github.io/rgaa-audit/' }}"
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "url=$TARGET_URL" >> "$GITHUB_OUTPUT"
 
       - name: Check HTTP status and TLS endpoint
+        env:
+          TARGET_URL: ${{ steps.target.outputs.url }}
         run: |
           set -euo pipefail
-          URL='${{ steps.target.outputs.url }}'
-          STATUS=$(curl -L -s -o /tmp/site-body.html -w "%{http_code}" "$URL")
+          # Retry transient transport failures (including TLS handshake errors).
+          # Keep certificate verification enabled and bound the total request time.
+          if STATUS=$(curl --location --silent --show-error \
+            --proto '=https' --proto-redir '=https' \
+            --connect-timeout 10 --max-time 30 \
+            --retry 2 --retry-all-errors --retry-delay 2 --retry-max-time 100 \
+            --dump-header /tmp/site-headers.txt \
+            --output /tmp/site-body.html --write-out "%{http_code}" "$TARGET_URL"); then
+            echo "HTTP status: $STATUS"
+          else
+            CURL_EXIT=$?
+            echo "::error::Site inaccessible apres tentatives: curl code $CURL_EXIT (HTTP $STATUS)"
+            exit "$CURL_EXIT"
+          fi
           if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
-            echo "Site status invalide: $STATUS"
+            echo "::error::Site status invalide: $STATUS"
             exit 1
           fi
-
-          curl -L -I -s "$URL" > /tmp/site-headers.txt
-          echo "HTTP status: $STATUS"
 
       - name: Validate in-page security policies
         run: |
