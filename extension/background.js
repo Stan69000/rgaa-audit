@@ -6,6 +6,7 @@
 
 const ENGINE_FILE = 'shared/rgaa-rules.js';
 const MAX_SELECTOR_LENGTH = 512;
+const GUIDE_PORT = 'rgaa-guide';
 
 async function getActiveTab() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -94,6 +95,36 @@ async function highlightInTab(tabId, selector) {
   return Boolean(injection && injection.result);
 }
 
+/** Retire les surimpressions du guide (exécuté dans la page). */
+function clearGuideOverlays() {
+  if (globalThis.RgaaGuidePage) globalThis.RgaaGuidePage.clear();
+  const overlay = document.getElementById('rgaa-guide-overlay');
+  if (overlay) overlay.remove();
+  const grayscale = document.getElementById('rgaa-guide-grayscale');
+  if (grayscale) grayscale.remove();
+  return true;
+}
+
+/**
+ * Le panneau latéral ne peut pas nettoyer la page pendant sa propre fermeture : il garde
+ * une connexion ouverte avec le service worker, qui retire les surimpressions de l'onglet
+ * suivi dès que cette connexion se coupe (panneau fermé).
+ */
+function onGuideConnect(port) {
+  if (!port || port.name !== GUIDE_PORT) return;
+  if (port.sender && port.sender.id && port.sender.id !== chrome.runtime.id) return;
+  let tabId = null;
+  port.onMessage.addListener((message) => {
+    if (isPlainObject(message) && Number.isInteger(message.tabId)) tabId = message.tabId;
+  });
+  port.onDisconnect.addListener(() => {
+    if (tabId === null) return;
+    chrome.scripting.executeScript({ target: { tabId }, func: clearGuideOverlays }).catch(() => {});
+  });
+}
+
+chrome.runtime.onConnect.addListener(onGuideConnect);
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!isPlainObject(message) || !isSafeAction(message.action)) {
     sendResponse({ success: false, error: 'Action non autorisée.' });
@@ -138,5 +169,7 @@ if (typeof module !== 'undefined' && module.exports) {
     createFallbackReport,
     explainInjectionError,
     highlightInPage,
+    onGuideConnect,
+    clearGuideOverlays,
   };
 }

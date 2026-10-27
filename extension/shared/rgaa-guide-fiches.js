@@ -35,6 +35,7 @@
       question: 'Le texte qui remplace cette image dit-il ce qu’elle apporte ?',
       pourquoi: 'Une personne aveugle entend ce texte à la place de l’image. « photo » ou « IMG_2045 » ne lui apprend rien ; « Affiche du concert du 12 juin à Chazay » lui donne l’information.',
       etapes: [
+        'Si des images défilent (carrousel), mettez-les d’abord en pause.',
         'Regardez l’image entourée dans la page.',
         'Lisez le texte affiché juste dessous : c’est ce qu’entend un lecteur d’écran.',
         'Sans voir l’image, auriez-vous la même information ?',
@@ -53,6 +54,7 @@
       question: 'Cette image est-elle vraiment décorative ?',
       pourquoi: 'Cette image est ignorée par les lecteurs d’écran. C’est parfait pour un motif ou une illustration d’ambiance, mais si elle contient une information (un graphique, un texte, un logo de partenaire), elle disparaît pour une personne aveugle.',
       etapes: [
+        'Si des images défilent (carrousel), mettez-les d’abord en pause.',
         'Regardez l’image entourée et marquée « Décorative ».',
         'Contient-elle un texte, une donnée ou une information absente du texte autour ?',
       ],

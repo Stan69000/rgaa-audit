@@ -15,6 +15,7 @@ function loadBackground(chromeStub, extra = {}) {
       id: 'ext-id',
       lastError: null,
       onMessage: { addListener(fn) { listener = fn; } },
+      onConnect: { addListener() {} },
     },
     tabs: { query: async () => [{ id: 7 }] },
     scripting: { executeScript: async () => [] },
@@ -95,4 +96,28 @@ test('background : highlightInPage ne plante pas sur un sélecteur invalide', ()
     document: { querySelector() { throw new Error('SyntaxError'); } },
   });
   assert.equal(exports.highlightInPage('a[['), false);
+});
+
+test('background : retire les cadres du guide quand le panneau latéral se ferme', async () => {
+  const calls = [];
+  const { exports } = loadBackground({
+    scripting: { executeScript: async (details) => { calls.push(details); return []; } },
+  });
+  const handlers = {};
+  const port = {
+    name: 'rgaa-guide',
+    sender: { id: 'ext-id' },
+    onMessage: { addListener(fn) { handlers.message = fn; } },
+    onDisconnect: { addListener(fn) { handlers.disconnect = fn; } },
+  };
+  exports.onGuideConnect(port);
+  handlers.message({ tabId: 42 });
+  handlers.disconnect();
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].target.tabId, 42);
+  assert.equal(calls[0].func, exports.clearGuideOverlays);
+
+  const ignored = { ...port, name: 'autre', onMessage: { addListener() { throw new Error('ne doit pas écouter'); } } };
+  assert.doesNotThrow(() => exports.onGuideConnect(ignored));
 });

@@ -45,12 +45,13 @@ function startAudit() {
   const btn = $('btnAudit');
   btn.disabled = true;
   btn.textContent = 'Analyse en cours…';
+  $('guideCallout').hidden = true;
   announce('Analyse de la page en cours.');
   $('results').replaceChildren(createStatusMessage('Analyse en cours…'));
 
   chrome.runtime.sendMessage({ action: 'getAuditResults' }, (response) => {
     btn.disabled = false;
-    btn.textContent = 'Relancer l’audit';
+    btn.textContent = 'Relancer l’audit automatique';
 
     if (chrome.runtime.lastError || !response || !response.success) {
       renderError(response?.error || chrome.runtime.lastError?.message);
@@ -63,11 +64,18 @@ function startAudit() {
     $('urlDisplay').hidden = false;
     $('engineInfo').textContent = `Moteur ${currentReport.engineVersion || '?'} — RGAA 4.1.2`;
     $('scoreBar').hidden = false;
-    $('scoreExplain').hidden = false;
+    $('scoreDetails').hidden = false;
+    document.body.classList.add('audited');
     $('filters').hidden = false;
     $('footer').hidden = false;
     renderResults(currentReport.results, currentFilter);
     const s = currentReport.score;
+    if (s.aVerifier > 0 && !$('btnGuide').hidden) {
+      $('calloutTitle').textContent = `${s.aVerifier} critère(s) restent à vérifier par une personne.`;
+      $('guideCallout').hidden = false;
+      // L'invitation, plus parlante après l'audit, remplace le bouton générique du guide.
+      $('guidePath').hidden = true;
+    }
     announce(`Audit terminé : ${s.nonConformes} critère(s) non conforme(s), ${s.aVerifier || 0} à vérifier, ${s.conformes} conforme(s).`);
   });
 }
@@ -220,20 +228,20 @@ function download(content, type, fileName) {
  * repérée à l'ouverture du panneau, avant le clic.
  */
 function setupGuideButton() {
-  const btn = $('btnGuide');
-  if (!btn) return;
+  const buttons = [...document.querySelectorAll('[data-open-guide]')];
+  if (!buttons.length) return;
   if (!chrome.sidePanel || typeof chrome.sidePanel.open !== 'function') {
-    btn.hidden = true;
+    buttons.forEach((b) => { b.closest('.path, .guide-callout').hidden = true; b.hidden = true; });
     return;
   }
   let windowId = null;
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     windowId = tabs && tabs[0] ? tabs[0].windowId : null;
   });
-  btn.addEventListener('click', () => {
+  buttons.forEach((btn) => btn.addEventListener('click', () => {
     if (windowId === null) return;
     chrome.sidePanel.open({ windowId }).then(() => window.close()).catch((err) => renderError(err && err.message));
-  });
+  }));
 }
 
 function buildVulgarizedHtml(report) {

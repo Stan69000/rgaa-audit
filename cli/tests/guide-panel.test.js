@@ -81,12 +81,12 @@ test('question élément par élément : aide affichée dans la page, réponses 
   const focused = await guide.evaluate(() => document.activeElement.tagName);
   assert.equal(focused, 'H2', 'le focus va au titre de la question');
 
-  for (let i = 0; i < 3; i++) {
+  const total = Number((await guide.locator('.card .eyebrow').textContent()).match(/sur (\d+)/)[1]);
+  for (let i = 0; i < total; i++) {
     const label = await guide.locator('.card .label-text').textContent();
     await clickText(guide, label === 'IMG_2045' ? 'Non, à reformuler' : 'Oui, c’est clair');
   }
-  await guide.waitForSelector('text=Question terminée', { state: 'attached' }).catch(() => {});
-  assert.match(await guide.locator('#status').textContent(), /Non conforme|Réponse enregistrée/);
+  await guide.waitForFunction(() => /Non conforme/.test(document.getElementById('status').textContent));
   const focusedAfter = await guide.evaluate(() => document.activeElement.textContent);
   assert.match(focusedAfter, /Non, à reformuler|Oui, c’est clair/, 'le focus reste sur les réponses');
 });

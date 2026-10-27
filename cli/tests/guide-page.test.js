@@ -29,8 +29,13 @@ after(async () => {
 const labels = (key) => inv.collections[key].map((i) => i.label);
 
 test('inventaire : images informatives et décoratives', () => {
-  assert.deepEqual(labels('imagesInformative').sort(), ['Graphique des adhésions', 'IMG_2045', 'Logo de l’association'].sort());
+  assert.deepEqual(labels('imagesInformative').sort(), ['Diapositive visible', 'Graphique des adhésions', 'IMG_2045', 'Logo de l’association', 'Photo de la carte'].sort());
   assert.equal(inv.collections.imagesDecorative.length, 1);
+});
+
+test('carrousel : la diapositive recouverte est ignorée, pas l’image sous un lien étiré', () => {
+  assert.ok(!labels('imagesInformative').includes('Diapositive cachée'));
+  assert.ok(labels('imagesInformative').includes('Photo de la carte'));
 });
 
 test('inventaire : liens, liens dans le texte, titres, zones', () => {

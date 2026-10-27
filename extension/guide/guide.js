@@ -86,6 +86,11 @@ function button(text, onclick, attrs = {}) {
 
 class PageAccessError extends Error {}
 
+// Connexion avec le service worker : à la fermeture du panneau, il retire les cadres de la page.
+const guidePort = chrome.runtime && typeof chrome.runtime.connect === 'function'
+  ? chrome.runtime.connect({ name: 'rgaa-guide' })
+  : null;
+
 async function activeTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !tab.id) throw new PageAccessError('Aucun onglet actif.');
@@ -96,6 +101,7 @@ async function activeTab() {
 
 async function inPage(func, args = []) {
   const tab = await activeTab();
+  if (guidePort) guidePort.postMessage({ tabId: tab.id });
   try {
     const [probe] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },

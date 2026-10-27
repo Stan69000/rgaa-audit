@@ -37,6 +37,21 @@
 
   // ── Inventaire ─────────────────────────────
 
+  /**
+   * Diapositive de carrousel masquée : une autre image est affichée par-dessus, au même
+   * endroit. Un simple calque transparent (lien étiré sur une carte) ne compte pas.
+   */
+  function coveredByAnotherImage(el) {
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    if (x < 0 || y < 0 || x >= window.innerWidth || y >= window.innerHeight) return false;
+    const top = document.elementFromPoint(x, y);
+    if (!top || top === el || el.contains(top) || top.contains(el)) return false;
+    const media = top.closest('img, picture, svg, video, canvas') || top.querySelector(':scope > img, :scope > picture');
+    return Boolean(media) && media !== el && !media.contains(el);
+  }
+
   function collectImages() {
     const d = dom();
     const informative = [];
@@ -46,6 +61,7 @@
       if (!visible(el)) return;
       const rect = el.getBoundingClientRect();
       if (rect.width < 8 || rect.height < 8) return;
+      if (coveredByAnotherImage(el)) return;
       const role = d.explicitRole(el);
       const hidden = d.isHiddenFromAT(el) || role === 'presentation' || role === 'none'
         || (el.localName === 'img' && el.getAttribute('alt') === '');
