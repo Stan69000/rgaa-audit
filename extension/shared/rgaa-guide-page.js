@@ -362,12 +362,56 @@
     },
   };
 
+  const REFRESH_MS = 800;
+  let highlighted = null;
+  let timer = null;
+
+  function drawHighlight(layer) {
+    if (!highlighted) return;
+    const el = query(highlighted.key);
+    if (!el) return;
+    if (effectivelyInvisible(el) || coveredByAnotherImage(el) || !el.isConnected) {
+      const r = pageRect(el);
+      const tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.textContent = 'Cet élément n’est plus affiché (carrousel ?) : mettez le défilement en pause.';
+      tag.style.cssText = `left:${Math.max(0, r.x)}px;top:${Math.max(0, r.y)}px;`;
+      layer.appendChild(tag);
+      return;
+    }
+    addBox(layer, el, { label: highlighted.caption || '', current: true });
+  }
+
+  /**
+   * Redessine les cadres d'après l'état actuel de la page : les carrousels et contenus
+   * animés changent après l'analyse, des cadres figés seraient faux.
+   */
+  function render() {
+    if (!current && !highlighted) return;
+    const layer = ensureLayer();
+    if (current && current.name !== 'grayscale') AIDS[current.name](layer);
+    drawHighlight(layer);
+  }
+
+  function startLive() {
+    if (timer) return;
+    timer = setInterval(render, REFRESH_MS);
+    window.addEventListener('resize', render);
+  }
+
+  function stopLive() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    window.removeEventListener('resize', render);
+  }
+
   function showAid(name) {
     clear();
     const aid = AIDS[name];
     if (!aid) throw new Error(`Aide inconnue : ${name}`);
     const count = aid(ensureLayer());
     current = { type: 'aid', name };
+    startLive();
     return count;
   }
 
@@ -376,19 +420,20 @@
     const el = query(key);
     if (!el) return false;
     el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
-    const layer = ensureLayer();
-    // L'aide en cours reste affichée autour de l'élément mis en évidence.
-    if (current && current.type === 'aid' && current.name !== 'grayscale') AIDS[current.name](layer);
-    addBox(layer, el, { label: caption || '', current: true });
+    highlighted = { key, caption };
+    render();
+    startLive();
     return true;
   }
 
   function clear() {
+    stopLive();
     const host = document.getElementById(HOST_ID);
     if (host) host.remove();
     const gray = document.getElementById(GRAYSCALE_ID);
     if (gray) gray.remove();
     current = null;
+    highlighted = null;
     return true;
   }
 

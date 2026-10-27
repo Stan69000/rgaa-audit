@@ -86,6 +86,27 @@ test('surimpressions : affichées dans un shadow DOM ignoré, puis retirées', a
   assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).filter), 'none');
 });
 
+test('cadres vivants : ils suivent le carrousel et signalent l’élément devenu invisible', async () => {
+  await page.evaluate(() => globalThis.RgaaGuidePage.showAid('alternatives'));
+  const key = inv.collections.imagesInformative.find((i) => i.label === 'Diapo affichée').key;
+  await page.evaluate((k) => globalThis.RgaaGuidePage.highlight(k, 'Diapo affichée'), key);
+  const tags = () => page.evaluate(() => [...document.getElementById('rgaa-guide-overlay').shadowRoot.querySelectorAll('.tag')].map((t) => t.textContent));
+  assert.ok((await tags()).includes('Diapo affichée'));
+  // Le carrousel passe à la diapositive suivante : l'ancienne s'efface, la nouvelle apparaît.
+  await page.evaluate(() => {
+    const [shown, faded] = document.querySelectorAll('.carousel-fade img');
+    shown.style.opacity = '0';
+    faded.parentElement.style.opacity = '1';
+  });
+  await page.waitForTimeout(1000);
+  const after = await tags();
+  assert.ok(after.includes('Diapo en fondu'), 'la diapositive affichée est encadrée');
+  assert.ok(after.some((t) => /n’est plus affiché/.test(t)), 'l’élément en cours est signalé comme masqué');
+  await page.evaluate(() => globalThis.RgaaGuidePage.clear());
+  await page.waitForTimeout(1000);
+  assert.equal(await page.evaluate(() => Boolean(document.getElementById('rgaa-guide-overlay'))), false, 'plus de rafraîchissement après clear()');
+});
+
 test('mise en évidence d’un élément par son sélecteur', async () => {
   const key = inv.collections.imagesInformative.find((i) => i.label === 'IMG_2045').key;
   assert.equal(await page.evaluate((k) => globalThis.RgaaGuidePage.highlight(k, 'IMG_2045'), key), true);

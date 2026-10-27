@@ -15,7 +15,7 @@ Lot 1 de la vérification guidée : accompagner pas à pas les vérifications qu
 - Le panneau du guide est lui-même accessible : titres, boutons à bascule, annonces, focus conservé pendant les réponses ; il passe son propre audit.
 - **Fenêtre de l’extension refondue** autour de deux parcours expliqués : audit automatique (1 minute) et vérification guidée (15 à 20 minutes). Après l’audit, une invitation rappelle le nombre de critères à vérifier et ouvre le guide ; l’écran se compacte pour laisser la place aux résultats.
 - Les cadres du guide sont retirés de la page quand on ferme le panneau latéral (le service worker suit la connexion du panneau).
-- Carrousels : les diapositives recouvertes par une autre image ne sont plus présentées ; les fiches images rappellent de mettre le carrousel en pause.
+- Carrousels : les cadres du guide se redessinent en continu et suivent la diapositive affichée ; les diapositives recouvertes ou en fondu ne sont pas présentées, un élément devenu invisible est signalé, et les fiches images rappellent de mettre le carrousel en pause.
 - Correction : les éléments masqués de la fenêtre (score, filtres) s’affichaient avant l’audit.
 - Moteur 0.3.1 : utilitaires DOM exposés pour les aides visuelles (`RgaaRules.dom`) ; le texte rogné par un conteneur `overflow: hidden` n’est plus mesuré (faux positif), celui d’une zone défilante est mesuré par ses ancêtres.
 
