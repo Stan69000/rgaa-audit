@@ -9,9 +9,9 @@ on:
         description: 'URLs a auditer (une par ligne)'
         required: false
       min_score:
-        description: 'Seuil minimal de conformite (0-100)'
+        description: 'Seuil minimal du score technique C/(C+NC), 0-100'
         required: false
-        default: '50'
+        default: '70'
 
 env:
   NODE_VERSION: '22'
@@ -34,7 +34,8 @@ jobs:
 
           INPUT_URLS="${{ github.event.inputs.urls || '' }}"
           SECRET_URLS="${{ secrets.AUDIT_URLS || '' }}"
-          MIN_SCORE="${{ github.event.inputs.min_score || '50' }}"
+          # Depuis 0.3.0, les points « a verifier » ne baissent plus le score : seuil releve de 50 a 70.
+          MIN_SCORE="${{ github.event.inputs.min_score || '70' }}"
 
           if [[ -n "$INPUT_URLS" ]]; then
             RAW="$INPUT_URLS"
@@ -72,28 +73,56 @@ jobs:
           npm ci
           npx playwright install chromium --with-deps
 
+      - name: Target key
+        id: key
+        shell: bash
+        run: echo "name=$(echo "${{ matrix.url }}" | sed 's|https\?://||;s|[^A-Za-z0-9._-]|-|g')" >> "$GITHUB_OUTPUT"
+
+      # Rapport de la semaine precedente, s'il existe : sert de reference pour les regressions.
+      - name: Restore previous report
+        uses: actions/cache/restore@v4
+        with:
+          path: baseline-${{ steps.key.outputs.name }}.json
+          key: audit-baseline-${{ steps.key.outputs.name }}-${{ github.run_id }}
+          restore-keys: audit-baseline-${{ steps.key.outputs.name }}-
+
       - name: Audit target
         working-directory: cli
         shell: bash
         run: |
           set -euo pipefail
-          SAFE_NAME=$(echo "${{ matrix.url }}" | sed 's|https\?://||;s|/|-|g')
+          SAFE_NAME="${{ steps.key.outputs.name }}"
+          BASELINE_ARGS=()
+          if [[ -f "../baseline-${SAFE_NAME}.json" ]]; then
+            BASELINE_ARGS=(--baseline "../baseline-${SAFE_NAME}.json" --fail-on-new)
+          fi
 
-          node bin/rgaa-audit.js "${{ matrix.url }}" \
-            -o html \
-            -s "../rapport-${SAFE_NAME}.html" \
-            -S
-
+          # Un seul passage : rapport JSON (seuil, regressions) et rapport HTML vulgarise.
           node bin/rgaa-audit.js "${{ matrix.url }}" \
             -o json \
             -s "../rapport-${SAFE_NAME}.json" \
-            -S false
+            --vulgarized-save "../rapport-${SAFE_NAME}.html" \
+            "${BASELINE_ARGS[@]}"
+
+      - name: Save report as next baseline
+        if: always()
+        shell: bash
+        run: |
+          SAFE_NAME="${{ steps.key.outputs.name }}"
+          if [[ -f "rapport-${SAFE_NAME}.json" ]]; then cp "rapport-${SAFE_NAME}.json" "baseline-${SAFE_NAME}.json"; fi
+
+      - name: Store baseline
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: baseline-${{ steps.key.outputs.name }}.json
+          key: audit-baseline-${{ steps.key.outputs.name }}-${{ github.run_id }}
 
       - name: Enforce minimum score
         shell: bash
         run: |
           set -euo pipefail
-          SAFE_NAME=$(echo "${{ matrix.url }}" | sed 's|https\?://||;s|/|-|g')
+          SAFE_NAME="${{ steps.key.outputs.name }}"
           SEUIL="${{ needs.resolve-targets.outputs.min_score }}"
 
           node -e "

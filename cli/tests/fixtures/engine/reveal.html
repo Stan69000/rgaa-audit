@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Contenus révélés au défilement</title>
+<style>
+  body { margin: 0; font: 16px Arial, sans-serif; color: #222222; background: #ffffff; }
+  .spacer { height: 2400px; }
+  .reveal { opacity: 0; transition: opacity 1s ease; }
+  .reveal.on { opacity: 1; }
+  .ok { color: #333333; }
+  .pale { color: #aaaaaa; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Apparitions au défilement</h1>
+  <div class="spacer"></div>
+  <section class="reveal"><p class="ok">Texte foncé révélé au défilement</p></section>
+  <section class="reveal"><p class="pale">Texte pâle révélé au défilement</p></section>
+</main>
+<script>
+  const io = new IntersectionObserver((entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('on'); }));
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+</script>
+</body>
+</html>

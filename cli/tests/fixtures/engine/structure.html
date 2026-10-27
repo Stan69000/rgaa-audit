@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="francais">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="30; url=https://example.org/">
+<title>Pièges de structure</title>
+<style>
+  body { color: #222222; background: #ffffff; font: 16px Arial, sans-serif; }
+  a.plain { color: #222222; text-decoration: none; }
+  a.colored { color: #0070e0; text-decoration: none; }
+</style>
+</head>
+<body>
+<a href="#contenu">Aller au contenu</a>
+<header><h1>Structure</h1></header>
+<main id="main-1">
+  <h2></h2>
+  <div role="heading" class="heading-no-level">Titre ARIA</div>
+  <ul class="bad-list"><div>Pas un li</div><li>OK</li></ul>
+  <li class="orphan-li">Orphelin</li>
+  <p id="dup">Premier</p>
+  <p id="dup">Second</p>
+  <p lang="xx-">Texte</p>
+  <p>Un paragraphe assez long avec un <a href="/x" class="plain">lien invisible</a> au milieu du texte courant.</p>
+  <p>Un autre paragraphe assez long avec un <a href="/y" class="colored">lien coloré</a> au milieu du texte.</p>
+  <center>Centré</center>
+  <p align="right">Aligné</p>
+  <table role="presentation" class="layout-th"><tr><th>En-tête</th><td>Cellule</td></tr></table>
+  <table class="data-table">
+    <caption>Données</caption>
+    <tr><th>Nom</th><th scope="col">Valeur</th></tr>
+    <tr><td headers="absent">A</td><td>1</td></tr>
+  </table>
+  <span tabindex="3">Ordre forcé</span>
+  <marquee>Défilant</marquee>
+</main>
+<main id="main-2"><p>Second main</p></main>
+<footer>Pied</footer>
+</body>
+</html>

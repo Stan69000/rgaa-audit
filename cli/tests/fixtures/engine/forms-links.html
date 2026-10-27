@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="utf-8"><title>Pièges formulaires et liens</title>
+<style>.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style>
+</head>
+<body>
+<main>
+  <h1>Formulaires et liens</h1>
+  <p>
+    <a href="/a" class="link-ok">Programme de la saison</a>
+    <a href="/b" aria-label="Accueil du site" class="link-mismatch">Contact</a>
+    <a href="/c" aria-label="Télécharger le programme" class="link-match">Télécharger</a>
+    <a href="/d" class="link-empty"></a>
+    <a href="/e" class="link-icon-sr"><svg aria-hidden="true" width="16" height="16"></svg><span class="sr-only">Facebook</span></a>
+    <a href="/f" class="link-generic">en savoir plus</a>
+  </p>
+  <form>
+    <label for="nom">Nom (obligatoire)</label>
+    <input id="nom" name="nom" type="text" autocomplete="family-name" required class="field-ok">
+
+    <input id="ville" name="ville" type="text" placeholder="Votre ville" class="field-placeholder">
+
+    <label class="implicit">Code <input type="text" name="code" class="field-implicit"></label>
+
+    <label for="fantome">Fantôme</label>
+
+    <label for="tel">Téléphone</label>
+    <input id="tel" name="tel" type="tel" aria-label="Numéro" autocomplete="tel" class="field-mismatch">
+
+    <label for="mail">Courriel</label>
+    <input id="mail" name="mail" type="email" autocomplete="emial" class="field-bad-autocomplete">
+
+    <label for="mail2">Courriel pro</label>
+    <input id="mail2" name="mail2" type="email" autocomplete="section-pro work email" class="field-good-autocomplete">
+
+    <input type="radio" name="choix" id="r1" value="1"><label for="r1">Un</label>
+    <input type="radio" name="choix" id="r2" value="2"><label for="r2">Deux</label>
+
+    <fieldset class="fieldset-no-legend">
+      <input type="checkbox" name="opt" id="c1"><label for="c1">A</label>
+      <input type="checkbox" name="opt" id="c2"><label for="c2">B</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Taille</legend>
+      <input type="radio" name="taille" id="t1"><label for="t1">S</label>
+      <input type="radio" name="taille" id="t2"><label for="t2">M</label>
+    </fieldset>
+
+    <button type="button" class="btn-icon"><svg width="16" height="16" aria-hidden="true"></svg></button>
+    <button type="submit" aria-label="Valider le formulaire" class="btn-mismatch">Envoyer</button>
+    <button type="submit">Envoyer</button>
+    <button type="button" class="card-ok" aria-label="Lire la vidéo : Fête du village"><h3>Fête du village</h3><span>Reportage · 3:12</span></button>
+  </form>
+</main>
+</body>
+</html>

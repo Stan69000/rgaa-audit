@@ -40,3 +40,7 @@ dist/
 build/
 *.crx
 *.zip
+cli/vendor/
+/cli/rapport*.html
+/cli/rapport*.json
+rgaa-audit-extension-*.zip

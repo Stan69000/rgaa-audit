@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="utf-8"><title>Pièges ARIA</title></head>
+<body>
+<main>
+  <h1>ARIA</h1>
+  <!-- Motifs valides : aucun signalement attendu -->
+  <div role="tablist" aria-label="Onglets valides">
+    <button role="tab" aria-selected="true" aria-controls="panel-1" id="tab-1">Un</button>
+    <button role="tab" aria-selected="false" aria-controls="panel-2" id="tab-2" tabindex="-1">Deux</button>
+  </div>
+  <div role="tabpanel" id="panel-1" aria-labelledby="tab-1">Contenu un</div>
+  <div role="tabpanel" id="panel-2" aria-labelledby="tab-2" hidden>Contenu deux</div>
+  <img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" role="presentation" alt="" width="10" height="10">
+  <div role="group" aria-label="Groupe valide"><span role="none">x</span></div>
+  <div role="region" aria-label="Fallback" class="valid-fallback-role"><span role="switch button" aria-checked="false" tabindex="0">Option</span></div>
+
+  <!-- Erreurs attendues -->
+  <div role="tabs" class="invalid-role">Rôle inventé</div>
+  <div role="widget" class="abstract-role">Rôle abstrait</div>
+  <span role="tab" class="orphan-tab" tabindex="0">Onglet orphelin</span>
+  <div role="tablist" class="empty-tablist" aria-label="Filtres"><button aria-current="true">Tout</button></div>
+  <input type="text" aria-labeledby="nope" class="typo-attr" title="Champ">
+  <button aria-expanded="yes" class="bad-value">Menu</button>
+  <p aria-describedby="absent-id" class="missing-ref">Paragraphe</p>
+  <button aria-expanded="false" aria-controls="lazy-panel" class="lazy-controls">Accordéon</button>
+  <div role="checkbox" tabindex="0" class="checkbox-no-state">Case</div>
+  <div role="button" class="button-no-tabindex">Faux bouton</div>
+  <div aria-hidden="true" class="hidden-focusable"><a href="#x">Lien caché</a></div>
+  <div onclick="void 0" class="onclick-div">Cliquable</div>
+</main>
+</body>
+</html>
