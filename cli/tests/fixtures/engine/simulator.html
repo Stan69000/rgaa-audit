@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Pièges clavier et affichage</title>
+<style>
+  body { margin: 0; font: 16px Arial, sans-serif; color: #111111; background: #ffffff; }
+  .skip { position: absolute; left: -9999px; }
+  .skip:focus { left: 8px; top: 8px; background: #ffffff; padding: 4px; }
+  a.nofocus:focus { outline: none; }
+  button.shadow:focus { outline: none; box-shadow: 0 0 0 3px #0000ff; }
+  .wide { width: 600px; background: #eeeeee; }
+  a.hoverbad:hover { color: #cccccc; }
+  button.weak { background: #ffffff; border: 1px solid #555555; }
+  button.weak:focus { outline: none; background: #f2f2f2; }
+  a.focusbad:focus { color: #dddddd; outline: 2px solid #000000; }
+  .clip { width: 600px; height: 40px; overflow: hidden; }
+</style>
+</head>
+<body>
+<a href="#main" class="skip">Aller au contenu</a>
+<nav aria-label="Principale">
+  <a href="#x" class="nofocus">Lien sans focus visible</a>
+  <button type="button" class="shadow">Bouton avec focus visible</button>
+  <a href="#y" class="hoverbad">Lien pâle au survol</a>
+  <button type="button" class="weak">Bouton au focus discret</button>
+  <a href="#z" class="focusbad">Lien pâle au focus</a>
+</nav>
+<main id="main">
+  <h1>Simulation</h1>
+  <div class="wide">Bloc de largeur fixe</div>
+  <div class="clip">Ce texte tient sur une ligne mais déborde avec plus d’espacement.</div>
+  <div id="trap" tabindex="0">Zone qui retient le focus</div>
+</main>
+<script>
+  document.getElementById('trap').addEventListener('keydown', (event) => {
+    if (event.key === 'Tab') event.preventDefault();
+  });
+</script>
+</body>
+</html>

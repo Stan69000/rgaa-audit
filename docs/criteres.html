@@ -123,7 +123,7 @@
     <div class="disclaimer">
       <strong>⚠️ Projet associatif vibe codé</strong> — Cet outil est développé bénévolement par
       <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener">Le Singe Du Numérique</a>
-      dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.
+      dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.2.
       Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé.
       Utilisez-le comme point de départ, pas comme conclusion.
     </div>
@@ -156,95 +156,99 @@
     </div>
 
     <section class="grid" aria-label="Détail par thème">
+<!-- couverture:themes:debut -->
       <article class="card">
-        <div class="card-head"><h2>1. Images</h2><span class="badge partiel">2 auto / 3 partiels / 4 manuels</span></div>
+        <div class="card-head"><h2>1. Images</h2><span class="badge auto">2 auto / 1 partiel / 6 manuels</span></div>
         <p class="meta">9 critères</p>
-        <p>Vérifie si les images ont une alternative lisible et utile.</p>
-        <ul><li>Automatique: présence de `alt`, gestion des images décoratives.</li><li>Manuel: pertinence de la description selon le contexte.</li></ul>
+        <p>Les images ont-elles une alternative lisible et utile ?</p>
+        <ul><li>1.1 — img sans alt, SVG/role="img"/canvas sans alternative, input image, area</li><li>1.2 — image décorative pourvue d’une alternative ; SVG ni masqué ni nommé (à vérifier)</li><li>1.3 — alternative générique, nom de fichier, trop longue</li></ul>
       </article>
       <article class="card">
-        <div class="card-head"><h2>2. Cadres</h2><span class="badge partiel">1 auto / 1 manuel</span></div>
+        <div class="card-head"><h2>2. Cadres</h2><span class="badge auto">1 auto / 1 manuel</span></div>
         <p class="meta">2 critères</p>
-        <p>Vérifie si les `iframe` sont identifiables et compréhensibles.</p>
-        <ul><li>Automatique: présence d'un titre.</li><li>Manuel: qualité et clarté du titre.</li></ul>
+        <p>Les cadres (iframe) sont-ils identifiables ?</p>
+        <ul><li>2.1 — iframe sans title</li></ul>
       </article>
       <article class="card">
-        <div class="card-head"><h2>3. Couleurs</h2><span class="badge partiel">1 auto / 1 partiel / 1 manuel</span></div>
+        <div class="card-head"><h2>3. Couleurs</h2><span class="badge auto">2 auto / 1 manuel</span></div>
         <p class="meta">3 critères</p>
-        <p>Vérifie le contraste et l'usage de la couleur comme seul signal.</p>
-        <ul><li>Automatique: contraste texte/fond.</li><li>Manuel: vérifier qu'une info n'existe pas uniquement par la couleur.</li></ul>
+        <p>Le texte est-il assez contrasté, l’information pas uniquement portée par la couleur ?</p>
+        <ul><li>3.2 — texte réellement rendu : fond composé (transparences, opacité, éléments superposés), seuils 24 px / 18,5 px gras ; CLI : états survol et focus, thème sombre, thème alternatif du site</li><li>3.3 — icône seule d’un bouton ou d’un lien sous 3:1 ; bordures de champs (à vérifier) ; CLI : contraste de l’indicateur de focus (à vérifier)</li></ul>
       </article>
       <article class="card">
-        <div class="card-head"><h2>4. Multimédia</h2><span class="badge manuel">0 auto / 4 partiels / 8 manuels / 1 à faire</span></div>
+        <div class="card-head"><h2>4. Multimédia</h2><span class="badge auto">1 auto / 2 partiels / 10 manuels</span></div>
         <p class="meta">13 critères</p>
-        <p>Thème fortement éditorial: sous-titres, transcription, audio-description.</p>
-        <ul><li>Partiel: détection technique d'indices (tracks, autoplay).</li><li>Manuel: contrôle qualité et complétude des alternatives.</li></ul>
+        <p>Vidéos et sons : sous-titres, transcription, audiodescription, contrôle de la lecture.</p>
+        <ul><li>4.3 — vidéo sans piste de sous-titres</li><li>4.10 — média en lecture automatique avec le son</li><li>4.11 — média sans contrôles natifs</li></ul>
       </article>
       <article class="card">
-        <div class="card-head"><h2>5. Tableaux</h2><span class="badge partiel">4 auto / 1 partiel / 2 manuels / 1 à faire</span></div>
+        <div class="card-head"><h2>5. Tableaux</h2><span class="badge auto">2 auto / 2 partiels / 4 manuels</span></div>
         <p class="meta">8 critères</p>
-        <p>Vérifie la structure des tableaux de données.</p>
-        <ul><li>Automatique: `th`, `scope`, résumé.</li><li>Manuel: pertinence métier des intitulés.</li></ul>
+        <p>Les tableaux de données sont-ils correctement structurés ?</p>
+        <ul><li>5.1 — tableau complexe sans résumé</li><li>5.6 — tableau sans en-tête déclaré</li><li>5.7 — th sans scope/id/role, scope invalide, headers cassé</li><li>5.8 — tableau de mise en forme avec th, caption, scope…</li></ul>
       </article>
       <article class="card">
-        <div class="card-head"><h2>6. Liens</h2><span class="badge auto">2 auto</span></div>
+        <div class="card-head"><h2>6. Liens</h2><span class="badge auto">1 auto / 1 partiel</span></div>
         <p class="meta">2 critères</p>
-        <p>Vérifie que les liens sont compréhensibles hors contexte.</p>
-        <ul><li>Automatique: intitulés trop vagues, liens image sans alternative.</li></ul>
+        <p>Les liens ont-ils un intitulé compréhensible ?</p>
+        <ul><li>6.1 — nom accessible sans l’intitulé visible (6.1.5) ; intitulés génériques (à vérifier)</li><li>6.2 — lien sans intitulé</li></ul>
       </article>
       <article class="card">
-        <div class="card-head"><h2>7. Scripts</h2><span class="badge partiel">0 auto / 2 partiels / 2 manuels / 1 à faire</span></div>
+        <div class="card-head"><h2>7. Scripts</h2><span class="badge auto">2 auto / 3 manuels</span></div>
         <p class="meta">5 critères</p>
-        <p>Concerne les composants interactifs et leur usage clavier/lecteur d'écran.</p>
-        <ul><li>Partiel: signaux ARIA et interactions suspectes.</li><li>Manuel: comportement réel avec technologies d'assistance.</li></ul>
+        <p>Les composants interactifs sont-ils utilisables au clavier et au lecteur d’écran ?</p>
+        <ul><li>7.1 — rôles invalides ou hors contexte, attributs et valeurs ARIA invalides, états requis, références cassées</li><li>7.3 — composants interactifs non focusables, onclick sur élément non interactif</li></ul>
       </article>
       <article class="card">
-        <div class="card-head"><h2>8. Éléments obligatoires</h2><span class="badge partiel">4 auto / 3 manuels / 3 à faire</span></div>
+        <div class="card-head"><h2>8. Éléments obligatoires</h2><span class="badge auto">3 auto / 4 partiels / 3 manuels</span></div>
         <p class="meta">10 critères</p>
-        <p>Vérifie les bases du document: langue, titre, structure technique.</p>
-        <ul><li>Automatique: `doctype`, `lang`, `title`.</li><li>Manuel: pertinence éditoriale.</li></ul>
+        <p>Langue, titre, validité du code : les bases du document.</p>
+        <ul><li>8.1 — doctype</li><li>8.2 — id en double ; CLI --validate-html : validation complète du code généré (html-validate, en local)</li><li>8.3 — lang absent sur html</li><li>8.4 — code de langue invalide</li><li>8.5 — title absent ou vide</li><li>8.8 — code de langue invalide sur un élément</li><li>8.9 — paragraphes vides servant d’espacement</li></ul>
       </article>
       <article class="card">
-        <div class="card-head"><h2>9. Structure</h2><span class="badge partiel">3 auto / 1 à faire</span></div>
+        <div class="card-head"><h2>9. Structuration de l’information</h2><span class="badge auto">2 auto / 1 partiel / 1 manuel</span></div>
         <p class="meta">4 critères</p>
-        <p>Vérifie que la page est lisible de façon structurée.</p>
-        <ul><li>Automatique: titres, listes, repères de navigation.</li></ul>
+        <p>Titres, zones, listes : la page est-elle structurée ?</p>
+        <ul><li>9.1 — titres vides, role="heading" sans aria-level ; hiérarchie (à vérifier)</li><li>9.2 — main absent ou multiple ; header/nav/footer (à vérifier)</li><li>9.3 — enfants de ul/ol/dl invalides, li orphelin ; listes simulées (à vérifier)</li></ul>
       </article>
       <article class="card">
-        <div class="card-head"><h2>10. Présentation</h2><span class="badge partiel">2 auto / 3 partiels / 5 manuels / 4 à faire</span></div>
+        <div class="card-head"><h2>10. Présentation de l’information</h2><span class="badge auto">6 auto / 1 partiel / 7 manuels</span></div>
         <p class="meta">14 critères</p>
-        <p>Concerne la lisibilité, le focus, les contenus masqués et les survols.</p>
-        <ul><li>Partiel: zoom, test sans CSS.</li><li>Manuel: compréhension réelle dans des parcours d'usage.</li></ul>
+        <p>Focus visible, zoom, affichage mobile, contenus masqués.</p>
+        <ul><li>10.1 — balises et attributs de présentation</li><li>10.4 — texte tronqué à 200 %</li><li>10.6 — lien dans le texte non souligné et sous 3:1 avec le texte</li><li>10.7 — CLI : comparaison d’images focus/sans focus sur le parcours clavier ; CSS supprimant le contour (à vérifier)</li><li>10.8 — élément focusable dans une zone aria-hidden</li><li>10.11 — défilement horizontal à 320 px</li><li>10.12 — texte tronqué avec l’espacement du test 10.12</li></ul>
       </article>
       <article class="card">
-        <div class="card-head"><h2>11. Formulaires</h2><span class="badge partiel">4 auto / 5 manuels / 4 à faire</span></div>
+        <div class="card-head"><h2>11. Formulaires</h2><span class="badge auto">3 auto / 4 partiels / 6 manuels</span></div>
         <p class="meta">13 critères</p>
-        <p>Vérifie les labels, aides de saisie et messages d'erreur.</p>
-        <ul><li>Automatique: association `label`/champ.</li><li>Manuel: qualité des consignes et de la récupération d'erreurs.</li></ul>
+        <p>Étiquettes, regroupements, erreurs et aide à la saisie.</p>
+        <ul><li>11.1 — champ sans étiquette, placeholder seul, label for orphelin ; étiquette implicite (à vérifier)</li><li>11.2 — nom accessible sans l’étiquette visible (11.2.5)</li><li>11.5 — boutons radio / cases à cocher de même nom non regroupés</li><li>11.6 — regroupement sans légende</li><li>11.9 — bouton sans intitulé, nom sans l’intitulé visible (11.9.2)</li><li>11.10 — obligation non signalée, erreur non associée</li><li>11.13 — valeur autocomplete invalide ; autocomplete manquant (à vérifier)</li></ul>
       </article>
       <article class="card">
-        <div class="card-head"><h2>12. Navigation</h2><span class="badge partiel">4 auto / 4 manuels / 3 à faire</span></div>
+        <div class="card-head"><h2>12. Navigation</h2><span class="badge auto">2 auto / 1 partiel / 8 manuels</span></div>
         <p class="meta">11 critères</p>
-        <p>Vérifie la cohérence de navigation et l'accès clavier.</p>
-        <ul><li>Automatique: liens d'évitement et ordre de tabulation de base.</li><li>Manuel: cohérence globale entre pages.</li></ul>
+        <p>Liens d’évitement, ordre de tabulation, pièges clavier.</p>
+        <ul><li>12.7 — lien d’évitement absent, cible absente ; CLI : visible au focus et fonctionnel</li><li>12.8 — tabindex positif</li><li>12.9 — focus bloqué sur un élément pendant le parcours clavier</li></ul>
       </article>
       <article class="card">
-        <div class="card-head"><h2>13. Consultation</h2><span class="badge partiel">1 auto / 1 partiel / 6 manuels / 4 à faire</span></div>
+        <div class="card-head"><h2>13. Consultation</h2><span class="badge auto">1 auto / 3 partiels / 8 manuels</span></div>
         <p class="meta">12 critères</p>
-        <p>Concerne sessions, téléchargements, ouverture de fenêtres, contenus animés.</p>
-        <ul><li>Automatique: signaux techniques simples.</li><li>Manuel: impacts réels selon les usages.</li></ul>
+        <p>Rafraîchissements, documents, animations et mouvements.</p>
+        <ul><li>13.1 — meta refresh et redirection différée</li><li>13.3 — documents bureautiques sans format annoncé</li><li>13.7 — animations en boucle plus rapides que 3 cycles par seconde</li><li>13.8 — marquee/blink (non conforme) ; animations infinies, vidéo en boucle (à vérifier)</li></ul>
       </article>
+<!-- couverture:themes:fin -->
     </section>
 
     <section class="summary" aria-label="Résumé interprétation">
       <p><strong>Comment utiliser ce guide ?</strong> Commencez par les thèmes avec le plus de critères manuels (multimédia, présentation, consultation). Ce sont eux qui demandent le plus souvent une revue humaine.</p>
-      <p><strong>État de couverture actuel (RGAA 4.1) :</strong> 26.4% automatisé, 14.2% partiel, 38.7% manuel, 20.8% à implémenter.</p>
+<!-- couverture:resume:debut -->
+      <p><strong>État de couverture actuel (RGAA 4.1.2) :</strong> 28 critères automatisés (26.4 %), 20 partiels (18.9 %), 58 manuels (54.7 %).</p>
+<!-- couverture:resume:fin -->
       <p><strong>Où voir le détail règle par règle ?</strong> Consultez le mapping complet: <a href="https://github.com/Stan69000/rgaa-audit/blob/main/docs/RGAA-mapping.md" target="_blank" rel="noopener">docs/RGAA-mapping.md</a>.</p>
     </section>
   </main>
 
   <footer>
-    ⚠️ Projet associatif vibe codé — Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.
+    ⚠️ Projet associatif vibe codé — Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.2. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.
   </footer>
 </body>
 </html>

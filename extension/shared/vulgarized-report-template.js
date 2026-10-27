@@ -14,11 +14,12 @@
     const safeReport = report || {};
     const summary = summarizeCriteria(Array.isArray(safeReport.results) ? safeReport.results : []);
     const top = buildTopPriorities(summary.byCriterion).slice(0, 5);
-    const score = safeReport.score || { taux: 0, nonConformes: 0, conformes: 0, na: 0, total: 0 };
+    const score = safeReport.score || { taux: 0, nonConformes: 0, conformes: 0, aVerifier: 0, na: 0, total: 0 };
     const positives = buildPositiveSignals(safeReport);
     const encouragement = buildEncouragement(score);
     const actionLevers = buildActionLevers(top, summary.byCriterion);
     const transparencyBox = renderTransparency(safeReport);
+    const toCheck = renderToCheck(summary.byCriterion);
 
     const cards = top.map((item) => `
       <div class="card">
@@ -38,7 +39,9 @@
     const hasOds = Boolean(ods && ods.base64 && ods.fileName);
     const newWindowHint = '<span class="sr-only"> (ouvre dans une nouvelle fenêtre)</span>';
 
-    const reportDataScript = toInlineJson(safeReport);
+    // Les captures sont déjà dans la page : inutile de les dupliquer dans le JSON téléchargeable.
+    const { captures: _captures, ...reportForJson } = safeReport;
+    const reportDataScript = toInlineJson(reportForJson);
     const odsDataScript = toInlineJson(hasOds ? ods : null);
 
     return `<!DOCTYPE html>
@@ -111,7 +114,7 @@
       font-size:12px;
       font-weight:700;
     }
-    .grid { display:grid; grid-template-columns: repeat(4, minmax(140px,1fr)); gap:12px; margin:18px 0 24px; }
+    .grid { display:grid; grid-template-columns: repeat(5, minmax(120px,1fr)); gap:12px; margin:18px 0 24px; }
     .kpi { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px 14px; box-shadow:0 8px 18px rgba(15, 37, 74, 0.05); transition:transform .25s ease, box-shadow .25s ease; }
     .kpi:hover { transform:translateY(-2px); box-shadow:0 14px 24px rgba(15, 37, 74, 0.09); }
     .kpi .v { font-size:30px; font-weight:700; line-height:1.05; }
@@ -132,6 +135,16 @@
     .btn { border:1px solid #bfd0eb; background:var(--panel); color:#19315a; border-radius:10px; padding:8px 12px; font-weight:700; cursor:pointer; text-decoration:none; transition:all .2s ease; }
     .btn:hover { background:#eef4ff; border-color:#a8c1e8; transform:translateY(-1px); }
     .btn:focus-visible, a:focus-visible, button:focus-visible { outline:3px solid #0f4fbf; outline-offset:2px; }
+    .criterion-block { border-top:1px solid var(--border); padding:8px 0; }
+    .criterion-block summary { cursor:pointer; line-height:1.5; }
+    .issues { list-style:none; padding:0; margin:8px 0 0; }
+    .issue { padding:8px 0 8px 12px; border-left:3px solid #d8e1ee; margin:6px 0; overflow-wrap:anywhere; }
+    .examples { margin:6px 0 0 18px; font-size:12px; }
+    .examples code { font-size:12px; }
+    code.snippet { color:var(--muted); }
+    .capture { margin:8px 0 0; }
+    .capture img { max-width:100%; height:auto; border:1px solid var(--border); border-radius:8px; }
+    .capture figcaption { font-size:12px; color:var(--muted); }
     .where { margin-top:8px; font-size:13px; color:#334155; background:#f8fbff; border:1px solid #dfebfb; border-radius:10px; padding:8px; }
     .hint { margin-top:8px; color:var(--muted); font-size:12px; }
     .disclaimer { margin-bottom:16px; padding:10px 12px; border-radius:12px; background:var(--warn-bg); border:1px solid #f2c066; color:#6a4200; font-size:12px; }
@@ -203,7 +216,7 @@
       <p class="intro-impact">En moins de 3 minutes, vous savez quoi corriger d’abord pour débloquer le plus d’utilisateurs.</p>
     </div>
     <div class="sub reveal delay-1">${esc(safeReport.title || safeReport.url || '')} · ${new Date(safeReport.timestamp || Date.now()).toLocaleString('fr-FR')}</div>
-    <div class="disclaimer reveal delay-1"><strong>Projet associatif vibe codé —</strong> Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.</div>
+    <div class="disclaimer reveal delay-1"><strong>Projet associatif vibe codé —</strong> Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.2. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.</div>
 
     <div class="tools reveal delay-2">
       <button type="button" class="btn" id="btnDownloadHtml">Télécharger HTML</button>
@@ -218,8 +231,9 @@
 
     <div class="grid reveal delay-2">
       <div class="kpi"><div class="v">${score.taux}%</div><div class="l">Score technique auto</div></div>
-      <div class="kpi"><div class="v">${score.nonConformes}</div><div class="l">Points bloquants</div></div>
-      <div class="kpi"><div class="v">${score.conformes}</div><div class="l">Points conformes</div></div>
+      <div class="kpi"><div class="v">${score.nonConformes}</div><div class="l">Critères non conformes</div></div>
+      <div class="kpi"><div class="v">${score.aVerifier || 0}</div><div class="l">Critères à vérifier</div></div>
+      <div class="kpi"><div class="v">${score.conformes}</div><div class="l">Critères conformes</div></div>
       <div class="kpi"><div class="v">${effortLabel}</div><div class="l">Effort moyen estimé</div></div>
     </div>
 
@@ -227,7 +241,8 @@
       <strong>Lecture rapide</strong>
       <ul>
         <li>Ce rapport montre où des personnes peuvent être bloquées dès maintenant.</li>
-        <li>Le score vous aide à mesurer la progression, pas à certifier une conformité RGAA.</li>
+        <li>Le score ne compte que les critères tranchés automatiquement (conformes ou non conformes) : il mesure une progression, il ne certifie pas une conformité RGAA.</li>
+        <li>Les critères « à vérifier » signalent des indices à confirmer par une personne ; ils n’entrent pas dans le score.</li>
         <li>Les priorités P1 sont les corrections qui ont le plus d’impact utilisateur immédiat.</li>
         <li>La validation finale reste humaine, surtout sur la compréhension et le sens des contenus.</li>
       </ul>
@@ -253,11 +268,15 @@
       ${cards || '<div class="card"><h3>Aucun point prioritaire détecté</h3><p>Aucun critère non conforme n’a été détecté automatiquement sur cet échantillon.</p></div>'}
     </div>
 
+    ${toCheck}
+
     <h2 style="margin-top:16px;">Leviers actionnables</h2>
     <div class="cards">
       ${actionLevers || '<div class="card"><h3>Aucun levier critique détecté</h3><p>Les points non conformes sont mineurs ou absents sur cet échantillon.</p></div>'}
     </div>
 
+    ${renderTemplateIssues(safeReport)}
+    ${renderAllIssues(summary.byCriterion, safeReport)}
     ${renderVulgarizedPages(safeReport)}
     ${renderVulgarizedSkippedPages(safeReport)}
 
@@ -351,10 +370,12 @@
     for (const [criterion, items] of byCriterion.entries()) {
       const statuses = items.map((i) => i.status);
       if (!statuses.includes('NC')) continue;
-      const firstMessage = items.find((i) => i.status === 'NC')?.message || 'Non-conformité détectée';
-      priorities.push(enrichPriority(criterion, firstMessage));
+      const ncItems = items.filter((i) => i.status === 'NC');
+      const firstMessage = ncItems[0]?.message || 'Non-conformité détectée';
+      const occurrences = ncItems.reduce((acc, i) => acc + (Number(i.count) || 1), 0);
+      priorities.push({ ...enrichPriority(criterion, firstMessage), occurrences });
     }
-    return priorities.sort((a, b) => priorityScore(b.priority) - priorityScore(a.priority));
+    return priorities.sort((a, b) => priorityScore(b.priority) - priorityScore(a.priority) || b.occurrences - a.occurrences);
   }
 
   function enrichPriority(criterion, issue) {
@@ -396,6 +417,41 @@
         priority: 'P1',
         effort: 'S',
       },
+      '6': {
+        title: 'Liens incompréhensibles',
+        impact: 'Un lien sans intitulé clair est annoncé « lien » sans indiquer où il mène.',
+        action: 'Donner à chaque lien un intitulé qui décrit sa destination.',
+        priority: 'P1',
+        effort: 'S',
+      },
+      '7': {
+        title: 'Composants interactifs mal codés',
+        impact: 'Menus, onglets ou boutons personnalisés sont inutilisables au clavier ou au lecteur d’écran.',
+        action: 'Préférer les éléments HTML natifs, sinon corriger rôles, états et gestion clavier.',
+        priority: 'P1',
+        effort: 'M',
+      },
+      '8': {
+        title: 'Éléments obligatoires manquants',
+        impact: 'Langue, titre ou validité du code mal définis perturbent les aides techniques.',
+        action: 'Corriger la langue, le titre de page et les identifiants en double.',
+        priority: 'P2',
+        effort: 'S',
+      },
+      '9': {
+        title: 'Structure de page peu lisible',
+        impact: 'Sans titres ni zones balisées, la navigation rapide au lecteur d’écran devient impossible.',
+        action: 'Baliser titres, listes et zones (header, nav, main, footer).',
+        priority: 'P2',
+        effort: 'S',
+      },
+      '13': {
+        title: 'Consultation perturbée',
+        impact: 'Redirections, rafraîchissements ou animations non contrôlables gênent la lecture.',
+        action: 'Laisser l’utilisateur maître du temps et des mouvements.',
+        priority: 'P2',
+        effort: 'S',
+      },
       '1': {
         title: 'Images non accessibles',
         impact: 'Les personnes aveugles ne perçoivent pas l’information portée par les images.',
@@ -425,8 +481,9 @@
     const score = report.score || {};
     const positives = [];
 
-    if (typeof score.conformes === 'number' && typeof score.total === 'number' && score.total > 0) {
-      positives.push(`${score.conformes} critères conformes sur ${score.total} critères applicables sur cet échantillon.`);
+    const decided = Number(score.conformes || 0) + Number(score.nonConformes || 0);
+    if (typeof score.conformes === 'number' && decided > 0) {
+      positives.push(`${score.conformes} critère(s) conforme(s) sur ${decided} critère(s) tranché(s) automatiquement.`);
     }
     if (typeof score.na === 'number' && score.na > 0) {
       positives.push(`${score.na} critères sont non applicables sur cette page (pas de faux signal à corriger).`);
@@ -436,8 +493,10 @@
     if (typeof simulation.c === 'number' && simulation.c > 0) {
       positives.push(`${simulation.c} vérifications utilisateur (clavier, responsive, CSS) sont passées.`);
     }
-    if (typeof simulation.focusElementsTested === 'number' && simulation.focusElementsTested > 0) {
-      positives.push(`Le focus clavier est visible sur ${simulation.focusElementsTested} éléments testés.`);
+    const focusOk = (Array.isArray(report.results) ? report.results : [])
+      .some((r) => r && r.source === 'simulation' && r.id === '10.7' && r.status === 'C');
+    if (focusOk && simulation.focusElementsTested > 0) {
+      positives.push(`Le focus clavier est visible sur les ${simulation.focusElementsTested} éléments parcourus.`);
     }
 
     if (!positives.length) {
@@ -521,11 +580,12 @@
       const taux = Number(p.score?.taux ?? 0);
       const nc = Number(p.score?.nonConformes ?? p.nonConformes ?? 0);
       const c = Number(p.score?.conformes ?? p.conformes ?? 0);
+      const nt = Number(p.score?.aVerifier ?? p.aVerifier ?? 0);
       const href = esc(p.url || '');
       const urlLine = href
         ? `<a href="${href}" target="_blank" rel="noopener noreferrer" style="word-break:break-all;">${href}</a>`
         : 'URL indisponible';
-      return `<li><strong>${esc(p.title || p.url || 'Page')}</strong><br>${urlLine}<br>Conformité: <strong>${taux}%</strong> · Critères non conformes: <strong>${nc}</strong> · Critères conformes: <strong>${c}</strong></li>`;
+      return `<li><strong>${esc(p.title || p.url || 'Page')}</strong><br>${urlLine}<br>Conformité: <strong>${taux}%</strong> · Critères non conformes: <strong>${nc}</strong> · À vérifier: <strong>${nt}</strong> · Critères conformes: <strong>${c}</strong></li>`;
     }).join('');
 
     return `
@@ -579,6 +639,98 @@
           <p style="margin:6px 0 0;">Haute: <strong>${byConfidence.high}</strong> · Moyenne: <strong>${byConfidence.medium}</strong> · Basse: <strong>${byConfidence.low}</strong></p>
           <p style="margin:6px 0 0;">Vérification manuelle recommandée: <strong>${manualRecommended}</strong> résultat(s).</p>
         </div>
+      </div>
+    `;
+  }
+
+  function criteriaTitles() {
+    if (typeof globalThis !== 'undefined' && globalThis.RgaaCriteria) return globalThis.RgaaCriteria.RGAA_CRITERIA;
+    try {
+      return require('./rgaa-criteria.js').RGAA_CRITERIA;
+    } catch {
+      return {};
+    }
+  }
+
+  function compareIds(a, b) {
+    const [ta, ca] = String(a).split('.').map(Number);
+    const [tb, cb] = String(b).split('.').map(Number);
+    return ta - tb || ca - cb;
+  }
+
+  function pagePathOf(url) {
+    try {
+      const u = new URL(url);
+      return u.pathname + u.search;
+    } catch {
+      return String(url || '');
+    }
+  }
+
+  function renderTemplateIssues(report) {
+    const issues = Array.isArray(report.templateIssues) ? report.templateIssues : [];
+    if (!issues.length) return '';
+    const total = Array.isArray(report.pages) ? report.pages.length : 0;
+    const rows = issues.slice(0, 15).map((i) => `<li><strong>${esc(i.id)}</strong> — ${esc(i.message)} <span class="meta">(${i.pageCount}${total ? `/${total}` : ''} pages)</span></li>`).join('');
+    return `
+      <h2 style="margin-top:16px;">Défauts de gabarit</h2>
+      <div class="box">
+        <p style="margin:0 0 8px;color:#44556f;">Ces non-conformités se répètent sur plusieurs pages : elles viennent sans doute d’un élément commun (en-tête, pied de page, composant). Une seule correction les fait disparaître partout.</p>
+        <ul>${rows}</ul>
+      </div>
+    `;
+  }
+
+  function renderAllIssues(byCriterion, report) {
+    const titles = criteriaTitles();
+    const captures = report.captures || {};
+    const multiPage = Array.isArray(report.pages) && report.pages.length > 1;
+    const ids = [...byCriterion.keys()].filter((id) => byCriterion.get(id).some((i) => i.status === 'NC')).sort(compareIds);
+    if (!ids.length) return '';
+    const total = ids.reduce((n, id) => n + byCriterion.get(id).filter((i) => i.status === 'NC').length, 0);
+    const blocks = ids.map((id) => {
+      const items = byCriterion.get(id).filter((i) => i.status === 'NC');
+      const list = items.map((item) => {
+        const examples = (Array.isArray(item.examples) && item.examples.length ? item.examples : (item.snippet ? [{ selector: item.selector, snippet: item.snippet }] : []))
+          .slice(0, 3)
+          .map((e) => `<li>${e.selector ? `<code>${esc(e.selector)}</code><br>` : ''}${e.snippet ? `<code class="snippet">${esc(e.snippet)}</code>` : ''}</li>`).join('');
+        const capture = item.capture && captures[item.capture]
+          ? `<figure class="capture"><img src="${esc(captures[item.capture])}" alt="Capture de l’élément signalé, entouré en magenta${item.selector ? ` (${esc(item.selector)})` : ''}" loading="lazy"><figcaption>Élément entouré en magenta</figcaption></figure>`
+          : '';
+        return `<li class="issue">
+          <p><strong>${esc(item.message)}</strong>${multiPage && item.pageUrl ? ` <span class="meta">— ${esc(pagePathOf(item.pageUrl))}</span>` : ''}</p>
+          ${item.remediationHint ? `<p class="meta">Piste : ${esc(item.remediationHint)}</p>` : ''}
+          ${examples ? `<ul class="examples">${examples}</ul>` : ''}
+          ${capture}
+        </li>`;
+      }).join('');
+      return `<details class="criterion-block"${items.length <= 3 ? ' open' : ''}>
+        <summary><strong>${esc(id)}</strong> ${esc(titles[id] || '')} <span class="meta">(${items.length})</span></summary>
+        <ul class="issues">${list}</ul>
+      </details>`;
+    }).join('');
+    return `
+      <h2 style="margin-top:16px;">Toutes les non-conformités (${total})</h2>
+      <div class="box all-issues">${blocks}</div>
+    `;
+  }
+
+  function renderToCheck(byCriterion) {
+    const rows = [];
+    for (const [criterion, items] of byCriterion.entries()) {
+      if (items.some((i) => i.status === 'NC')) continue;
+      items
+        .filter((i) => i.status === 'NT' && i.resultType === 'heuristic_warning')
+        .forEach((i) => rows.push({ criterion, message: i.message, hint: i.remediationHint }));
+    }
+    if (!rows.length) return '';
+    const list = rows.slice(0, 12).map((r) => `<li><strong>${esc(r.criterion)}</strong> — ${esc(r.message)}${r.hint ? `<br><span class="meta">${esc(r.hint)}</span>` : ''}</li>`).join('');
+    return `
+      <h2 style="margin-top:16px;">À vérifier par une personne</h2>
+      <div class="box">
+        <p style="margin:0 0 8px;color:#44556f;">Indices détectés automatiquement mais qui dépendent du contexte : à confirmer avant de les corriger.</p>
+        <ul>${list}</ul>
+        ${rows.length > 12 ? `<p class="meta">${rows.length - 12} autre(s) point(s) dans le rapport JSON.</p>` : ''}
       </div>
     `;
   }

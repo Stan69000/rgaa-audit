@@ -51,36 +51,40 @@ Ce projet est régi par le [Contributor Covenant](https://www.contributor-covena
 ```
 rgaa-audit/
 │
-├── bin/
-│   └── rgaa-audit.js          # Point d'entrée CLI
+├── engine/
+│   ├── src/                       # ★ moteur de règles, un fichier par thème (à modifier ici)
+│   └── build.js                   # assemble engine/src → extension/shared/rgaa-rules.js
 │
-├── src/
-│   ├── audit.js               # Orchestrateur
-│   ├── browser.js             # Playwright wrapper
-│   ├── simulator.js           # Simulation actions humaines
-│   ├── logger.js              # Couleurs terminal
-│   ├── rules/
-│   │   └── index.js           # Toutes les règles DOM auto
-│   ├── ai/
-│   │   └── claude-analysis.js # Intégration Claude API
-│   └── reporters/
-│       └── index.js           # JSON / HTML / CSV
+├── extension/                     # Extension Chrome (Manifest V3)
+│   ├── manifest.json              # permissions : activeTab + scripting uniquement
+│   ├── background.js              # injecte le moteur dans l'onglet actif
+│   ├── panel/                     # panneau (popup)
+│   ├── shared/                    # code partagé avec la CLI
+│   │   ├── rgaa-rules.js          # moteur assemblé (généré, ne pas modifier à la main)
+│   │   ├── rgaa-criteria.js       # intitulés officiels RGAA 4.1.2 (généré)
+│   │   └── vulgarized-report-template.js
+│   └── tests/                     # tests du service worker
 │
-├── extension/                 # Extension Chrome
-│   ├── manifest.json
-│   ├── content.js             # Règles DOM (côté browser)
-│   ├── background.js
-│   └── panel/
-│       ├── panel.html
-│       └── panel.js
+├── cli/
+│   ├── bin/                       # rgaa-audit, rgaa-fill-grid
+│   ├── src/
+│   │   ├── audit.js               # orchestrateur (crawl, pages, score, rapports)
+│   │   ├── rules/index.js         # exécute le moteur partagé dans Playwright
+│   │   ├── simulator.js           # simulation clavier / survol / zoom / 320 px / espacement
+│   │   ├── page-prep.js           # bandeau cookies, thème alternatif
+│   │   ├── html-validation.js     # --validate-html (8.2)
+│   │   ├── aggregate.js           # défauts de gabarit, --baseline
+│   │   ├── captures.js            # captures annotées des non-conformités
+│   │   ├── shared.js              # résolution de extension/shared (ou vendor/ dans le paquet npm)
+│   │   └── reporters/             # JSON / CSV / HTML vulgarisé / grille ODS
+│   ├── scripts/
+│   │   ├── coverage.js            # ★ couverture déclarée, critère par critère
+│   │   └── generate-docs.js       # régénère docs/RGAA-mapping.md et docs/criteres.html
+│   └── tests/
+│       ├── fixtures/engine/       # pages « pièges » par thème
+│       └── *.test.js              # tests node:test exécutés dans Chromium
 │
-├── tests/
-│   ├── fixtures/              # Pages HTML de test
-│   └── rules/                 # Tests unitaires par règle
-│
-└── docs/
-    ├── RGAA-mapping.md        # Critères → automatisable ou non
-    └── API.md                 # Intégration programmatique
+└── docs/                          # site GitHub Pages + mapping RGAA
 ```
 
 ---
@@ -96,7 +100,7 @@ rgaa-audit/
 ### Installation
 
 ```bash
-git clone https://github.com/ton-user/rgaa-audit.git
+git clone https://github.com/Stan69000/rgaa-audit.git
 cd rgaa-audit/cli
 npm install
 npx playwright install chromium
@@ -125,92 +129,67 @@ npm test
 
 ## Ajouter une règle RGAA
 
-C'est la contribution la plus utile. Voici le processus exact.
-
 ### 1. Identifier le critère
 
-Consulter [accessibilite.numerique.gouv.fr](https://accessibilite.numerique.gouv.fr/methode/criteres-et-tests/) et vérifier dans `docs/RGAA-mapping.md` si le critère est déjà couvert.
+Lire le critère et ses tests sur [accessibilite.numerique.gouv.fr](https://accessibilite.numerique.gouv.fr/methode/criteres-et-tests/), puis vérifier dans `docs/RGAA-mapping.md` ce qui est déjà couvert. Le numéro de critère doit correspondre au **test officiel** : par exemple un lien sans intitulé relève du 6.2, pas du 6.1.
 
-### 2. Déterminer si c'est automatisable
+### 2. Choisir le bon niveau de certitude
 
-| Automatisable | Exemples |
-|---------------|----------|
-| ✅ Oui | Attribut manquant, structure DOM vérifiable, calcul CSS |
-| ⚠️ Partiel | Détecter la présence mais pas la pertinence |
-| ❌ Non | Pertinence du contenu, qualité de l'alternative textuelle |
+| Fonction | Statut | Quand l'utiliser |
+|---|---|---|
+| `out.error(...)` | `NC` | Le code prouve la non-conformité (attribut manquant, référence cassée, ratio mesuré). |
+| `out.warn(...)` | `NT` | Indice qui dépend du contexte : peut être un faux positif. |
+| `out.pass(...)` | `C` | Le contrôle automatique est passé. |
+| `out.manual(...)` | `NT` | Rappel de vérification humaine, sans indice particulier. |
+| `out.na(...)` | `NA` | Aucun élément concerné. |
 
-### 3. Écrire la règle dans `src/rules/index.js`
+En cas de doute, choisir `out.warn` : une fausse non-conformité coûte plus cher (perte de confiance) qu'un point à vérifier.
 
-Chaque fonction d'audit suit ce pattern :
+### 3. Écrire la règle dans `engine/src/`
 
-```javascript
-function auditMonTheme() {
-  const results = [];
+Chaque thème a son fichier (`engine/src/26-theme-06-liens.js`…), les utilitaires communs sont dans `02-utilitaires-dom.js`, `03-nom-accessible.js` et `04-couleurs-et-contraste.js`. Les fragments partagent une même portée : pas d'`import`, les fonctions des autres fichiers sont directement disponibles. Après modification :
 
-  // Helper local
-  const flag = (id, status, el, msg) => results.push({
-    id,          // ex: '1.1'
-    status,      // 'NC' | 'C' | 'NA'
-    message: msg,
-    snippet: el?.outerHTML?.slice(0, 150) || null,
-    source: 'dom',
-  });
-
-  // Cas : aucun élément concerné → NA
-  const els = document.querySelectorAll('mon-selecteur');
-  if (!els.length) {
-    flag('X.Y', 'NA', null, 'Aucun élément concerné');
-    return results;
-  }
-
-  // Cas : vérification
-  els.forEach(el => {
-    if (!el.hasAttribute('mon-attribut')) {
-      flag('X.Y', 'NC', el, 'Description du problème');
-    } else {
-      flag('X.Y', 'C', el, 'Description OK');
-    }
-  });
-
-  return results;
-}
+```bash
+cd cli
+npm run build:engine
 ```
 
-**Important :** La fonction s'exécute dans le contexte `page.evaluate()` — pas d'imports, pas de require, uniquement du DOM natif.
-
-### 4. L'ajouter à `runDomRules()`
+Les règles sont regroupées par thème (`auditImages`, `auditLinks`…). Chaque constat passe par le collecteur `out`, qui regroupe les occurrences identiques :
 
 ```javascript
-async function runDomRules(page) {
-  // ... existant ...
-  log('   Thème X — Mon thème…');
-  const monTheme = await page.evaluate(auditMonTheme);
-  // ...
-  const all = [...existants, ...monTheme];
-}
+out.error({
+  id: '6.2',                    // critère RGAA
+  rule: 'link-name',            // identifiant stable de la règle
+  element: link,                // élément fautif (sélecteur et extrait calculés automatiquement)
+  message: 'Lien sans intitulé.',
+  group: 'link-name',           // les constats de même groupe sont fusionnés avec un compteur
+  rationale: 'Pourquoi c’est un problème pour les personnes.',
+  remediationHint: 'Comment corriger.',
+});
 ```
 
-### 5. Porter la règle dans `extension/content.js`
+**Important :** le moteur s'exécute dans la page (et dans l'extension) : pas de `require`, uniquement du DOM natif. Utiliser les utilitaires existants : `isRendered`, `isHiddenFromAT`, `accessibleName`, `visibleText`, `composeColors`…
 
-Le `content.js` de l'extension contient les mêmes règles mais pour le contexte navigateur (sans Playwright). Ajouter la même logique dans la fonction correspondante.
+Aucun portage n'est nécessaire : la CLI et l'extension chargent le même fichier assemblé.
 
-### 6. Mettre à jour `docs/RGAA-mapping.md`
+### 4. Ajouter un cas dans une fixture et un test
 
-Marquer le critère comme couvert dans le tableau de mapping.
-
-### 7. Ajouter un test
+Ajouter dans `cli/tests/fixtures/engine/<thème>.html` un cas fautif **et** un cas conforme proche (le faux positif à éviter), puis l'assertion dans `cli/tests/engine.test.js` :
 
 ```javascript
-// tests/rules/criterion-X-Y.test.js
-const { test } = require('node:test');
-const assert = require('node:assert');
-
-// Page HTML minimale pour tester
-const fixtureNC = `<html><body><img src="test.png"></body></html>`;
-const fixtureC  = `<html><body><img src="test.png" alt="Description"></body></html>`;
-
-// ... tester que fixtureNC → NC et fixtureC → C
+assert.match(snippetsOf(report, { rule: 'link-name' }), /link-empty/);
+assert.doesNotMatch(snippetsOf(report, { rule: 'link-name' }), /link-icon-sr/);
 ```
+
+### 5. Mettre à jour la couverture
+
+Déclarer le niveau du critère dans `cli/scripts/coverage.js`, puis :
+
+```bash
+npm run docs:coverage
+```
+
+Le test `coverage.test.js` échoue si la documentation ne correspond pas au code.
 
 ---
 

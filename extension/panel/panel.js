@@ -1,191 +1,245 @@
-// panel.js — Logique du popup RGAA Audit
+// panel.js — Logique du panneau RGAA Audit
+
+'use strict';
+
+const STATUS_LABELS = { NC: 'Non conforme', NT: 'À vérifier', C: 'Conforme', NA: 'Non applicable' };
+const STATUS_ORDER = { NC: 0, NT: 1, C: 2, NA: 3 };
+const CONFIDENCE_LABELS = { high: 'confiance élevée', medium: 'confiance moyenne', low: 'confiance faible' };
 
 let currentReport = null;
 let currentFilter = 'all';
 
-const btnAudit = document.getElementById('btnAudit');
-const resultsEl = document.getElementById('results');
-const scoreBar = document.getElementById('scoreBar');
-const filters = document.getElementById('filters');
-const footer = document.getElementById('footer');
-const urlDisplay = document.getElementById('urlDisplay');
-const scoreExplain = document.getElementById('scoreExplain');
+const $ = (id) => document.getElementById(id);
 
-// ── LANCEMENT AUDIT ──────────────────────────
+function criteriaTitles() {
+  return (typeof window !== 'undefined' && window.RgaaCriteria && window.RgaaCriteria.RGAA_CRITERIA) || {};
+}
 
-btnAudit.addEventListener('click', () => {
-  btnAudit.disabled = true;
-  btnAudit.textContent = '⏳ Analyse en cours…';
-  resultsEl.replaceChildren(createStatusMessage('Scan en cours…', {
-    textAlign: 'center',
-    padding: '32px',
-    color: '#445',
-    fontFamily: '\'DM Mono\', monospace',
-    fontSize: '12px',
-  }));
+function compareCriterionIds(a, b) {
+  const [ta, ca] = a.split('.').map(Number);
+  const [tb, cb] = b.split('.').map(Number);
+  return ta - tb || ca - cb;
+}
 
-  chrome.runtime.sendMessage({ action: 'getAuditResults' }, response => {
-    btnAudit.disabled = false;
-    btnAudit.textContent = '↻ Relancer l\'audit';
+function el(tag, attrs = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    if (value === undefined || value === null || value === false) continue;
+    if (key === 'text') node.textContent = value;
+    else node.setAttribute(key, value === true ? '' : String(value));
+  }
+  for (const child of [].concat(children)) {
+    if (child) node.appendChild(child);
+  }
+  return node;
+}
 
-    if (!response || !response.success) {
-      renderError(response?.error);
+function announce(message) {
+  const status = $('status');
+  if (status) status.textContent = message;
+}
+
+// ── Lancement ────────────────────────────────
+
+function startAudit() {
+  const btn = $('btnAudit');
+  btn.disabled = true;
+  btn.textContent = 'Analyse en cours…';
+  announce('Analyse de la page en cours.');
+  $('results').replaceChildren(createStatusMessage('Analyse en cours…'));
+
+  chrome.runtime.sendMessage({ action: 'getAuditResults' }, (response) => {
+    btn.disabled = false;
+    btn.textContent = 'Relancer l’audit';
+
+    if (chrome.runtime.lastError || !response || !response.success) {
+      renderError(response?.error || chrome.runtime.lastError?.message);
       return;
     }
 
     currentReport = response.report;
     renderScore(currentReport.score);
+    $('urlDisplay').textContent = `Page analysée : ${currentReport.url}`;
+    $('urlDisplay').hidden = false;
+    $('engineInfo').textContent = `Moteur ${currentReport.engineVersion || '?'} — RGAA 4.1.2`;
+    $('scoreBar').hidden = false;
+    $('scoreExplain').hidden = false;
+    $('filters').hidden = false;
+    $('footer').hidden = false;
     renderResults(currentReport.results, currentFilter);
-    urlDisplay.textContent = currentReport.url;
-    scoreBar.style.display = 'flex';
-    scoreExplain.style.display = 'block';
-    filters.style.display = 'flex';
-    footer.style.display = 'flex';
+    const s = currentReport.score;
+    announce(`Audit terminé : ${s.nonConformes} critère(s) non conforme(s), ${s.aVerifier || 0} à vérifier, ${s.conformes} conforme(s).`);
   });
-});
-
-// ── SCORE ────────────────────────────────────
-
-function renderScore(score) {
-  const circ = 2 * Math.PI * 22; // r=22
-  const offset = circ - (score.taux / 100) * circ;
-  const color = score.taux >= 75 ? '#00C896' : score.taux >= 50 ? '#FFB800' : '#FF4444';
-
-  document.getElementById('scoreCircle').style.strokeDashoffset = offset;
-  document.getElementById('scoreCircle').style.stroke = color;
-  document.getElementById('scoreValue').textContent = score.taux + '%';
-  document.getElementById('scoreValue').style.color = color;
-
-  document.getElementById('statNC').textContent = score.nonConformes;
-  document.getElementById('statC').textContent = score.conformes;
-  document.getElementById('statNA').textContent = score.na;
-  document.getElementById('statTotal').textContent = score.total;
-  scoreExplain.textContent = `Conformité: ${score.taux}% · Critères non conformes: ${score.nonConformes} · Critères conformes: ${score.conformes} · Critères non applicables: ${score.na}`;
 }
 
-// ── RÉSULTATS ────────────────────────────────
+// ── Score ────────────────────────────────────
+
+function renderScore(score) {
+  const circumference = 2 * Math.PI * 22;
+  const color = score.taux >= 75 ? '#3EE6AE' : score.taux >= 50 ? '#FFCB57' : '#FF7A7A';
+  const circle = $('scoreCircle');
+  circle.style.strokeDashoffset = String(circumference - (score.taux / 100) * circumference);
+  circle.style.stroke = color;
+  $('scoreValue').textContent = `${score.taux}%`;
+  $('scoreValue').style.color = color;
+  $('statNC').textContent = score.nonConformes;
+  $('statNT').textContent = score.aVerifier || 0;
+  $('statC').textContent = score.conformes;
+  $('statNA').textContent = score.na;
+  $('scoreExplain').textContent = `Score technique : ${score.taux} % des critères tranchés automatiquement sont conformes `
+    + `(${score.conformes} conforme(s), ${score.nonConformes} non conforme(s)). `
+    + `${score.aVerifier || 0} critère(s) restent à vérifier et n’entrent pas dans ce score.`;
+}
+
+// ── Résultats ────────────────────────────────
+
+function groupByCriterion(results, filter) {
+  const groups = new Map();
+  for (const result of results) {
+    if (filter !== 'all' && result.status !== filter) continue;
+    if (!groups.has(result.id)) groups.set(result.id, []);
+    groups.get(result.id).push(result);
+  }
+  return groups;
+}
 
 function renderResults(results, filter) {
-  const filtered = filter === 'all' ? results : results.filter(r => r.status === filter);
-
-  if (!filtered.length) {
-    resultsEl.replaceChildren(createStatusMessage('Aucun résultat pour ce filtre.', {
-      textAlign: 'center',
-      padding: '24px',
-      color: '#445',
-      fontSize: '12px',
-    }));
+  const container = $('results');
+  const groups = groupByCriterion(results || [], filter);
+  if (!groups.size) {
+    container.replaceChildren(createStatusMessage('Aucun résultat pour ce filtre.'));
     return;
   }
-
-  // Dédoublonner par critère + message
-  const seen = new Set();
-  const deduped = filtered.filter(r => {
-    const key = `${r.id}-${r.status}-${r.message.slice(0, 40)}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
+  const statusByCriterion = (currentReport && currentReport.score && currentReport.score.criteria) || {};
+  const ids = [...groups.keys()].sort((a, b) => {
+    const sa = STATUS_ORDER[statusByCriterion[a]] ?? 4;
+    const sb = STATUS_ORDER[statusByCriterion[b]] ?? 4;
+    return sa - sb || compareCriterionIds(a, b);
   });
+  const titles = criteriaTitles();
+  container.replaceChildren(...ids.map((id) => renderCriterion(id, titles[id], statusByCriterion[id], groups.get(id))));
+}
 
-  const items = deduped.map(renderResultItem);
-  resultsEl.replaceChildren(...items);
+function renderCriterion(id, title, status, items) {
+  const sorted = [...items].sort((a, b) => (STATUS_ORDER[a.status] ?? 4) - (STATUS_ORDER[b.status] ?? 4));
+  const effective = status || sorted[0].status;
+  const summary = el('summary', {}, [
+    renderBadge(effective),
+    el('span', { class: 'criterion-id', text: id }),
+    el('span', { class: 'criterion-title', text: title || 'Critère RGAA' }),
+  ]);
+  const details = el('details', { class: 'criterion', open: effective === 'NC' }, [
+    summary,
+    el('ul', { class: 'result-list' }, sorted.map(renderResultItem)),
+  ]);
+  return details;
+}
+
+function renderBadge(status) {
+  return el('span', { class: `badge badge-${status}`, title: STATUS_LABELS[status] || status }, [
+    el('span', { 'aria-hidden': 'true', text: status }),
+    el('span', { class: 'visually-hidden', text: STATUS_LABELS[status] || status }),
+  ]);
 }
 
 function renderResultItem(result) {
-  const item = document.createElement('div');
-  item.setAttribute('class', 'result-item');
-  item.setAttribute('title', result.xpath || '');
-
-  const idEl = document.createElement('span');
-  idEl.setAttribute('class', 'result-id');
-  idEl.textContent = result.id || '';
-
-  const badgeEl = document.createElement('span');
-  badgeEl.setAttribute('class', `result-badge badge-${result.status}`);
-  badgeEl.textContent = result.status || '';
-
-  const textEl = document.createElement('div');
-  textEl.setAttribute('class', 'result-text');
-  textEl.textContent = result.message || '';
-
-  if (result.snippet) {
-    const snippetEl = document.createElement('div');
-    snippetEl.setAttribute('class', 'result-snippet');
-    snippetEl.textContent = result.snippet;
-    textEl.appendChild(snippetEl);
+  const body = el('div', { class: 'result-body' }, [
+    el('p', { class: 'result-message', text: result.message || '' }),
+  ]);
+  if (result.remediationHint && result.status !== 'C' && result.status !== 'NA') {
+    body.appendChild(el('p', { class: 'result-hint', text: `Piste : ${result.remediationHint}` }));
   }
+  const meta = [];
+  if (result.confidence && CONFIDENCE_LABELS[result.confidence] && result.status !== 'NA') meta.push(CONFIDENCE_LABELS[result.confidence]);
+  if (result.context) meta.push(`thème ${result.context}`);
+  if (meta.length) body.appendChild(el('p', { class: 'result-meta', text: meta.join(' · ') }));
 
-  item.appendChild(idEl);
-  item.appendChild(badgeEl);
-  item.appendChild(textEl);
+  const examples = Array.isArray(result.examples) && result.examples.length
+    ? result.examples
+    : (result.snippet ? [{ selector: result.selector || null, snippet: result.snippet }] : []);
+  if (examples.length) {
+    body.appendChild(el('ul', { class: 'examples', 'aria-label': 'Exemples dans la page' }, examples.map(renderExample)));
+  }
+  return el('li', { class: 'result-item' }, [renderBadge(result.status), body]);
+}
+
+function renderExample(example) {
+  const item = el('li', { class: 'example' }, [
+    el('code', { text: example.snippet || example.selector || '', title: example.snippet || '' }),
+  ]);
+  if (example.selector && typeof chrome !== 'undefined' && chrome.runtime) {
+    const button = el('button', { type: 'button', class: 'btn-locate', text: 'Voir' });
+    button.setAttribute('aria-label', `Voir l’élément dans la page : ${example.selector}`);
+    button.addEventListener('click', () => {
+      chrome.runtime.sendMessage({ action: 'highlightElement', selector: example.selector }, (response) => {
+        announce(response && response.success ? 'Élément mis en évidence dans la page.' : 'Élément introuvable dans la page.');
+      });
+    });
+    item.appendChild(button);
+  }
   return item;
 }
 
-function createStatusMessage(message, styles) {
-  const container = document.createElement('div');
-  Object.assign(container.style, styles);
-  container.textContent = message;
-  return container;
+function createStatusMessage(message) {
+  return el('p', { class: 'empty', text: message });
 }
 
 function renderError(message) {
-  const container = document.createElement('div');
-  container.style.color = '#FF4444';
-  container.style.padding = '16px';
-  container.style.fontSize = '12px';
-  container.textContent = `Erreur : ${message || 'Impossible de communiquer avec la page.'}`;
-  resultsEl.replaceChildren(container);
+  const text = `Erreur : ${message || 'impossible de communiquer avec la page.'}`;
+  $('results').replaceChildren(el('p', { class: 'error', role: 'alert', text }));
 }
 
-// ── FILTRES ──────────────────────────────────
+// ── Filtres ──────────────────────────────────
 
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentFilter = btn.dataset.filter;
-    if (currentReport) renderResults(currentReport.results, currentFilter);
-  });
-});
+function setFilter(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
+  if (currentReport) {
+    renderResults(currentReport.results, currentFilter);
+    const count = groupByCriterion(currentReport.results, filter).size;
+    announce(`${count} critère(s) affiché(s).`);
+  }
+}
 
-// ── EXPORT JSON ──────────────────────────────
+// ── Exports ──────────────────────────────────
 
-document.getElementById('btnExport').addEventListener('click', () => {
-  if (!currentReport) return;
-  const blob = new Blob([JSON.stringify(currentReport, null, 2)], { type: 'application/json' });
+function download(content, type, fileName) {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `rgaa-audit-${Date.now()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
-document.getElementById('btnExportHtml').addEventListener('click', () => {
-  if (!currentReport) return;
-  const html = buildVulgarizedHtml(currentReport);
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `rapport-vulgarise-${Date.now()}.html`;
+  const a = el('a', { href: url, download: fileName });
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-});
+}
 
 function buildVulgarizedHtml(report) {
   const shared = window.RgaaSharedReport;
-  if (!shared || typeof shared.generateVulgarizedReport !== "function") {
-    throw new Error("Template partagé indisponible.");
+  if (!shared || typeof shared.generateVulgarizedReport !== 'function') {
+    throw new Error('Template partagé indisponible.');
   }
   return shared.generateVulgarizedReport(report, { includeCliLink: true });
+}
+
+if (typeof document !== 'undefined' && document.getElementById('btnAudit')) {
+  $('btnAudit').addEventListener('click', startAudit);
+  document.querySelectorAll('.filter-btn').forEach((btn) => {
+    btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+  });
+  $('btnExport').addEventListener('click', () => {
+    if (currentReport) download(JSON.stringify(currentReport, null, 2), 'application/json', `rgaa-audit-${Date.now()}.json`);
+  });
+  $('btnExportHtml').addEventListener('click', () => {
+    if (currentReport) download(buildVulgarizedHtml(currentReport), 'text/html;charset=utf-8', `rapport-vulgarise-${Date.now()}.html`);
+  });
 }
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     renderResultItem,
+    renderCriterion,
     createStatusMessage,
+    groupByCriterion,
+    compareCriterionIds,
   };
 }

@@ -1,0 +1,93 @@
+/**
+ * Couverture du référentiel RGAA 4.1.2 par l'outil, critère par critère.
+ * Source unique de docs/RGAA-mapping.md et de docs/criteres.html (npm run docs:coverage).
+ * Le test tests/coverage.test.js vérifie que ce tableau correspond au code.
+ *
+ *   auto    : des non-conformités sont détectées de façon fiable (une partie du critère peut rester manuelle)
+ *   partial : signaux heuristiques ou contrôle d'une petite partie du critère (« à vérifier »)
+ *   manual  : aucune détection, rappel de vérification humaine au mieux
+ *
+ *   where   : 'dom' (CLI et extension), 'cli' (simulation Playwright uniquement), 'both'
+ */
+'use strict';
+
+const COVERAGE = {
+  '1.1': { level: 'auto', where: 'dom', note: 'img sans alt, SVG/role="img"/canvas sans alternative, input image, area' },
+  '1.2': { level: 'auto', where: 'dom', note: 'image décorative pourvue d’une alternative ; SVG ni masqué ni nommé (à vérifier)' },
+  '1.3': { level: 'partial', where: 'dom', note: 'alternative générique, nom de fichier, trop longue' },
+  '1.4': { level: 'manual' }, '1.5': { level: 'manual' }, '1.6': { level: 'manual' },
+  '1.7': { level: 'manual' }, '1.8': { level: 'manual' }, '1.9': { level: 'manual' },
+  '2.1': { level: 'auto', where: 'dom', note: 'iframe sans title' },
+  '2.2': { level: 'manual' },
+  '3.1': { level: 'manual' },
+  '3.2': { level: 'auto', where: 'both', note: 'texte réellement rendu : fond composé (transparences, opacité, éléments superposés), seuils 24 px / 18,5 px gras ; CLI : états survol et focus, thème sombre, thème alternatif du site' },
+  '3.3': { level: 'auto', where: 'both', note: 'icône seule d’un bouton ou d’un lien sous 3:1 ; bordures de champs (à vérifier) ; CLI : contraste de l’indicateur de focus (à vérifier)' },
+  '4.1': { level: 'manual' }, '4.2': { level: 'manual' },
+  '4.3': { level: 'partial', where: 'dom', note: 'vidéo sans piste de sous-titres' },
+  '4.4': { level: 'manual' }, '4.5': { level: 'manual' }, '4.6': { level: 'manual' }, '4.7': { level: 'manual' },
+  '4.8': { level: 'manual' }, '4.9': { level: 'manual' },
+  '4.10': { level: 'auto', where: 'dom', note: 'média en lecture automatique avec le son' },
+  '4.11': { level: 'partial', where: 'dom', note: 'média sans contrôles natifs' },
+  '4.12': { level: 'manual' }, '4.13': { level: 'manual' },
+  '5.1': { level: 'partial', where: 'dom', note: 'tableau complexe sans résumé' },
+  '5.2': { level: 'manual' }, '5.3': { level: 'manual' }, '5.4': { level: 'manual' }, '5.5': { level: 'manual' },
+  '5.6': { level: 'partial', where: 'dom', note: 'tableau sans en-tête déclaré' },
+  '5.7': { level: 'auto', where: 'dom', note: 'th sans scope/id/role, scope invalide, headers cassé' },
+  '5.8': { level: 'auto', where: 'dom', note: 'tableau de mise en forme avec th, caption, scope…' },
+  '6.1': { level: 'partial', where: 'dom', note: 'nom accessible sans l’intitulé visible (6.1.5) ; intitulés génériques (à vérifier)' },
+  '6.2': { level: 'auto', where: 'dom', note: 'lien sans intitulé' },
+  '7.1': { level: 'auto', where: 'dom', note: 'rôles invalides ou hors contexte, attributs et valeurs ARIA invalides, états requis, références cassées' },
+  '7.2': { level: 'manual' },
+  '7.3': { level: 'auto', where: 'dom', note: 'composants interactifs non focusables, onclick sur élément non interactif' },
+  '7.4': { level: 'manual' }, '7.5': { level: 'manual' },
+  '8.1': { level: 'auto', where: 'dom', note: 'doctype' },
+  '8.2': { level: 'partial', where: 'both', note: 'id en double ; CLI --validate-html : validation complète du code généré (html-validate, en local)' },
+  '8.3': { level: 'auto', where: 'dom', note: 'lang absent sur html' },
+  '8.4': { level: 'partial', where: 'dom', note: 'code de langue invalide' },
+  '8.5': { level: 'auto', where: 'dom', note: 'title absent ou vide' },
+  '8.6': { level: 'manual' }, '8.7': { level: 'manual' },
+  '8.8': { level: 'partial', where: 'dom', note: 'code de langue invalide sur un élément' },
+  '8.9': { level: 'partial', where: 'dom', note: 'paragraphes vides servant d’espacement' },
+  '8.10': { level: 'manual' },
+  '9.1': { level: 'partial', where: 'dom', note: 'titres vides, role="heading" sans aria-level ; hiérarchie (à vérifier)' },
+  '9.2': { level: 'auto', where: 'dom', note: 'main absent ou multiple ; header/nav/footer (à vérifier)' },
+  '9.3': { level: 'auto', where: 'dom', note: 'enfants de ul/ol/dl invalides, li orphelin ; listes simulées (à vérifier)' },
+  '9.4': { level: 'manual' },
+  '10.1': { level: 'auto', where: 'dom', note: 'balises et attributs de présentation' },
+  '10.2': { level: 'manual' },
+  '10.3': { level: 'manual', where: 'cli', note: 'capture sans CSS fournie pour la vérification' },
+  '10.4': { level: 'partial', where: 'cli', note: 'texte tronqué à 200 %' },
+  '10.5': { level: 'manual' },
+  '10.6': { level: 'auto', where: 'dom', note: 'lien dans le texte non souligné et sous 3:1 avec le texte' },
+  '10.7': { level: 'auto', where: 'both', note: 'CLI : comparaison d’images focus/sans focus sur le parcours clavier ; CSS supprimant le contour (à vérifier)' },
+  '10.8': { level: 'auto', where: 'dom', note: 'élément focusable dans une zone aria-hidden' },
+  '10.9': { level: 'manual' }, '10.10': { level: 'manual' },
+  '10.11': { level: 'auto', where: 'cli', note: 'défilement horizontal à 320 px' },
+  '10.12': { level: 'auto', where: 'cli', note: 'texte tronqué avec l’espacement du test 10.12' },
+  '10.13': { level: 'manual' }, '10.14': { level: 'manual' },
+  '11.1': { level: 'auto', where: 'dom', note: 'champ sans étiquette, placeholder seul, label for orphelin ; étiquette implicite (à vérifier)' },
+  '11.2': { level: 'partial', where: 'dom', note: 'nom accessible sans l’étiquette visible (11.2.5)' },
+  '11.3': { level: 'manual' }, '11.4': { level: 'manual' },
+  '11.5': { level: 'auto', where: 'dom', note: 'boutons radio / cases à cocher de même nom non regroupés' },
+  '11.6': { level: 'auto', where: 'dom', note: 'regroupement sans légende' },
+  '11.7': { level: 'manual' }, '11.8': { level: 'manual' },
+  '11.9': { level: 'partial', where: 'dom', note: 'bouton sans intitulé, nom sans l’intitulé visible (11.9.2)' },
+  '11.10': { level: 'partial', where: 'dom', note: 'obligation non signalée, erreur non associée' },
+  '11.11': { level: 'manual' }, '11.12': { level: 'manual' },
+  '11.13': { level: 'partial', where: 'dom', note: 'valeur autocomplete invalide ; autocomplete manquant (à vérifier)' },
+  '12.1': { level: 'manual' }, '12.2': { level: 'manual' }, '12.3': { level: 'manual' }, '12.4': { level: 'manual' },
+  '12.5': { level: 'manual' }, '12.6': { level: 'manual' },
+  '12.7': { level: 'auto', where: 'both', note: 'lien d’évitement absent, cible absente ; CLI : visible au focus et fonctionnel' },
+  '12.8': { level: 'partial', where: 'dom', note: 'tabindex positif' },
+  '12.9': { level: 'auto', where: 'cli', note: 'focus bloqué sur un élément pendant le parcours clavier' },
+  '12.10': { level: 'manual' }, '12.11': { level: 'manual' },
+  '13.1': { level: 'auto', where: 'dom', note: 'meta refresh et redirection différée' },
+  '13.2': { level: 'manual' },
+  '13.3': { level: 'partial', where: 'dom', note: 'documents bureautiques sans format annoncé' },
+  '13.4': { level: 'manual' }, '13.5': { level: 'manual' }, '13.6': { level: 'manual' },
+  '13.7': { level: 'partial', where: 'cli', note: 'animations en boucle plus rapides que 3 cycles par seconde' },
+  '13.8': { level: 'partial', where: 'dom', note: 'marquee/blink (non conforme) ; animations infinies, vidéo en boucle (à vérifier)' },
+  '13.9': { level: 'manual' }, '13.10': { level: 'manual' }, '13.11': { level: 'manual' }, '13.12': { level: 'manual' },
+};
+
+module.exports = { COVERAGE };

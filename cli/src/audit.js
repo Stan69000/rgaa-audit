@@ -10,7 +10,16 @@ const path = require('node:path');
 
 const { createBrowser, closeBrowser } = require('./browser');
 const { simulateHumanActions } = require('./simulator');
-const { runDomRules } = require('./rules');
+const { runDomRules, runDarkSchemeContrast, runAlternateThemeContrast, computeScore } = require('./rules');
+const { createPagePreparer, applyAlternateTheme } = require('./page-prep');
+const { validatePageHtml } = require('./html-validation');
+const { findTemplateIssues, compareWithBaseline } = require('./aggregate');
+const { captureFindings, attachCaptureData } = require('./captures');
+
+const MAX_CAPTURES = 40;
+const { requireShared } = require('./shared');
+
+const { ENGINE_VERSION } = requireShared('rgaa-rules.js');
 const { generateReport } = require('./reporters');
 const { fillRgaaGridFromReports } = require('./reporters/ods-grid');
 const { log, success, warn } = require('./logger');
@@ -42,6 +51,13 @@ async function runAudit(url, opts = {}) {
     verbose = false,
     safeCrawl = false,
     strictSecurity = false,
+    colorScheme = 'auto',
+    dismiss = 'auto',
+    themeClick = '',
+    themeScript = '',
+    validateHtml = false,
+    baseline = '',
+    captures = true,
   } = opts;
 
   const debugEnabled = Boolean(debug || verbose);
@@ -55,6 +71,7 @@ async function runAudit(url, opts = {}) {
   const resolvedSave = resolveOutputPath(save, { outputDir });
   const resolvedVulgarizedSave = resolveOutputPath(vulgarizedSave, { outputDir });
   const resolvedOdsTemplate = odsTemplate ? path.resolve(odsTemplate) : '';
+  const baselineReport = baseline ? loadBaseline(baseline) : null;
   const resolvedOdsSave = resolveOutputPath(odsSave, { outputDir });
 
   log(`\n♿  RGAA Audit CLI — ${auditedUrl}\n`);
@@ -80,9 +97,17 @@ async function runAudit(url, opts = {}) {
       },
     }));
 
+    const preparePage = createPagePreparer(page, { dismiss });
+    // Toute navigation (page suivante, rechargement de la simulation…) repasse par ici.
+    const open = async (url) => {
+      await navigateWithFallback(page, url, navigationProfile, debugLog);
+      await preparePage();
+    };
+
     log(`📄 Chargement de ${auditedUrl}…`);
     await navigateWithFallback(page, auditedUrl, navigationProfile, debugLog);
     await page.waitForTimeout(1000);
+    await preparePage();
 
     const rootTitle = await page.title();
     success(`   Titre : "${rootTitle}"`);
@@ -105,6 +130,9 @@ async function runAudit(url, opts = {}) {
 
     // ── 3. AUDIT DES PAGES ────────────────────
     const allResults = [];
+    let darkScheme = colorScheme === 'light' ? 'off' : (colorScheme === 'both' ? 'on' : 'auto');
+    const screenshotsDir = path.join(outputDir || '.', 'audit-screenshots');
+    let capturesTaken = 0;
     const pages = [];
     const pagesSkipped = [];
     let simulationResults = null;
@@ -112,11 +140,11 @@ async function runAudit(url, opts = {}) {
     for (let i = 0; i < targets.length; i++) {
       const targetUrl = targets[i];
       const label = targets.length > 1 ? ` (${i + 1}/${targets.length})` : '';
-      log(`\n🔍 Audit DOM (règles RGAA 4.1)${label} — ${targetUrl}`);
+      log(`\n🔍 Audit DOM (règles RGAA 4.1.2)${label} — ${targetUrl}`);
 
       try {
         if (i > 0) {
-          await navigateWithFallback(page, targetUrl, navigationProfile, debugLog);
+          await open(targetUrl);
           await page.waitForTimeout(500);
         }
       } catch (e) {
@@ -142,11 +170,61 @@ async function runAudit(url, opts = {}) {
         continue;
       }
 
+      if (captures && capturesTaken < MAX_CAPTURES) {
+        capturesTaken += await captureFindings(page, domResults, {
+          dir: path.join(screenshotsDir, 'non-conformites'),
+          prefix: `p${String(i + 1).padStart(2, '0')}`,
+          max: Math.min(6, MAX_CAPTURES - capturesTaken),
+        }).catch(() => 0);
+      }
+
       let pageSimulation = null;
       if (simulate && i === 0) {
         log('\n⌨️  Simulation d\'actions humaines (page principale)…');
-        pageSimulation = await simulateHumanActions(page);
+        pageSimulation = await simulateHumanActions(page, {
+          reload: () => open(targetUrl),
+          screenshotsDir,
+        });
         simulationResults = pageSimulation;
+      }
+
+      if (darkScheme !== 'off') {
+        try {
+          const darkResults = await runDarkSchemeContrast(page, { reload: () => open(targetUrl) });
+          if (darkResults) {
+            darkScheme = 'on';
+            domResults.push(...darkResults.map((r) => ({ ...r, pageUrl: targetUrl, pageTitle })));
+          } else if (darkScheme === 'auto') {
+            darkScheme = 'off';
+            debugLog('Aucun thème sombre (prefers-color-scheme) détecté : passe sombre désactivée');
+          }
+        } catch (e) {
+          warn(`   Passe thème sombre impossible (${normalizeSkipReason(e)}) : ${targetUrl}`);
+        }
+      }
+
+      if (validateHtml) {
+        try {
+          const htmlFindings = await validatePageHtml(page);
+          domResults.push(...htmlFindings.map((r) => ({ ...r, pageUrl: targetUrl, pageTitle })));
+          const errors = htmlFindings.filter((f) => f.status === 'NC').reduce((n, f) => n + f.count, 0);
+          log(`   Validation HTML : ${errors ? `${errors} erreur(s)` : 'aucune erreur'}`);
+        } catch (e) {
+          warn(`   Validation HTML impossible : ${String(e?.message || e).split('\n')[0]}`);
+        }
+      }
+
+      if (themeClick || themeScript) {
+        try {
+          const altResults = await runAlternateThemeContrast(page, {
+            apply: () => applyAlternateTheme(page, { click: themeClick, script: themeScript }),
+            revert: themeClick ? () => applyAlternateTheme(page, { click: themeClick }) : null,
+            reload: () => open(targetUrl),
+          });
+          if (altResults) domResults.push(...altResults.map((r) => ({ ...r, pageUrl: targetUrl, pageTitle })));
+        } catch (e) {
+          warn(`   Passe thème alternatif impossible (${String(e?.message || e).split('\n')[0]}) : ${targetUrl}`);
+        }
       }
 
       const pageResults = mergeResults(domResults, pageSimulation, targetUrl, pageTitle);
@@ -159,6 +237,7 @@ async function runAudit(url, opts = {}) {
         score: pageScore,
         nonConformes: pageScore.nonConformes,
         conformes: pageScore.conformes,
+        aVerifier: pageScore.aVerifier,
       });
     }
 
@@ -169,6 +248,7 @@ async function runAudit(url, opts = {}) {
 
     // ── 5. RAPPORT ────────────────────────────
     const report = {
+      engineVersion: ENGINE_VERSION,
       url: auditedUrl,
       title: rootTitle,
       timestamp: new Date().toISOString(),
@@ -182,6 +262,15 @@ async function runAudit(url, opts = {}) {
       results: allResults,
       simulation: simulationResults?.summary || null,
     };
+
+    if (pages.length > 1) {
+      report.templateIssues = findTemplateIssues(allResults);
+      printTemplateIssues(report.templateIssues, pages.length);
+    }
+    if (baselineReport) {
+      report.baseline = { file: path.resolve(baseline), ...compareWithBaseline(report, baselineReport) };
+      printBaselineSummary(report.baseline);
+    }
 
     if (debugEnabled) {
       report.debug = {
@@ -210,7 +299,7 @@ async function runAudit(url, opts = {}) {
       warn('   Export ODS ignoré: fournir --ods-template et --ods-save ensemble.');
     }
 
-    const outputStr = await generateReport(report, output);
+    const outputStr = await generateReport(['html', 'vulgarized'].includes(output) ? attachCaptureData(report) : report, output);
 
     if (resolvedSave) {
       safeWriteReport(resolvedSave, outputStr);
@@ -220,7 +309,7 @@ async function runAudit(url, opts = {}) {
     }
 
     if (resolvedVulgarizedSave) {
-      const reportForVulgarized = attachOdsDownloadPayload(report);
+      const reportForVulgarized = attachCaptureData(attachOdsDownloadPayload(report));
       const vulgarized = await generateReport(reportForVulgarized, 'vulgarized');
       safeWriteReport(resolvedVulgarizedSave, vulgarized);
       success(`📄 Rapport vulgarisé sauvegardé : ${resolvedVulgarizedSave}`);
@@ -229,6 +318,41 @@ async function runAudit(url, opts = {}) {
     return report;
   } finally {
     if (browser) await closeBrowser(browser);
+  }
+}
+
+function loadBaseline(file) {
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(path.resolve(file), 'utf8'));
+  } catch (err) {
+    throw new Error(`Rapport de référence illisible (${file}) : ${err.message}`);
+  }
+  if (!parsed || !Array.isArray(parsed.results)) {
+    throw new Error(`Rapport de référence invalide (${file}) : tableau « results » absent.`);
+  }
+  return parsed;
+}
+
+function printTemplateIssues(issues, pageCount) {
+  if (!issues.length) return;
+  log(`\n  Défauts de gabarit (même non-conformité sur plusieurs pages) :`);
+  for (const issue of issues.slice(0, 8)) {
+    console.log(`   ${issue.id.padEnd(5)} ${issue.pageCount}/${pageCount} pages — ${issue.message.slice(0, 110)}`);
+  }
+  if (issues.length > 8) log(`   … et ${issues.length - 8} autre(s), voir templateIssues dans le rapport JSON.`);
+}
+
+function printBaselineSummary(diff) {
+  log(`\n  Comparaison avec la référence${diff.baselineTimestamp ? ` du ${diff.baselineTimestamp.slice(0, 10)}` : ''} :`);
+  if (diff.engineChanged) {
+    warn(`   Moteur différent (${diff.baselineEngineVersion || 'inconnu'} → ${ENGINE_VERSION}) : des écarts peuvent venir de l’outil, pas du site.`);
+  }
+  const line = `   ${diff.newCount} nouvelle(s) non-conformité(s), ${diff.resolvedCount} résolue(s)`;
+  if (diff.newCount) warn(line);
+  else success(line);
+  for (const item of diff.added.slice(0, 10)) {
+    console.log(`   + ${item.id.padEnd(5)} ${item.page} — ${item.message.slice(0, 100)}`);
   }
 }
 
@@ -282,31 +406,6 @@ function attachOdsDownloadPayload(report) {
   }
 }
 
-function computeScore(results) {
-  const byCriterion = {};
-  results.forEach((r) => {
-    if (!byCriterion[r.id]) byCriterion[r.id] = [];
-    byCriterion[r.id].push(r.status || statusFromResultType(r.resultType));
-  });
-
-  let conformes = 0;
-  let nonConformes = 0;
-  let na = 0;
-  Object.entries(byCriterion).forEach(([, statuses]) => {
-    if (statuses.includes('NC')) nonConformes++;
-    else if (statuses.every((s) => s === 'NA')) na++;
-    else conformes++;
-  });
-
-  const applicable = conformes + nonConformes;
-  return {
-    taux: applicable > 0 ? Math.round((conformes / applicable) * 100) : 0,
-    conformes,
-    nonConformes,
-    na,
-    total: Object.keys(byCriterion).length,
-  };
-}
 
 function summarizeResultQualification(results = []) {
   const output = {
@@ -316,9 +415,11 @@ function summarizeResultQualification(results = []) {
       manualChecks: 'Points nécessitant une vérification humaine (contexte, pertinence, parcours réels).',
     },
     disclaimers: [
-      'Ce rapport est un pré-audit automatique basé sur le RGAA 4.1.',
-      'Le score est un indicateur de progression technique, non une conformité RGAA certifiée.',
+      'Ce rapport est un pré-audit automatique basé sur le RGAA 4.1.2.',
+      'Le score ne compte que les critères tranchés automatiquement (C et NC) : ce n’est pas un taux de conformité RGAA.',
+      'Les constats « à vérifier » (NT) n’entrent pas dans le score et demandent un contrôle humain.',
     ],
+    statusCounts: {},
     resultTypeCounts: {},
     confidenceCounts: {},
     severityCounts: {},
@@ -331,6 +432,8 @@ function summarizeResultQualification(results = []) {
     const resultType = String(result?.resultType || 'unknown');
     const confidence = String(result?.confidence || 'unknown');
     const severity = String(result?.severity || 'unknown');
+    const status = String(result?.status || 'unknown');
+    output.statusCounts[status] = (output.statusCounts[status] || 0) + 1;
 
     output.resultTypeCounts[resultType] = (output.resultTypeCounts[resultType] || 0) + 1;
     output.confidenceCounts[confidence] = (output.confidenceCounts[confidence] || 0) + 1;
@@ -351,6 +454,7 @@ function printSummary(score, title, url, pagesAudited = 1, transparency = null) 
     `  Score technique détectable : ${String(score.taux + '%').padEnd(5)}  ${bar}`,
     `  Conformes    : ${String(score.conformes).padEnd(4)} critères`,
     `  Non conformes: ${String(score.nonConformes).padEnd(4)} critères`,
+    `  À vérifier   : ${String(score.aVerifier || 0).padEnd(4)} critères`,
     `  N/A          : ${String(score.na).padEnd(4)} critères`,
     `  Pages auditées: ${String(pagesAudited).padEnd(4)}`,
   ];
@@ -359,6 +463,7 @@ function printSummary(score, title, url, pagesAudited = 1, transparency = null) 
 
   console.log(`
 ${color}${framed}${reset}
+  Score = critères C / (C + NC). Les critères « à vérifier » n’y entrent pas.
   Indicateur technique automatique (non équivalent à une conformité RGAA).
   `);
 
@@ -379,11 +484,6 @@ ${color}${framed}${reset}
   console.log(`  Vérif. manuelle recommandée: ${transparency.manualReviewRecommendedCount}/${transparency.totalFindings}`);
 }
 
-function statusFromResultType(resultType) {
-  if (resultType === 'good_signal') return 'C';
-  if (resultType === 'manual_only') return 'NA';
-  return 'NC';
-}
 
 function createDebugLogger(enabled, sink = log) {
   return (message) => {
@@ -720,6 +820,7 @@ function safeOrigin(url) {
 
 module.exports = {
   runAudit,
+  loadBaseline,
   computeScore,
   _internals: {
     createDebugLogger,

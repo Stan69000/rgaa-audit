@@ -4,6 +4,9 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
+const { requireShared } = require('../shared');
+
+const { criterionStatus } = requireShared('rgaa-rules.js');
 
 function assertSafeArchiveEntries(zipPath) {
   const listing = execFileSync('unzip', ['-Z1', zipPath], {
@@ -45,17 +48,14 @@ function aggregateCriterionStatuses(results = []) {
 
   const summary = new Map();
   for (const [criterionId, items] of byCriterion.entries()) {
-    const statuses = items.map(i => i.status);
-    let status = 'NT';
-    if (statuses.includes('NC')) status = 'NC';
-    else if (statuses.every(s => s === 'NA')) status = 'NA';
-    else if (statuses.includes('C')) status = 'C';
+    const status = criterionStatus(items.map(i => i.status));
 
+    // Pour un critère « à vérifier », on ne reporte que les indices détectés, pas les rappels génériques.
     const notes = items
-      .filter(i => i.status === 'NC')
-      .map(i => i.message)
+      .filter(i => i.status === status && (status === 'NC' || i.resultType === 'heuristic_warning'))
+      .map(i => (status === 'NT' ? `À vérifier : ${i.message}` : i.message))
       .filter(Boolean)
-      .slice(0, 2)
+      .slice(0, 3)
       .join(' | ');
 
     summary.set(criterionId, { status, notes });
@@ -97,7 +97,7 @@ function updateCriteriaRows(sheetXml, criterionMap) {
       },
     );
 
-    if (mapped.status === 'NC' && mapped.notes) {
+    if ((mapped.status === 'NC' || mapped.status === 'NT') && mapped.notes) {
       const note = xmlEscape(mapped.notes);
       // Place quick remediation hints in "Modifications à apporter" when the template still has
       // two repeated empty cells for columns 6-7.

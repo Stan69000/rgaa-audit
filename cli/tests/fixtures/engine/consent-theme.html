@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>Bandeau et thème</title>
+<style>
+  html[data-theme="dark"] body { background: #111111; color: #eeeeee; }
+  html[data-theme="light"] body { background: #ffffff; color: #eeeeee; }
+  .cookie-banner { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; color: #111111; padding: 16px; }
+</style>
+<script>
+  const saved = localStorage.getItem('theme');
+  if (saved) document.documentElement.dataset.theme = saved;
+</script>
+</head>
+<body>
+<main>
+  <h1>Thème piloté par le site</h1>
+  <p class="theme-text">Texte clair, lisible seulement sur le thème sombre.</p>
+  <button type="button" id="theme-toggle" onclick="const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; localStorage.setItem('theme', t);">Changer de thème</button>
+</main>
+<div class="cookie-banner" id="banner">
+  <p>Nous utilisons des cookies pour mesurer l’audience.</p>
+  <button type="button" onclick="document.getElementById('banner').remove(); localStorage.setItem('consent', 'accepted')">Accepter</button>
+  <button type="button" onclick="document.getElementById('banner').remove(); localStorage.setItem('consent', 'refused')">Refuser</button>
+</div>
+<script>
+  if (localStorage.getItem('consent')) document.getElementById('banner').remove();
+</script>
+</body>
+</html>

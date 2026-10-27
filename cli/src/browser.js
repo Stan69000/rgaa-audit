@@ -23,7 +23,9 @@ async function createBrowser({ headless = true, debug = false, onDebugEvent } = 
   const context = await browser.newContext({
     viewport: { width: 1280, height: 720 },
     locale: 'fr-FR',
-    userAgent: 'Mozilla/5.0 (compatible; RGAA-Audit-Bot/0.1)',
+    userAgent: `Mozilla/5.0 (compatible; RGAA-Audit-Bot/${require('../package.json').version})`,
+    colorScheme: 'light',
+    reducedMotion: 'no-preference',
   });
   const page = await context.newPage();
 

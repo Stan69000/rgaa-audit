@@ -1,24 +1,28 @@
 {
   "name": "@rgaa-audit/cli",
-  "version": "0.1.0",
-  "description": "Auditeur RGAA 4.1 — CLI avec simulation d'actions humaines",
+  "version": "0.3.0",
+  "description": "Pré-audit RGAA 4.1.2 — CLI Playwright avec simulation d’actions humaines",
   "main": "src/audit.js",
   "bin": {
     "rgaa-audit": "./bin/rgaa-audit.js",
     "rgaa-fill-grid": "./bin/rgaa-fill-grid.js"
   },
   "scripts": {
-    "test": "node --test tests/*.test.js",
-    "test:verbose": "node --test --test-reporter=spec tests/*.test.js",
-    "audit:smoke": "node bin/rgaa-audit.js https://example.com -o json -s /tmp/smoke.json -S false",
-    "lint": "node --check bin/rgaa-audit.js bin/rgaa-fill-grid.js src/audit.js src/simulator.js src/browser.js src/rules/index.js src/reporters/index.js src/reporters/ods-grid.js"
+    "test": "node --test tests/*.test.js ../extension/tests/*.test.js",
+    "test:verbose": "node --test --test-reporter=spec tests/*.test.js ../extension/tests/*.test.js",
+    "audit:smoke": "node bin/rgaa-audit.js https://example.com -o json -s /tmp/smoke.json --no-simulate",
+    "lint": "node ../engine/build.js --check && node --check bin/rgaa-audit.js && node --check bin/rgaa-fill-grid.js && node --check src/audit.js && node --check src/simulator.js && node --check src/browser.js && node --check src/shared.js && node --check src/rules/index.js && node --check src/reporters/index.js && node --check src/reporters/ods-grid.js && node --check ../extension/shared/rgaa-rules.js && node --check ../extension/shared/rgaa-criteria.js && node --check ../extension/background.js && node --check ../extension/panel/panel.js && node --check src/page-prep.js && node --check src/html-validation.js && node --check src/aggregate.js && node --check src/captures.js",
+    "prepack": "node scripts/vendor-shared.js",
+    "docs:coverage": "node scripts/generate-docs.js",
+    "package:extension": "cd ../extension && V=$(node -p \"require('./manifest.json').version\") && rm -f ../rgaa-audit-extension-$V.zip && zip -qr ../rgaa-audit-extension-$V.zip . -x 'tests/*' '*.md' '.DS_Store' && echo rgaa-audit-extension-$V.zip",
+    "build:engine": "node ../engine/build.js"
   },
   "dependencies": {
+    "html-validate": "11.16.2",
     "playwright": "^1.64.1"
   },
-  "devDependencies": {},
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20"
   },
   "keywords": [
     "rgaa",
@@ -32,5 +36,11 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Stan69000/rgaa-audit.git"
-  }
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "vendor/",
+    "README.md"
+  ]
 }

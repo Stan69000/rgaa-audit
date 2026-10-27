@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Pièges de contraste</title>
+<style>
+  body { margin: 0; background: #ffffff; color: #111111; font: 16px/1.4 Arial, sans-serif; }
+  .nav { position: fixed; top: 0; left: 0; right: 0; padding: 10px; background: transparent; z-index: 2; }
+  .nav a { color: #ffffff; }
+  .hero { height: 160px; background: #1a1a2e; }
+  .fail { color: #999999; }
+  .overlay { background: rgba(0, 0, 0, 0.5); padding: 4px; }
+  .overlay span { color: #ffffff; }
+  .srgb-pass { color: color(srgb 0.1 0.1 0.1); }
+  .srgb-fail { color: color(srgb 0.75 0.75 0.75); }
+  .oklch-fail { color: oklch(0.85 0 0); }
+  .big-pass { font-size: 24px; color: #888888; }
+  .big-fail { font-size: 20px; color: #888888; }
+  .bold-pass { font-size: 19px; font-weight: 700; color: #888888; }
+  .bold-fail { font-size: 18px; font-weight: 700; color: #888888; }
+  .gradient { background-image: linear-gradient(#000000, #333333); color: #ffffff; padding: 4px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); color: #eeeeee; }
+  .dark-card { background: #222222; color: #dddddd; padding: 4px; }
+</style>
+</head>
+<body>
+<nav class="nav" aria-label="Principale"><a href="#a" class="nav-link">Accueil</a> <a href="#b" class="nav-link">Contact</a></nav>
+<section class="hero" aria-label="Bandeau"></section>
+<main>
+  <h1>Contrastes</h1>
+  <p class="ok">Texte lisible</p>
+  <p class="fail">Texte gris clair</p>
+  <div class="overlay"><span class="overlay-text">Texte sur voile translucide</span></div>
+  <p class="srgb-pass">Couleur srgb foncée</p>
+  <p class="srgb-fail">Couleur srgb claire</p>
+  <p class="oklch-fail">Couleur oklch claire</p>
+  <p class="big-pass">Gros texte gris</p>
+  <p class="big-fail">Texte moyen gris</p>
+  <p class="bold-pass">Texte gras gris</p>
+  <p class="bold-fail">Texte gras trop petit</p>
+  <p class="gradient">Texte sur dégradé</p>
+  <p class="dark-card">Texte clair sur carte sombre</p>
+  <div style="background:#000000;padding:4px"><p class="faded-group" style="opacity:0.5;background:#ffffff;color:#000000;margin:0">Carte estompée en entier</p></div>
+  <div style="background:#f5f0e6;padding:4px"><p class="faded-fail" style="opacity:0.68;background:#efe8d7;color:#5c5343;margin:0;font-size:12px">Événement passé estompé</p></div>
+  <button type="button" disabled style="color:#cccccc">Bouton désactivé</button>
+  <p><span class="sr-only">Texte réservé aux lecteurs d’écran</span></p>
+  <button type="button" class="icon-pale" aria-label="Fermer" style="background:#ffffff;border:0"><svg width="20" height="20" aria-hidden="true"><path d="M2 2 L18 18" fill="none" stroke="#cccccc" stroke-width="3"/></svg></button>
+  <button type="button" class="icon-dark" aria-label="Menu" style="background:#ffffff;border:0;color:#333333"><svg width="20" height="20" aria-hidden="true"><rect x="2" y="4" width="16" height="3" fill="currentColor"/></svg></button>
+  <a href="/aide" class="icon-with-text"><svg width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="#dddddd"/></svg> Aide</a>
+</main>
+</body>
+</html>

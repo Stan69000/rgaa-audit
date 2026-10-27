@@ -8,6 +8,18 @@
     :root {
       --font-sans: "Avenir Next", Avenir, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
       --font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --bg: #0B0B1A;
+      --surface: #14142B;
+      --surface-2: #1C1C38;
+      --border: #2A2A4A;
+      --text: #ECECFF;
+      --muted: #B4B8DA;
+      --nc: #FF7A7A;
+      --nt: #FFCB57;
+      --c: #3EE6AE;
+      --na: #B9B9CC;
+      --accent: #FF9466;
+      --focus: #FFD34D;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,8 +28,8 @@
       width: 480px;
       min-height: 200px;
       max-height: 600px;
-      background: #07071A;
-      color: #E8E8FF;
+      background: var(--bg);
+      color: var(--text);
       font-family: var(--font-sans);
       font-size: 13px;
       overflow: hidden;
@@ -25,326 +37,182 @@
       flex-direction: column;
     }
 
-    /* HEADER */
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+    .visually-hidden {
+      position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
+
     .header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 14px 16px;
-      border-bottom: 1px solid #1A1A2E;
-      background: #0D0D1A;
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface);
     }
     .logo {
-      width: 32px; height: 32px;
-      background: linear-gradient(135deg, #FF6B35, #E74C3C);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; flex-shrink: 0;
+      width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+      background: linear-gradient(135deg, #C2410C, #B91C1C);
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
     }
-    .header-text { flex: 1; }
-    .header-text h1 { font-size: 14px; font-weight: 800; }
-    .header-text p { font-size: 10px; color: #445; font-family: var(--font-mono); }
+    .header h1 { font-size: 14px; font-weight: 800; }
+    .header p { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
 
-    /* SCORE BAR */
-    .score-bar {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 12px 16px;
-      background: #0A0A18;
-      border-bottom: 1px solid #1A1A2E;
+    .disclaimer {
+      margin: 8px 16px 0; padding: 8px 10px; border-radius: 8px;
+      border: 1px solid #6B4F12; background: #2A1F08; color: #FDE68A;
+      font-size: 11px; line-height: 1.45;
     }
-    .score-ring-wrap { position: relative; width: 56px; height: 56px; flex-shrink: 0; }
-    .score-ring-wrap svg { transform: rotate(-90deg); }
+
+    .score-bar {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 16px; margin-top: 8px;
+      background: var(--surface); border-block: 1px solid var(--border);
+    }
+    .score-ring { position: relative; width: 56px; height: 56px; flex-shrink: 0; }
+    .score-ring svg { transform: rotate(-90deg); }
     .score-value {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
       font-family: var(--font-mono); font-weight: 800; font-size: 13px;
     }
-    .score-stats { display: flex; gap: 16px; flex: 1; }
-    .stat { text-align: center; }
-    .stat-val { font-family: var(--font-mono); font-size: 18px; font-weight: 800; }
-    .stat-lbl { font-size: 10px; color: #445; margin-top: 1px; }
-    .score-explain {
-      font-size: 11px;
-      color: #A8A8C8;
-      padding: 8px 16px 10px;
-      border-bottom: 1px solid #1A1A2E;
-      background: #0A0A18;
-      line-height: 1.5;
-    }
+    .stats { display: flex; gap: 14px; flex: 1; list-style: none; }
+    .stats li { text-align: center; }
+    .stat-val { display: block; font-family: var(--font-mono); font-size: 18px; font-weight: 800; }
+    .stat-lbl { display: block; font-size: 11px; color: var(--muted); }
+    .score-explain { font-size: 11px; color: var(--muted); padding: 8px 16px; line-height: 1.5; }
 
-    /* BOUTON AUDIT */
+    .meta { font-size: 11px; color: var(--muted); padding: 0 16px 6px; line-height: 1.5; word-break: break-all; }
+
     .btn-audit {
-      margin: 12px 16px;
-      padding: 10px 0;
-      background: linear-gradient(135deg, #FF6B35, #E74C3C);
-      border: none; border-radius: 10px;
-      color: #fff; font-weight: 700; font-size: 13px;
-      cursor: pointer; font-family: var(--font-sans);
-      transition: opacity .2s;
+      margin: 8px 16px 10px; padding: 10px 0;
+      background: linear-gradient(135deg, #C2410C, #B91C1C);
+      border: none; border-radius: 10px; color: #FFFFFF;
+      font-weight: 700; font-size: 13px; font-family: var(--font-sans); cursor: pointer;
     }
-    .btn-audit:hover { opacity: .9; }
-    .btn-audit:disabled { background: #1A1A2E; color: #445; cursor: not-allowed; }
+    .btn-audit:hover { filter: brightness(1.1); }
+    .btn-audit:disabled { background: var(--surface-2); color: var(--muted); cursor: progress; }
 
-    /* FILTRES */
-    .filters {
-      display: flex;
-      gap: 6px;
-      padding: 0 16px 10px;
-    }
+    .filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 10px; }
     .filter-btn {
-      padding: 4px 10px; border-radius: 999px; border: 1px solid transparent;
+      padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border);
       font-size: 11px; font-family: var(--font-mono); cursor: pointer;
-      background: #1A1A2E; color: #556; transition: all .15s;
+      background: var(--surface); color: var(--text);
     }
-    .filter-btn.active { border-color: currentColor; }
-    .filter-btn.nc { color: #FF4444; }
-    .filter-btn.nc.active { background: #FF444420; }
-    .filter-btn.c { color: #00C896; }
-    .filter-btn.c.active { background: #00C89620; }
-    .filter-btn.na { color: #888; }
-    .filter-btn.na.active { background: #88888820; }
-    .filter-btn.all { color: #A8A8C8; }
-    .filter-btn.all.active { background: #A8A8C820; }
+    .filter-btn[aria-pressed="true"] { border-color: currentColor; background: var(--surface-2); font-weight: 700; }
+    .filter-btn[data-filter="NC"] { color: var(--nc); }
+    .filter-btn[data-filter="NT"] { color: var(--nt); }
+    .filter-btn[data-filter="C"] { color: var(--c); }
+    .filter-btn[data-filter="NA"] { color: var(--na); }
 
-    /* RÉSULTATS */
-    .results {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0 16px 16px;
-    }
-    .results::-webkit-scrollbar { width: 4px; }
-    .results::-webkit-scrollbar-thumb { background: #2A2A4A; border-radius: 2px; }
+    .results { flex: 1; overflow-y: auto; padding: 0 16px 12px; }
+    .results::-webkit-scrollbar { width: 6px; }
+    .results::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-    .result-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid #0F0F1E;
-      cursor: pointer;
-      transition: background .1s;
+    .criterion { border-bottom: 1px solid var(--border); }
+    .criterion > summary {
+      display: flex; align-items: flex-start; gap: 8px; padding: 8px 2px;
+      cursor: pointer; list-style: none;
     }
-    .result-item:hover { background: #0D0D1A; border-radius: 6px; padding-left: 6px; }
+    .criterion > summary::-webkit-details-marker { display: none; }
+    .criterion > summary::before { content: "▸"; color: var(--muted); width: 10px; flex-shrink: 0; }
+    .criterion[open] > summary::before { content: "▾"; }
+    .criterion-id { font-family: var(--font-mono); font-size: 11px; color: var(--accent); font-weight: 700; min-width: 34px; }
+    .criterion-title { flex: 1; font-size: 12px; line-height: 1.45; color: var(--text); }
 
-    .result-id {
-      font-family: var(--font-mono); font-size: 10px;
-      color: #FF6B35; font-weight: 700; min-width: 30px; margin-top: 2px;
+    .badge {
+      font-size: 10px; padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono);
+      font-weight: 700; min-width: 30px; text-align: center; flex-shrink: 0; border: 1px solid currentColor;
     }
-    .result-badge {
-      font-size: 10px; padding: 2px 6px; border-radius: 4px;
-      font-family: var(--font-mono); font-weight: 700;
-      min-width: 28px; text-align: center; flex-shrink: 0; margin-top: 1px;
-    }
-    .badge-NC { background: #FF444425; color: #FF4444; }
-    .badge-C  { background: #00C89625; color: #00C896; }
-    .badge-NA { background: #88888825; color: #888; }
+    .badge-NC { color: var(--nc); }
+    .badge-NT { color: var(--nt); }
+    .badge-C  { color: var(--c); }
+    .badge-NA { color: var(--na); }
 
-    .result-text { flex: 1; font-size: 12px; color: #A8A8C8; line-height: 1.5; }
-    .result-snippet {
-      font-family: var(--font-mono); font-size: 10px;
-      color: #445; margin-top: 4px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      max-width: 340px;
+    .result-list { list-style: none; padding: 0 0 8px 18px; }
+    .result-item { display: flex; gap: 8px; padding: 6px 0; border-top: 1px dashed var(--border); }
+    .result-body { flex: 1; min-width: 0; }
+    .result-message { font-size: 12px; line-height: 1.5; color: var(--text); }
+    .result-hint { font-size: 11px; line-height: 1.45; color: var(--muted); margin-top: 3px; }
+    .result-meta { font-size: 10px; color: var(--muted); margin-top: 3px; font-family: var(--font-mono); }
+    .result-snippet, .example code {
+      display: block; font-family: var(--font-mono); font-size: 10px; color: var(--muted);
+      margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    .examples { list-style: none; margin-top: 4px; }
+    .example { display: flex; gap: 6px; align-items: center; }
+    .example code { flex: 1; min-width: 0; margin-top: 0; }
+    .btn-locate {
+      flex-shrink: 0; font-size: 10px; font-family: var(--font-mono); padding: 2px 6px;
+      border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;
+    }
+    .btn-locate:hover { background: var(--surface-2); }
 
-    /* EXPORT */
-    .footer {
-      padding: 10px 16px;
-      border-top: 1px solid #1A1A2E;
-      display: flex;
-      gap: 8px;
-    }
+    .empty { text-align: center; padding: 28px 16px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .error { color: var(--nc); padding: 16px 0; font-size: 12px; line-height: 1.5; }
+
+    .footer { padding: 10px 16px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 8px; }
     .btn-sm {
-      padding: 6px 12px; border-radius: 8px; border: 1px solid;
-      font-size: 11px; font-family: var(--font-mono);
-      cursor: pointer; font-weight: 600; background: none;
-      transition: all .15s;
+      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface);
+      font-size: 11px; font-family: var(--font-mono); cursor: pointer; font-weight: 600; color: var(--text);
+      text-decoration: none; display: inline-flex; align-items: center;
     }
-    .btn-export-json { border-color: #00C89640; color: #00C896; }
-    .btn-export-json:hover { background: #00C89615; }
-    .btn-export-html { border-color: #FFB80040; color: #FFB800; }
-    .btn-export-html:hover { background: #FFB80015; }
-    .btn-link { border-color: #4A9EFF40; color: #4A9EFF; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
-    .btn-link:hover { background: #4A9EFF15; }
-    .btn-ai { border-color: #8E44AD40; color: #A855F7; margin-left: auto; }
-    .btn-ai:hover { background: #8E44AD15; }
-    .btn-ai:disabled { opacity: .4; cursor: not-allowed; }
-
-    /* EMPTY STATE */
-    .empty {
-      text-align: center;
-      padding: 32px 16px;
-      color: #6F79A7;
-    }
-    .empty .icon { font-size: 32px; margin-bottom: 8px; }
-    .empty p { font-size: 12px; line-height: 1.6; color: #818CC0; }
-
-    /* AI PANEL */
-    .ai-panel {
-      background: #0D0A1A;
-      border: 1px solid #2A1A3A;
-      border-radius: 10px;
-      padding: 12px;
-      margin: 0 16px 10px;
-      font-size: 12px;
-      color: #C8C8E8;
-      line-height: 1.7;
-      display: none;
-    }
-    .ai-panel.visible { display: block; }
-    .ai-label {
-      font-family: var(--font-mono); font-size: 10px;
-      color: #A855F7; margin-bottom: 6px;
-    }
-    #aiText h1, #aiText h2, #aiText h3 {
-      line-height: 1.3;
-      margin: 8px 0 6px;
-      color: #F2EDFF;
-    }
-    #aiText h1 { font-size: 16px; }
-    #aiText h2 { font-size: 14px; }
-    #aiText h3 { font-size: 13px; }
-    #aiText p { margin: 6px 0; color: #D7D0EE; }
-    #aiText ul, #aiText ol { margin: 6px 0 8px 18px; }
-    #aiText li { margin: 4px 0; }
-    #aiText strong { color: #FFF7D6; font-weight: 700; }
-    #aiText code {
-      font-family: var(--font-mono);
-      background: #171230;
-      border: 1px solid #2D2650;
-      color: #C9B8FF;
-      padding: 1px 5px;
-      border-radius: 6px;
-      font-size: 11px;
-    }
-    #aiText .ai-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 8px 0 10px;
-      border: 1px solid #352B5B;
-      border-radius: 8px;
-      overflow: hidden;
-      display: block;
-    }
-    #aiText .ai-table th,
-    #aiText .ai-table td {
-      padding: 6px 8px;
-      text-align: left;
-      border-bottom: 1px solid #271F46;
-      border-right: 1px solid #271F46;
-      vertical-align: top;
-      font-size: 11px;
-      color: #DAD3EF;
-    }
-    #aiText .ai-table th {
-      background: #181234;
-      color: #F5F0FF;
-      font-weight: 700;
-    }
-    #aiText .ai-table tr:last-child td { border-bottom: none; }
-    #aiText .ai-table th:last-child,
-    #aiText .ai-table td:last-child { border-right: none; }
-
-    .url-display {
-      font-family: 'DM Mono', monospace; font-size: 10px;
-      color: #707AA6; padding: 0 16px 8px;
-      white-space: normal;
-      word-break: break-all;
-      line-height: 1.4;
-      max-height: 40px;
-      overflow: auto;
-    }
-    .privacy-note {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      color: #8E98C7;
-      padding: 0 16px 8px;
-      line-height: 1.5;
-    }
-    .disclaimer-note {
-      margin: 8px 16px 0;
-      padding: 8px 10px;
-      border-radius: 8px;
-      border: 1px solid #6b4f12;
-      background: #2a1f08;
-      color: #fde68a;
-      font-size: 11px;
-      line-height: 1.45;
-    }
+    .btn-sm:hover { background: var(--surface-2); }
   </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo">♿</div>
-  <div class="header-text">
+<header class="header">
+  <div class="logo" aria-hidden="true">♿</div>
+  <div>
     <h1>RGAA Audit</h1>
-    <p>RGAA 4.1 — Audit automatique</p>
+    <p id="engineInfo">Pré-audit automatique RGAA 4.1.2</p>
   </div>
-</div>
-<div class="disclaimer-note">Avertissement: ne remplace pas un audit professionnel et n'est pas certifiant.</div>
+</header>
+<p class="disclaimer">Avertissement : ne remplace pas un audit professionnel et n’est pas certifiant. Les points « à vérifier » demandent un contrôle humain.</p>
 
-<div class="score-bar" id="scoreBar" style="display:none">
-  <div class="score-ring-wrap">
-    <svg width="56" height="56">
-      <circle cx="28" cy="28" r="22" fill="none" stroke="#1A1A2E" stroke-width="6"/>
-      <circle id="scoreCircle" cx="28" cy="28" r="22" fill="none"
-        stroke="#00C896" stroke-width="6"
-        stroke-dasharray="138.2" stroke-dashoffset="138.2"
-        stroke-linecap="round"
-        style="transition: stroke-dashoffset 1s ease"/>
+<section class="score-bar" id="scoreBar" hidden aria-labelledby="scoreHeading">
+  <h2 id="scoreHeading" class="visually-hidden">Synthèse</h2>
+  <div class="score-ring" aria-hidden="true">
+    <svg width="56" height="56" focusable="false">
+      <circle cx="28" cy="28" r="22" fill="none" stroke="#2A2A4A" stroke-width="6"/>
+      <circle id="scoreCircle" cx="28" cy="28" r="22" fill="none" stroke="#3EE6AE" stroke-width="6"
+        stroke-dasharray="138.2" stroke-dashoffset="138.2" stroke-linecap="round"/>
     </svg>
-    <div class="score-value" id="scoreValue" style="color:#00C896">0%</div>
+    <div class="score-value" id="scoreValue">0%</div>
   </div>
-  <div class="score-stats">
-    <div class="stat">
-      <div class="stat-val" id="statNC" style="color:#FF4444">0</div>
-      <div class="stat-lbl">Non conf.</div>
-    </div>
-    <div class="stat">
-      <div class="stat-val" id="statC" style="color:#00C896">0</div>
-      <div class="stat-lbl">Conformes</div>
-    </div>
-    <div class="stat">
-      <div class="stat-val" id="statNA" style="color:#888">0</div>
-      <div class="stat-lbl">N/A</div>
-    </div>
-    <div class="stat">
-      <div class="stat-val" id="statTotal" style="color:#A8A8C8">0</div>
-      <div class="stat-lbl">Critères</div>
-    </div>
-  </div>
-</div>
-<div class="score-explain" id="scoreExplain" style="display:none"></div>
+  <ul class="stats">
+    <li><span class="stat-val" id="statNC" style="color:var(--nc)">0</span><span class="stat-lbl">Non conformes</span></li>
+    <li><span class="stat-val" id="statNT" style="color:var(--nt)">0</span><span class="stat-lbl">À vérifier</span></li>
+    <li><span class="stat-val" id="statC" style="color:var(--c)">0</span><span class="stat-lbl">Conformes</span></li>
+    <li><span class="stat-val" id="statNA" style="color:var(--na)">0</span><span class="stat-lbl">N/A</span></li>
+  </ul>
+</section>
+<p class="score-explain" id="scoreExplain" hidden></p>
 
-<div class="url-display" id="urlDisplay"></div>
-<div class="privacy-note">Données d’audit traitées localement uniquement.</div>
-<div class="privacy-note" style="padding-top:0;">Audit extension: page courante uniquement.</div>
+<p class="meta" id="urlDisplay" hidden></p>
+<p class="meta">Audit de la page courante, effectué localement : aucune donnée n’est envoyée.</p>
 
-<button class="btn-audit" id="btnAudit">▶ Lancer l'audit</button>
+<button type="button" class="btn-audit" id="btnAudit">Lancer l’audit</button>
 
-<div class="filters" id="filters" style="display:none">
-  <button class="filter-btn all active" data-filter="all">Tous</button>
-  <button class="filter-btn nc" data-filter="NC">✗ NC</button>
-  <button class="filter-btn c" data-filter="C">✓ C</button>
-  <button class="filter-btn na" data-filter="NA">— N/A</button>
+<div class="filters" id="filters" role="group" aria-label="Filtrer les résultats" hidden>
+  <button type="button" class="filter-btn" data-filter="all" aria-pressed="true">Tous</button>
+  <button type="button" class="filter-btn" data-filter="NC" aria-pressed="false">Non conformes</button>
+  <button type="button" class="filter-btn" data-filter="NT" aria-pressed="false">À vérifier</button>
+  <button type="button" class="filter-btn" data-filter="C" aria-pressed="false">Conformes</button>
+  <button type="button" class="filter-btn" data-filter="NA" aria-pressed="false">N/A</button>
 </div>
 
-<div class="results" id="results">
-  <div class="empty">
-    <div class="icon">♿</div>
-    <p>Cliquez sur "Lancer l'audit"<br>pour analyser cette page.</p>
-  </div>
-</div>
+<p id="status" class="visually-hidden" role="status" aria-live="polite"></p>
 
-<div class="footer" id="footer" style="display:none">
-  <button class="btn-sm btn-export-json" id="btnExport">↓ JSON</button>
-  <button class="btn-sm btn-export-html" id="btnExportHtml">↗ Rapport HTML (single page)</button>
-  <a class="btn-sm btn-link" href="https://stan69000.github.io/rgaa-audit/" target="_blank" rel="noopener noreferrer">Audit complet CLI</a>
-</div>
+<main class="results" id="results" tabindex="-1" aria-label="Résultats">
+  <p class="empty">Lancez l’audit pour analyser la page affichée dans l’onglet courant.</p>
+</main>
 
+<footer class="footer" id="footer" hidden>
+  <button type="button" class="btn-sm" id="btnExport">Exporter en JSON</button>
+  <button type="button" class="btn-sm" id="btnExportHtml">Rapport HTML vulgarisé</button>
+  <a class="btn-sm" href="https://stan69000.github.io/rgaa-audit/" target="_blank" rel="noopener noreferrer">Audit multi-pages (CLI)<span class="visually-hidden"> (nouvelle fenêtre)</span></a>
+</footer>
+
+<script src="../shared/rgaa-criteria.js"></script>
 <script src="../shared/vulgarized-report-template.js"></script>
 <script src="panel.js"></script>
 </body>
