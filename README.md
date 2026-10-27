@@ -138,10 +138,21 @@ Le moteur se modifie dans `engine/src/` (un fichier par thème), puis s'assemble
 
 Les règles sont testées dans un vrai Chromium sur des fixtures « pièges » (`cli/tests/fixtures/engine/`) : navigation fixe transparente, voiles translucides, groupes d'opacité, rôles ARIA valides mais méconnus, focus rogné, piège clavier… Chaque faux positif corrigé doit y gagner un cas. L'extension est aussi testée chargée dans Chromium (`extension-e2e.test.js`).
 
+## Vérification guidée (extension)
+
+L’audit automatique tranche 28 critères sur 106. Pour les autres, le bouton **« Vérification guidée »** ouvre un panneau latéral qui pose les questions une par une, en langage clair, en montrant les éléments concernés dans la page :
+
+- trois profils (« Je découvre », « J’ai l’habitude », « Je développe le site ») qui adaptent les questions et le niveau de détail ;
+- quinze fiches (images, liens, structure, formulaires, clavier, couleurs, médias, documents), chacune avec pourquoi elle compte, comment vérifier et des exemples ;
+- six aides visuelles : alternatives des images, plan des titres, zones, liens, ordre de tabulation, niveaux de gris ;
+- export et import de la session (fichier JSON) pour reprendre plus tard ou transmettre ; synthèse HTML à partager.
+
+Les fiches sont dans `extension/shared/rgaa-guide-fiches.js` ; la logique de session dans `extension/guide/guide-core.js`.
+
 ## Extension Chrome
 
 L'extension est publiée sur le [Chrome Web Store](https://chromewebstore.google.com/detail/rgaa-audit/aiaiblaemmjcfeeobpjagdajbgbcabai).
-Permissions limitées à `activeTab` et `scripting` : l'audit s'exécute dans la page courante, rien n'est envoyé.
+Permissions limitées à `activeTab`, `scripting` et `sidePanel` (panneau de la vérification guidée) : l'audit s'exécute dans la page courante, rien n'est envoyé. Justifications détaillées : [extension/PERMISSIONS.md](extension/PERMISSIONS.md).
 
 Pour publier une nouvelle version : incrémenter `version` dans `extension/manifest.json`, puis
 

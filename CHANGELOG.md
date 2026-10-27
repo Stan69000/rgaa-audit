@@ -2,7 +2,24 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
-## Non publié
+## 0.4.0 — vérification manuelle guidée
+
+Lot 1 de la vérification guidée : accompagner pas à pas les vérifications qu’aucun outil automatique ne peut trancher.
+
+- **Panneau latéral** (bouton « Vérification guidée » de l’extension) qui reste ouvert à côté de la page. Nouvelle permission `sidePanel`, sans avertissement à l’installation ; justification dans `extension/PERMISSIONS.md`.
+- **Trois profils** : « Je découvre l’accessibilité » (questions pour tous, explications ouvertes), « J’ai l’habitude » (toutes les questions, explications repliées), « Je développe le site » (sélecteurs CSS et pistes de correction).
+- **Quinze fiches en langage clair** (1.2, 1.3, 2.2, 3.1, 4.3, 6.1, 8.4, 8.6, 9.1, 9.2, 10.6, 11.2, 11.9, 12.8, 13.3) : la question, pourquoi elle compte, comment vérifier, des exemples, et le critère officiel à un clic. Seules les questions qui concernent la page sont posées.
+- **Six aides visuelles** dans la page : alternatives des images, plan des titres, zones de la page, intitulés des liens, ordre de tabulation numéroté, niveaux de gris. Chaque élément à juger est mis en évidence l’un après l’autre.
+- **Réponses** élément par élément, par signalement dans une liste, ou pour toute la page ; « Je ne sais pas » renvoie le critère vers un audit approfondi.
+- **Sauvegarde par export et import** d’un fichier de session (`rgaa-audit-session/1`), sans stockage dans le navigateur ; fusion des sessions (la réponse la plus récente l’emporte). Synthèse HTML exportable.
+- Le panneau du guide est lui-même accessible : titres, boutons à bascule, annonces, focus conservé pendant les réponses ; il passe son propre audit.
+- **Fenêtre de l’extension refondue** autour de deux parcours expliqués : audit automatique (1 minute) et vérification guidée (15 à 20 minutes). Après l’audit, une invitation rappelle le nombre de critères à vérifier et ouvre le guide ; l’écran se compacte pour laisser la place aux résultats.
+- Les cadres du guide sont retirés de la page quand on ferme le panneau latéral (le service worker suit la connexion du panneau).
+- Carrousels : les cadres du guide se redessinent en continu et suivent la diapositive affichée ; les diapositives recouvertes ou en fondu ne sont pas présentées, un élément devenu invisible est signalé, et les fiches images rappellent de mettre le carrousel en pause.
+- Correction : les éléments masqués de la fenêtre (score, filtres) s’affichaient avant l’audit.
+- Moteur 0.3.1 : utilitaires DOM exposés pour les aides visuelles (`RgaaRules.dom`) ; le texte rogné par un conteneur `overflow: hidden` n’est plus mesuré (faux positif), celui d’une zone défilante est mesuré par ses ancêtres.
+
+### Ton des avertissements
 
 - Rapport vulgarisé : l'encadré d'avertissement « Projet associatif vibe codé » en tête de rapport est remplacé par une phrase sobre sur la portée du pré-audit ; la présentation de l'association et les limites de l'outil passent dans une note « À propos » en bas de page.
 - Même ton sobre sur le site (`docs/*.html`, bandeau et pied de page neutres), le README, le mapping RGAA généré et le panneau de l'extension. `DISCLAIMER.md` reste le texte de référence détaillé.

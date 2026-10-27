@@ -65,6 +65,12 @@ describe('3.2 — contraste du texte', () => {
     assert.doesNotMatch(icons, /icon-dark|icon-with-text/);
   });
 
+  test('ignore le texte rogné par un conteneur, mesure celui d’une zone défilante', () => {
+    const failing = snippetsOf(report, { id: '3.2', status: 'NC' });
+    assert.doesNotMatch(failing, /clipped-text/);
+    assert.match(failing, /scrolled-text/);
+  });
+
   test('renvoie le texte sur dégradé en « à vérifier », pas en non-conformité', () => {
     const undetermined = findResults(report, { id: '3.2', rule: 'text-contrast-undetermined' });
     assert.equal(undetermined.length, 1);

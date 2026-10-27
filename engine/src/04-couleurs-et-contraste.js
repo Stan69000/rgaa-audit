@@ -230,16 +230,40 @@ function effectiveBackground(el, point) {
   return { color: composed.background, method: composed.method };
 }
 
-function textPoint(textNode) {
+function textRect(textNode) {
   const range = document.createRange();
   range.selectNodeContents(textNode);
-  const rect = [...range.getClientRects()].find((r) => r.width > 0 && r.height > 0);
+  const rect = [...range.getClientRects()].find((r) => r.width > 0 && r.height > 0) || null;
   range.detach();
+  return rect;
+}
+
+function textPoint(textNode, rect = textRect(textNode)) {
   if (!rect) return null;
   const x = rect.left + Math.min(rect.width / 2, 8);
   const y = rect.top + rect.height / 2;
   if (x < 0 || y < 0 || x >= window.innerWidth || y >= window.innerHeight) return null;
   return { x, y };
+}
+
+/**
+ * Texte hors de la zone visible d'un ancêtre qui rogne son contenu :
+ * 'clipped' (overflow hidden/clip : invisible, à ignorer) ou 'scrolled' (zone défilante :
+ * visible après défilement, à mesurer par les ancêtres). null sinon.
+ */
+function clippingState(el, rect) {
+  let node = el.parentElement;
+  while (node && node !== document.documentElement) {
+    const s = style(node);
+    const overflow = `${s.overflowX} ${s.overflowY}`;
+    if (/hidden|clip|auto|scroll/.test(overflow)) {
+      const r = node.getBoundingClientRect();
+      const outside = rect.right <= r.left || rect.left >= r.right || rect.bottom <= r.top || rect.top >= r.bottom;
+      if (outside) return /auto|scroll/.test(overflow) ? 'scrolled' : 'clipped';
+    }
+    node = node.parentElement;
+  }
+  return null;
 }
 
 const SKIPPED_TEXT_PARENTS = new Set([

@@ -80,6 +80,19 @@ test('le service worker injecte le moteur et renvoie un rapport complet', async 
   await page.close();
 });
 
+test('panneau latéral : API disponible et guide chargé dans l’extension', async () => {
+  const hasSidePanel = await worker.evaluate(() => Boolean(chrome.sidePanel && chrome.sidePanel.open));
+  assert.equal(hasSidePanel, true);
+  const options = await worker.evaluate(() => chrome.sidePanel.getOptions({}));
+  assert.equal(options.path, 'guide/guide.html');
+  const extensionId = new URL(worker.url()).host;
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/guide/guide.html`);
+  assert.equal(await page.locator('h1').textContent(), 'Vérification guidée');
+  assert.equal(await page.locator('[role="group"] button').count(), 3, 'trois profils proposés');
+  await page.close();
+});
+
 test('mise en évidence d’un élément signalé', async () => {
   const page = await context.newPage();
   await page.goto(`${origin}/non-conforme.html`);

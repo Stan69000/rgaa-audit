@@ -100,14 +100,11 @@ function checkTextContrast(textNode, el) {
   if (!fontSize) return null;
   const textColor = parseColor(s.color);
   if (!textColor || textColor.a === 0) return null;
-  const point = textPoint(textNode);
-  if (!point) {
-    const range = document.createRange();
-    range.selectNodeContents(textNode);
-    const visible = [...range.getClientRects()].some((r) => r.width > 0 && r.height > 0);
-    range.detach();
-    if (!visible) return null;
-  }
+  const rect = textRect(textNode);
+  if (!rect) return null;
+  const clipping = clippingState(el, rect);
+  if (clipping === 'clipped') return null;
+  const point = clipping === 'scrolled' ? null : textPoint(textNode, rect);
   const composed = composeColors(el, point, textColor);
   if (composed.indeterminate) return { indeterminate: composed.indeterminate };
 

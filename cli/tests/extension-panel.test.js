@@ -35,7 +35,10 @@ before(async () => {
   ({ browser, page } = await launch());
   await page.addInitScript((report) => {
     window.__messages = [];
+    window.__sidePanel = [];
     window.chrome = {
+      tabs: { query: (q, cb) => cb([{ id: 1, windowId: 7 }]) },
+      sidePanel: { open: async (opts) => { window.__sidePanel.push(opts); } },
       runtime: {
         lastError: null,
         sendMessage(message, callback) {
@@ -46,6 +49,11 @@ before(async () => {
     };
   }, REPORT);
   await page.goto(PANEL_URL);
+  // Avant l'audit : seuls les deux parcours sont proposés.
+  for (const id of ['#scoreBar', '#filters', '#footer', '#guideCallout']) {
+    assert.equal(await page.isVisible(id), false, `${id} ne doit pas s’afficher avant l’audit`);
+  }
+  assert.equal(await page.isVisible('#btnGuide'), true);
   await page.click('#btnAudit');
   await page.waitForSelector('details.criterion');
 });
@@ -82,6 +90,15 @@ test('le bouton « Voir » demande la mise en évidence de l’élément', async
   await page.click('.btn-locate');
   const messages = await page.evaluate(() => window.__messages);
   assert.deepEqual(messages.at(-1), { action: 'highlightElement', selector: 'main > img' });
+});
+
+test('après l’audit, invitation à la vérification guidée qui ouvre le panneau latéral', async () => {
+  assert.equal(await page.isVisible('#guideCallout'), true);
+  assert.equal(await page.isVisible('#btnGuide'), false, 'un seul bouton vers le guide après l’audit');
+  assert.match(await page.textContent('#calloutTitle'), /1 critère\(s\) restent à vérifier/);
+  await page.evaluate(() => { window.close = () => {}; });
+  await page.click('#guideCallout button');
+  assert.deepEqual(await page.evaluate(() => window.__sidePanel), [{ windowId: 7 }]);
 });
 
 test('le panneau passe son propre audit sans non-conformité', async () => {

@@ -17,7 +17,7 @@
 'use strict';
 
 (function (root) {
-  const ENGINE_VERSION = '0.3.0';
+  const ENGINE_VERSION = '0.3.1';
 
   if (root.RgaaRules && root.RgaaRules.ENGINE_VERSION === ENGINE_VERSION) return;
 
@@ -623,16 +623,40 @@
     return { color: composed.background, method: composed.method };
   }
 
-  function textPoint(textNode) {
+  function textRect(textNode) {
     const range = document.createRange();
     range.selectNodeContents(textNode);
-    const rect = [...range.getClientRects()].find((r) => r.width > 0 && r.height > 0);
+    const rect = [...range.getClientRects()].find((r) => r.width > 0 && r.height > 0) || null;
     range.detach();
+    return rect;
+  }
+
+  function textPoint(textNode, rect = textRect(textNode)) {
     if (!rect) return null;
     const x = rect.left + Math.min(rect.width / 2, 8);
     const y = rect.top + rect.height / 2;
     if (x < 0 || y < 0 || x >= window.innerWidth || y >= window.innerHeight) return null;
     return { x, y };
+  }
+
+  /**
+   * Texte hors de la zone visible d'un ancêtre qui rogne son contenu :
+   * 'clipped' (overflow hidden/clip : invisible, à ignorer) ou 'scrolled' (zone défilante :
+   * visible après défilement, à mesurer par les ancêtres). null sinon.
+   */
+  function clippingState(el, rect) {
+    let node = el.parentElement;
+    while (node && node !== document.documentElement) {
+      const s = style(node);
+      const overflow = `${s.overflowX} ${s.overflowY}`;
+      if (/hidden|clip|auto|scroll/.test(overflow)) {
+        const r = node.getBoundingClientRect();
+        const outside = rect.right <= r.left || rect.left >= r.right || rect.bottom <= r.top || rect.top >= r.bottom;
+        if (outside) return /auto|scroll/.test(overflow) ? 'scrolled' : 'clipped';
+      }
+      node = node.parentElement;
+    }
+    return null;
   }
 
   const SKIPPED_TEXT_PARENTS = new Set([
@@ -1187,14 +1211,11 @@
     if (!fontSize) return null;
     const textColor = parseColor(s.color);
     if (!textColor || textColor.a === 0) return null;
-    const point = textPoint(textNode);
-    if (!point) {
-      const range = document.createRange();
-      range.selectNodeContents(textNode);
-      const visible = [...range.getClientRects()].some((r) => r.width > 0 && r.height > 0);
-      range.detach();
-      if (!visible) return null;
-    }
+    const rect = textRect(textNode);
+    if (!rect) return null;
+    const clipping = clippingState(el, rect);
+    if (clipping === 'clipped') return null;
+    const point = clipping === 'scrolled' ? null : textPoint(textNode, rect);
     const composed = composeColors(el, point, textColor);
     if (composed.indeterminate) return { indeterminate: composed.indeterminate };
 
@@ -2793,6 +2814,11 @@
     measureContrast,
     computeScore,
     criterionStatus,
+    // Utilitaires réutilisés par les aides visuelles du guide manuel (shared/rgaa-guide-page.js).
+    dom: {
+      accessibleName, visibleText, cssPath, isRendered, isHiddenFromAT, isVisuallyHidden,
+      isKeyboardFocusable, explicitRole, roleOf, normalizedText,
+    },
     _internals: {
       parseColor, contrastRatio, blend, accessibleName, visibleText, isValidLangCode,
       isValidAutocomplete, nameIncludesVisibleLabel, effectiveBackground, cssPath,

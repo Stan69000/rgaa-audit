@@ -24,6 +24,18 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html { background: var(--bg); }
+    [hidden] { display: none !important; }
+    /* Après l'audit, la fenêtre (600 px de haut au plus) laisse la place aux résultats. */
+    body.audited .disclaimer, body.audited #localNote, body.audited .paths-title,
+    body.audited .path-desc { display: none; }
+    body.audited .paths { margin-top: 6px; }
+    body.audited .btn-audit { padding: 6px 0; font-size: 12px; }
+    body.audited .guide-callout { gap: 6px; padding: 8px 10px; }
+    body.audited .guide-callout .btn-guide { padding: 7px 0; }
+    .score-details { padding: 4px 16px 0; font-size: 11px; color: var(--muted); }
+    .score-details summary { cursor: pointer; color: var(--text); }
+    .score-details .score-explain { padding: 4px 0 0; }
     body {
       width: 480px;
       min-height: 200px;
@@ -147,6 +159,21 @@
     .empty { text-align: center; padding: 28px 16px; color: var(--muted); font-size: 12px; line-height: 1.6; }
     .error { color: var(--nc); padding: 16px 0; font-size: 12px; line-height: 1.5; }
 
+    .paths { margin: 10px 16px 8px; display: grid; gap: 10px; }
+    .paths-title, .callout-title { font-size: 13px; font-weight: 800; margin: 0; }
+    .path { display: grid; gap: 4px; }
+    .path .btn-audit { margin: 0; }
+    .path-desc { font-size: 11px; color: var(--muted); line-height: 1.45; margin: 0; }
+    .path-desc strong { color: var(--text); }
+    .btn-guide {
+      padding: 10px 0; border: none; border-radius: 10px; cursor: pointer;
+      background: #5FD3C6; color: #07201D; font: 700 13px var(--font-sans);
+    }
+    .btn-guide:hover { filter: brightness(1.08); }
+    .guide-callout {
+      margin: 0 16px 10px; padding: 10px 12px; display: grid; gap: 6px;
+      border: 1px solid #5FD3C6; border-radius: 10px; background: var(--surface);
+    }
     .footer { padding: 10px 16px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 8px; }
     .btn-sm {
       padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface);
@@ -184,12 +211,31 @@
     <li><span class="stat-val" id="statNA" style="color:var(--na)">0</span><span class="stat-lbl">N/A</span></li>
   </ul>
 </section>
-<p class="score-explain" id="scoreExplain" hidden></p>
+<details class="score-details" id="scoreDetails" hidden>
+  <summary>Comment lire ce score ?</summary>
+  <p class="score-explain" id="scoreExplain"></p>
+</details>
 
 <p class="meta" id="urlDisplay" hidden></p>
-<p class="meta">Audit de la page courante, effectué localement : aucune donnée n’est envoyée.</p>
+<p class="meta" id="localNote">Audit de la page courante, effectué localement : aucune donnée n’est envoyée.</p>
 
-<button type="button" class="btn-audit" id="btnAudit">Lancer l’audit</button>
+<section class="paths" aria-labelledby="pathsTitle">
+  <h2 id="pathsTitle" class="paths-title">Vérifier cette page</h2>
+  <div class="path">
+    <button type="button" class="btn-audit" id="btnAudit" aria-describedby="descAudit">Lancer l’audit automatique</button>
+    <p class="path-desc" id="descAudit"><strong>1 minute.</strong> Repère les erreurs techniques : contrastes, textes des images, structure, formulaires…</p>
+  </div>
+  <div class="path" id="guidePath">
+    <button type="button" class="btn-guide" id="btnGuide" data-open-guide aria-describedby="descGuide">Commencer la vérification guidée</button>
+    <p class="path-desc" id="descGuide"><strong>15 à 20 minutes.</strong> Trois critères sur quatre demandent un regard humain : le guide vous montre les éléments dans la page et vous pose des questions simples.</p>
+  </div>
+</section>
+
+<section class="guide-callout" id="guideCallout" hidden aria-labelledby="calloutTitle">
+  <h2 id="calloutTitle" class="callout-title"></h2>
+  <p class="path-desc">La vérification guidée vous aide à les trancher pas à pas, en langage clair, sans connaissances techniques.</p>
+  <button type="button" class="btn-guide" data-open-guide>Continuer avec la vérification guidée</button>
+</section>
 
 <div class="filters" id="filters" role="group" aria-label="Filtrer les résultats" hidden>
   <button type="button" class="filter-btn" data-filter="all" aria-pressed="true">Tous</button>
