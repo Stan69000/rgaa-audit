@@ -37,7 +37,7 @@ function buildMarkdown() {
   const lines = [
     `# RGAA ${RGAA_VERSION} — couverture de l’outil, critère par critère`,
     '',
-    '> ⚠️ Projet associatif vibe codé — Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d\'ouverture de l\'accessibilité au plus grand nombre. Il s\'agit d\'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.2. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.',
+    '> Pré-audit automatique selon le RGAA 4.1.2, développé par l\'association Le Singe Du Numérique : un point de départ pour prioriser les corrections. La conformité se confirme ensuite par un audit humain (voir [DISCLAIMER.md](../DISCLAIMER.md)).',
     '',
     '_Fichier généré par `npm run docs:coverage` (dossier `cli/`) à partir de `cli/scripts/coverage.js`. Ne pas modifier à la main : un test vérifie que ce tableau correspond au code._',
     '',
