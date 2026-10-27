@@ -44,3 +44,4 @@ cli/vendor/
 /cli/rapport*.html
 /cli/rapport*.json
 rgaa-audit-extension-*.zip
+/cli/store/

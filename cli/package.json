@@ -15,7 +15,8 @@
     "prepack": "node scripts/vendor-shared.js",
     "docs:coverage": "node scripts/generate-docs.js",
     "package:extension": "cd ../extension && V=$(node -p \"require('./manifest.json').version\") && rm -f ../rgaa-audit-extension-$V.zip && zip -qr ../rgaa-audit-extension-$V.zip . -x 'tests/*' '*.md' '.DS_Store' && echo rgaa-audit-extension-$V.zip",
-    "build:engine": "node ../engine/build.js"
+    "build:engine": "node ../engine/build.js",
+    "store:screenshots": "node scripts/store-screenshots.js"
   },
   "dependencies": {
     "html-validate": "11.16.2",

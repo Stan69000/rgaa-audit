@@ -128,7 +128,7 @@
   <main>
     <section class="hero">
       <h1><em>Politique de confidentialité</em> — RGAA Audit</h1>
-      <div class="updated" aria-label="Date de mise à jour">Mise à jour : 9 avril 2026</div>
+      <div class="updated" aria-label="Date de mise à jour">Mise à jour : 27 octobre 2026 (extension 0.4.0)</div>
       <p>
         Cette politique décrit le traitement des données pour l'extension RGAA Audit.
       </p>
@@ -155,10 +155,18 @@
         <h2>3. Utilisation des autorisations</h2>
         <p>L'extension utilise uniquement les autorisations suivantes :</p>
         <ul>
-          <li><code>activeTab</code> : permet d'accéder temporairement à la page active afin d'effectuer un audit d'accessibilité.</li>
-          <li><code>scripting</code> : permet d'exécuter un script local pour analyser la structure de la page.</li>
+          <li><code>activeTab</code> : permet d'accéder temporairement à la page active, après un clic de l'utilisateur sur l'icône de l'extension, afin d'effectuer un audit d'accessibilité ou une vérification guidée. L'accès prend fin quand l'onglet change de page.</li>
+          <li><code>scripting</code> : permet d'exécuter, dans cette page uniquement, les scripts de l'extension qui analysent sa structure et affichent les aides visuelles de la vérification guidée (cadres, plan des titres, ordre de tabulation).</li>
+          <li><code>sidePanel</code> : permet d'afficher la vérification guidée dans le panneau latéral du navigateur, à côté de la page. Cette autorisation ne donne accès à aucun contenu.</li>
         </ul>
-        <p>Ces autorisations sont utilisées uniquement lorsque l'utilisateur déclenche un audit.</p>
+        <p>Ces autorisations sont utilisées uniquement lorsque l'utilisateur lance un audit ou une vérification guidée. L'extension ne demande aucun accès permanent aux sites et n'exécute aucun code distant.</p>
+      </article>
+
+      <article class="card">
+        <h2>3 bis. Fichiers exportés et importés</h2>
+        <p>L'utilisateur peut exporter un rapport (JSON ou HTML) ou une session de vérification guidée (JSON), et réimporter une session. Ces fichiers sont créés sur son ordinateur, à sa demande, et ne sont envoyés nulle part.</p>
+        <p>Ils contiennent les résultats de l'audit, les réponses et notes saisies, et des extraits du code de la page auditée (balises, textes alternatifs, intitulés), mais pas les valeurs saisies dans les formulaires de la page.</p>
+        <p>L'extension n'utilise pas le stockage du navigateur : les réponses en cours sont conservées en mémoire tant que le panneau est ouvert.</p>
       </article>
 
       <article class="card">
