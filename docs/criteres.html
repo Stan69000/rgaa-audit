@@ -61,13 +61,14 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.65; }
     .disclaimer {
-      background: rgba(234,179,8,0.08);
-      border-bottom: 1px solid rgba(234,179,8,0.2);
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
       padding: 12px 24px;
       font-size: 13px;
       color: var(--muted);
     }
     .disclaimer a { color: var(--accent2); }
+    .visually-hidden-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     nav {
       position: sticky; top: 0; z-index: 10;
       display: flex; justify-content: space-between; align-items: center;
@@ -119,13 +120,11 @@
   </style>
 </head>
 <body>
-  <aside aria-label="Avertissement important">
+  <aside aria-label="Portée de l’outil">
     <div class="disclaimer">
-      <strong>⚠️ Projet associatif vibe codé</strong> — Cet outil est développé bénévolement par
-      <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener">Le Singe Du Numérique</a>
-      dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.2.
-      Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé.
-      Utilisez-le comme point de départ, pas comme conclusion.
+      Pré-audit automatique selon le RGAA 4.1.2, proposé par
+      <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener">Le Singe Du Numérique<span class="visually-hidden-sr"> (nouvelle fenêtre)</span></a> :
+      un point de départ pour prioriser les corrections. La conformité se confirme ensuite par un audit humain.
     </div>
   </aside>
 
@@ -248,7 +247,7 @@
   </main>
 
   <footer>
-    ⚠️ Projet associatif vibe codé — Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.2. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.
+    Outil libre développé par Le Singe Du Numérique, association pour un numérique accessible au plus grand nombre. Pré-audit automatique selon le RGAA 4.1.2 : les résultats aident à agir, la conformité se confirme par un audit humain.
   </footer>
 </body>
 </html>

@@ -10,7 +10,7 @@
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://stan69000.github.io/rgaa-audit/">
   <meta property="og:title" content="RGAA Audit — Accessibilité numérique open-source">
-  <meta property="og:description" content="Pré-audit automatique d'accessibilité numérique (RGAA 4.1.2). Projet associatif, résultats non certifiés.">
+  <meta property="og:description" content="Pré-audit automatique d'accessibilité numérique (RGAA 4.1.2), libre et associatif : un point de départ pour prioriser les corrections.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://stan69000.github.io/rgaa-audit/">
   <meta property="og:site_name" content="RGAA Audit">
@@ -19,7 +19,7 @@
   <meta property="og:image:alt" content="RGAA Audit - Pré-audit open-source d'accessibilité numérique">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="RGAA Audit — Accessibilité numérique open-source">
-  <meta name="twitter:description" content="Pré-audit automatique d'accessibilité numérique (RGAA 4.1.2). Projet associatif, résultats non certifiés.">
+  <meta name="twitter:description" content="Pré-audit automatique d'accessibilité numérique (RGAA 4.1.2), libre et associatif : un point de départ pour prioriser les corrections.">
   <meta name="twitter:image" content="https://stan69000.github.io/rgaa-audit/og-image.svg">
   <title>RGAA Audit — Outil open-source d'accessibilité</title>
   <script type="application/ld+json">
@@ -86,10 +86,10 @@
       opacity: .5;
     }
 
-    /* ── DISCLAIMER BANNER ── */
+    /* ── BANDEAU DE PORTÉE ── */
     .disclaimer {
-      background: rgba(234,179,8,0.08);
-      border-bottom: 1px solid rgba(234,179,8,0.2);
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
       padding: 12px 40px;
       display: flex;
       align-items: flex-start;
@@ -105,6 +105,7 @@
     }
     .disclaimer a { color: var(--accent2); text-decoration: underline; }
     .disclaimer strong { color: #E8EAF0; font-weight: 500; }
+    .visually-hidden-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
     /* ── NAV ── */
     nav {
@@ -459,15 +460,13 @@
 <!-- SKIP LINK ── RGAA 12.1 -->
 <a href="#main" class="skip-link">Aller au contenu principal</a>
 
-<!-- BANDEAU DISCLAIMER -->
-<aside aria-label="Avertissement important">
+<!-- BANDEAU DE PORTÉE -->
+<aside aria-label="Portée de l’outil">
   <div class="disclaimer">
     <p>
-      <strong>⚠️ Projet associatif vibe codé</strong> — Cet outil est développé bénévolement par
-      <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener">Le Singe Du Numérique</a>
-      dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.2.
-      Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé.
-      Utilisez-le comme point de départ, pas comme conclusion.
+      Pré-audit automatique selon le RGAA 4.1.2, proposé par
+      <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener">Le Singe Du Numérique<span class="visually-hidden-sr"> (nouvelle fenêtre)</span></a> :
+      un point de départ pour prioriser les corrections. La conformité se confirme ensuite par un audit humain.
     </p>
   </div>
 </aside>
@@ -746,7 +745,7 @@
     <p>
       Un projet associatif de <a href="https://lesingedunumerique.fr" target="_blank" rel="noopener" aria-label="Visiter le site de Le Singe Du Numérique (nouvelle fenêtre)">Le Singe Du Numérique</a>
       — ouverture de l'accessibilité numérique au plus grand nombre.<br>
-      ⚠️ Projet associatif vibe codé — Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.2. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.<br>
+      Pré-audit automatique : les résultats aident à agir, la conformité se confirme par un audit humain.<br>
       MIT License · RGAA 4.1.2 · v0.3.0 · Construit avec Playwright
     </p>
   </div>

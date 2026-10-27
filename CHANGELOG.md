@@ -5,6 +5,7 @@ Toutes les évolutions notables du projet sont documentées ici.
 ## Non publié
 
 - Rapport vulgarisé : l'encadré d'avertissement « Projet associatif vibe codé » en tête de rapport est remplacé par une phrase sobre sur la portée du pré-audit ; la présentation de l'association et les limites de l'outil passent dans une note « À propos » en bas de page.
+- Même ton sobre sur le site (`docs/*.html`, bandeau et pied de page neutres), le README, le mapping RGAA généré et le panneau de l'extension. `DISCLAIMER.md` reste le texte de référence détaillé.
 
 ## 0.3.0 — 2026-10-26
 
