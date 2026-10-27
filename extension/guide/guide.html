@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RGAA Audit – vérification guidée</title>
+  <style>
+    :root {
+      --bg: #f7f8fa; --paper: #ffffff; --ink: #172033; --muted: #4a5568; --line: #d9dee7;
+      --accent: #0b5f73; --accent-ink: #ffffff; --accent-soft: #e3f1f4;
+      --ok: #1d6b3a; --ok-soft: #e4f3e9; --ko: #a12d2d; --ko-soft: #fbe9e9;
+      --nt: #7a4f00; --nt-soft: #fdf3dc; --focus: #c2410c;
+      --font: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+      --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #10141c; --paper: #161c27; --ink: #e8ecf3; --muted: #aab3c2; --line: #2b3444;
+        --accent: #6cc3d5; --accent-ink: #0b1a20; --accent-soft: #15303a;
+        --ok: #7fd49a; --ok-soft: #173024; --ko: #f29c9c; --ko-soft: #3a1c1f;
+        --nt: #f0c46a; --nt-soft: #362a12; --focus: #ff9a66;
+        color-scheme: dark;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.5; }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+    .visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    header.top { padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--paper); }
+    header.top p { margin: 0; font-size: 13px; color: var(--muted); }
+    header.top strong { color: var(--ink); }
+    main { padding: 16px; display: grid; gap: 14px; }
+
+    h1 { font-size: 20px; margin: 0; line-height: 1.25; }
+    h2 { font-size: 18px; margin: 0; line-height: 1.3; }
+    h3 { font-size: 15px; margin: 0; }
+    p { margin: 0; }
+    .muted { color: var(--muted); }
+    .eyebrow { font-family: var(--mono); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+
+    button, .btn { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); padding: 7px 12px; text-align: left; }
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+    button[disabled] { opacity: .55; cursor: not-allowed; }
+    button[data-fk="aide"][aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 700; }
+    button[data-fk="aide"]::before { content: "○ "; }
+    button[data-fk="aide"][aria-pressed="true"]::before { content: "● "; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .stack { display: grid; gap: 8px; }
+
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 8px; min-width: 0; }
+    .card code, .label-text { overflow-wrap: anywhere; }
+    .label-text { font-weight: 700; }
+    ol.steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+    details summary { cursor: pointer; color: var(--accent); }
+    details > div { padding-top: 6px; display: grid; gap: 4px; }
+
+    .answers { display: grid; gap: 6px; }
+    .answers button[aria-pressed="true"] { border-width: 2px; font-weight: 700; }
+    .answers .a-oui[aria-pressed="true"] { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
+    .answers .a-non[aria-pressed="true"] { background: var(--ko-soft); color: var(--ko); border-color: var(--ko); }
+    .answers .a-na[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); border-color: var(--muted); }
+    .answers .a-nsp[aria-pressed="true"] { background: var(--nt-soft); color: var(--nt); border-color: var(--nt); }
+
+    ul.items { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 50vh; overflow: auto; }
+    ul.items li { display: flex; gap: 6px; align-items: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+    ul.items li .txt { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+    ul.items li .sub { display: block; color: var(--muted); font-size: 13px; }
+    ul.items li button { padding: 4px 8px; font-size: 13px; flex-shrink: 0; }
+    ul.items li button[aria-pressed="true"] { background: var(--ko-soft); color: var(--ko); border-color: var(--ko); font-weight: 700; }
+
+    ul.outline { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 45vh; overflow: auto; font-size: 14px; }
+    ul.outline li { overflow-wrap: anywhere; }
+    ul.outline .lvl { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-right: 6px; }
+
+    ol.plan, ul.plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+    .plan button { width: 100%; display: flex; gap: 8px; justify-content: space-between; align-items: center; }
+    .plan .crit { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+    .badge { font-size: 12px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+    .b-C { background: var(--ok-soft); color: var(--ok); }
+    .b-NC { background: var(--ko-soft); color: var(--ko); }
+    .b-NT { background: var(--nt-soft); color: var(--nt); }
+    .b-NA, .b-none { background: var(--accent-soft); color: var(--muted); }
+
+    textarea { font: inherit; width: 100%; min-height: 60px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; background: var(--paper); color: var(--ink); }
+    label { font-weight: 700; font-size: 14px; }
+    .notice { padding: 10px 12px; border-radius: 8px; background: var(--nt-soft); color: var(--ink); border-left: 3px solid var(--nt); }
+    .error { padding: 10px 12px; border-radius: 8px; background: var(--ko-soft); color: var(--ink); border-left: 3px solid var(--ko); }
+    nav.bottom { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; padding-top: 6px; border-top: 1px solid var(--line); }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <p><strong>RGAA Audit</strong> · vérification guidée</p>
+    <p id="pageInfo" class="visually-hidden"></p>
+  </header>
+  <main id="app" aria-live="off"></main>
+  <p id="status" class="visually-hidden" role="status" aria-live="polite"></p>
+  <input type="file" id="importFile" accept="application/json,.json" class="visually-hidden" tabindex="-1" aria-hidden="true">
+
+  <script src="../shared/rgaa-criteria.js"></script>
+  <script src="../shared/rgaa-guide-fiches.js"></script>
+  <script src="guide-core.js"></script>
+  <script src="guide.js"></script>
+</body>
+</html>

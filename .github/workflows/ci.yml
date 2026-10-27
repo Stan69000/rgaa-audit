@@ -117,7 +117,7 @@ jobs:
             const m = require('./extension/manifest.json');
             if (m.manifest_version !== 3) throw new Error('MV3 requis');
             const perms = [...(m.permissions || [])].sort().join(',');
-            if (perms !== 'activeTab,scripting') throw new Error('permissions inattendues : ' + perms + ' (voir extension/PERMISSIONS.md)');
+            if (perms !== 'activeTab,scripting,sidePanel') throw new Error('permissions inattendues : ' + perms + ' (voir extension/PERMISSIONS.md)');
             if (m.host_permissions || m.content_scripts) throw new Error('host_permissions/content_scripts interdits');
             if (!fs.existsSync('./extension/shared/rgaa-rules.js')) throw new Error('moteur partagé manquant');
             console.log('manifest.json valide');

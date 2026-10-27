@@ -181,6 +181,10 @@ assert.match(snippetsOf(report, { rule: 'link-name' }), /link-empty/);
 assert.doesNotMatch(snippetsOf(report, { rule: 'link-name' }), /link-icon-sr/);
 ```
 
+### Ajouter une fiche à la vérification guidée
+
+Les questions manuelles sont dans `extension/shared/rgaa-guide-fiches.js`. Une fiche décrit une question en langage clair pour un critère : `mode` (`element`, `liste` ou `page`), la `collection` d'éléments à juger (fournie par `extension/shared/rgaa-guide-page.js`), l'aide visuelle éventuelle, le pourquoi, les étapes, des exemples et la correction. Écrire pour une personne qui n'a jamais lu le RGAA : phrases courtes, exemples concrets. Le test `cli/tests/guide-core.test.js` vérifie la structure de chaque fiche.
+
 ### 5. Mettre à jour la couverture
 
 Déclarer le niveau du critère dans `cli/scripts/coverage.js`, puis :

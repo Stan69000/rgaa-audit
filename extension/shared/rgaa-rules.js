@@ -17,7 +17,7 @@
 'use strict';
 
 (function (root) {
-  const ENGINE_VERSION = '0.3.0';
+  const ENGINE_VERSION = '0.3.1';
 
   if (root.RgaaRules && root.RgaaRules.ENGINE_VERSION === ENGINE_VERSION) return;
 
@@ -2793,6 +2793,11 @@
     measureContrast,
     computeScore,
     criterionStatus,
+    // Utilitaires réutilisés par les aides visuelles du guide manuel (shared/rgaa-guide-page.js).
+    dom: {
+      accessibleName, visibleText, cssPath, isRendered, isHiddenFromAT, isVisuallyHidden,
+      isKeyboardFocusable, explicitRole, roleOf, normalizedText,
+    },
     _internals: {
       parseColor, contrastRatio, blend, accessibleName, visibleText, isValidLangCode,
       isValidAutocomplete, nameIncludesVisibleLabel, effectiveBackground, cssPath,

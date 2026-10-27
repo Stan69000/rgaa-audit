@@ -213,6 +213,29 @@ function download(content, type, fileName) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// ── Vérification guidée (panneau latéral) ────
+
+/**
+ * sidePanel.open() doit être appelé directement dans le clic : la fenêtre est donc
+ * repérée à l'ouverture du panneau, avant le clic.
+ */
+function setupGuideButton() {
+  const btn = $('btnGuide');
+  if (!btn) return;
+  if (!chrome.sidePanel || typeof chrome.sidePanel.open !== 'function') {
+    btn.hidden = true;
+    return;
+  }
+  let windowId = null;
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    windowId = tabs && tabs[0] ? tabs[0].windowId : null;
+  });
+  btn.addEventListener('click', () => {
+    if (windowId === null) return;
+    chrome.sidePanel.open({ windowId }).then(() => window.close()).catch((err) => renderError(err && err.message));
+  });
+}
+
 function buildVulgarizedHtml(report) {
   const shared = window.RgaaSharedReport;
   if (!shared || typeof shared.generateVulgarizedReport !== 'function') {
@@ -223,6 +246,7 @@ function buildVulgarizedHtml(report) {
 
 if (typeof document !== 'undefined' && document.getElementById('btnAudit')) {
   $('btnAudit').addEventListener('click', startAudit);
+  setupGuideButton();
   document.querySelectorAll('.filter-btn').forEach((btn) => {
     btn.addEventListener('click', () => setFilter(btn.dataset.filter));
   });
