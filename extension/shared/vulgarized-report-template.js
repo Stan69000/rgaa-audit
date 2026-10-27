@@ -147,7 +147,9 @@
     .capture figcaption { font-size:12px; color:var(--muted); }
     .where { margin-top:8px; font-size:13px; color:#334155; background:#f8fbff; border:1px solid #dfebfb; border-radius:10px; padding:8px; }
     .hint { margin-top:8px; color:var(--muted); font-size:12px; }
-    .disclaimer { margin-bottom:16px; padding:10px 12px; border-radius:12px; background:var(--warn-bg); border:1px solid #f2c066; color:#6a4200; font-size:12px; }
+    .scope-note { margin:0 0 16px; padding-left:10px; border-left:3px solid var(--border); color:var(--muted); font-size:13px; line-height:1.5; }
+    .about { margin-top:24px; padding-top:12px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; line-height:1.6; }
+    .about p { margin:0 0 6px; }
     .intro-impact { font-size:16px; margin:0; }
     .pillars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px; }
     .pillar { background:#f8fbff; border:1px solid #dbe7f8; border-radius:10px; padding:10px; font-size:13px; }
@@ -216,7 +218,7 @@
       <p class="intro-impact">En moins de 3 minutes, vous savez quoi corriger d’abord pour débloquer le plus d’utilisateurs.</p>
     </div>
     <div class="sub reveal delay-1">${esc(safeReport.title || safeReport.url || '')} · ${new Date(safeReport.timestamp || Date.now()).toLocaleString('fr-FR')}</div>
-    <div class="disclaimer reveal delay-1"><strong>Projet associatif vibe codé —</strong> Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.2. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.</div>
+    <p class="scope-note reveal delay-1">Pré-audit automatique selon le RGAA 4.1.2 : un point de départ pour prioriser les corrections. La conformité se confirme ensuite par un audit humain.</p>
 
     <div class="tools reveal delay-2">
       <button type="button" class="btn" id="btnDownloadHtml">Télécharger HTML</button>
@@ -294,6 +296,10 @@
       <p><a href="https://lesingedunumerique.fr/" target="_blank" rel="noopener noreferrer">Site de l'association${newWindowHint}</a></p>
       <p><a href="https://stan-bouchet.com/" target="_blank" rel="noopener noreferrer">Le créateur${newWindowHint}</a></p>
     </div>
+    <footer class="about">
+      <p><strong>À propos de ce rapport.</strong> Il est produit par RGAA Audit, un outil libre développé par Le Singe Du Numérique, association qui œuvre pour un numérique accessible au plus grand nombre.</p>
+      <p>Les contrôles automatiques couvrent une partie du référentiel et certains résultats méritent d’être nuancés au regard du contexte. Ce document aide à agir ; il ne vaut pas déclaration de conformité.</p>
+    </footer>
   </main>
 
   <script>

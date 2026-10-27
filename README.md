@@ -2,7 +2,7 @@
 
 Pré-audit d'accessibilité RGAA 4.1.2 open-source (extension Chrome + CLI Playwright).
 
-> ⚠️ Projet associatif vibe codé — Cet outil est développé bénévolement par Le Singe Du Numérique dans une démarche d'ouverture de l'accessibilité au plus grand nombre. Il s'agit d'un pré-audit automatique, non certifié, basé sur le RGAA 4.1.2. Les résultats peuvent comporter des erreurs et ne remplacent pas un audit réalisé par un professionnel certifié, ni un accompagnement spécialisé. Utilisez-le comme point de départ, pas comme conclusion.
+> Pré-audit automatique selon le RGAA 4.1.2, développé par l'association Le Singe Du Numérique : un point de départ pour prioriser les corrections. La conformité se confirme ensuite par un audit humain (voir [DISCLAIMER.md](DISCLAIMER.md)).
 
 ## Objectif
 
