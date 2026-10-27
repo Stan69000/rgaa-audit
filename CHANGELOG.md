@@ -2,6 +2,10 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## Non publié
+
+- Rapport vulgarisé : l'encadré d'avertissement « Projet associatif vibe codé » en tête de rapport est remplacé par une phrase sobre sur la portée du pré-audit ; la présentation de l'association et les limites de l'outil passent dans une note « À propos » en bas de page.
+
 ## 0.3.0 — 2026-10-26
 
 Refonte de la fiabilité des règles. Les résultats changent : moins de faux positifs, des défauts auparavant manqués, et des numéros de critères corrigés.
