@@ -21,6 +21,11 @@ function summarize(ids) {
   return counts;
 }
 
+/** Cellule de tableau Markdown : antislashs puis barres verticales échappés. */
+function mdCell(text) {
+  return String(text).replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
+}
+
 function pct(n, total) {
   return `${((n / total) * 100).toFixed(1)} %`;
 }
@@ -58,7 +63,7 @@ function buildMarkdown() {
     ids.filter((id) => id.split('.')[0] === topic).forEach((id) => {
       const c = COVERAGE[id];
       const level = LEVELS[c.level];
-      lines.push(`| ${id} | ${RGAA_CRITERIA[id].replace(/\|/g, '\\|')} | ${level.icon} ${level.label} | ${c.where ? WHERE[c.where] : '—'} | ${c.note || '—'} |`);
+      lines.push(`| ${id} | ${mdCell(RGAA_CRITERIA[id])} | ${level.icon} ${level.label} | ${c.where ? WHERE[c.where] : '—'} | ${mdCell(c.note || '—')} |`);
     });
     lines.push('');
   }
