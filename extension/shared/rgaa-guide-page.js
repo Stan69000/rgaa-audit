@@ -41,12 +41,25 @@
    * Diapositive de carrousel masquée : une autre image est affichée par-dessus, au même
    * endroit. Un simple calque transparent (lien étiré sur une carte) ne compte pas.
    */
+  /** Transparent ou masqué, en tenant compte des ancêtres (diapositive inactive en fondu). */
+  function effectivelyInvisible(el) {
+    let node = el;
+    while (node && node.nodeType === 1) {
+      const s = window.getComputedStyle(node);
+      if (parseFloat(s.opacity) < 0.05 || s.visibility === 'hidden') return true;
+      node = node.parentElement;
+    }
+    return false;
+  }
+
   function coveredByAnotherImage(el) {
+    if (effectivelyInvisible(el)) return true;
     const r = el.getBoundingClientRect();
     const x = r.left + r.width / 2;
     const y = r.top + r.height / 2;
     if (x < 0 || y < 0 || x >= window.innerWidth || y >= window.innerHeight) return false;
-    const top = document.elementFromPoint(x, y);
+    // Une diapositive transparente reste « au-dessus » pour le navigateur : on l'écarte.
+    const top = document.elementsFromPoint(x, y).find((n) => !effectivelyInvisible(n));
     if (!top || top === el || el.contains(top) || top.contains(el)) return false;
     const media = top.closest('img, picture, svg, video, canvas') || top.querySelector(':scope > img, :scope > picture');
     return Boolean(media) && media !== el && !media.contains(el);
