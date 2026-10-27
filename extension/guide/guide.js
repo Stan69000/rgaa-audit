@@ -515,7 +515,7 @@ function pageView(step) {
     nodes.push(el('h3', { text: 'Zones détectées' }), el('ul', { class: 'outline' }, items.length ? items.map((l) => el('li', { text: l.label })) : [el('li', { text: 'Aucune zone balisée.' })]));
   }
   if (fiche.collection === 'tabOrder') {
-    nodes.push(el('h3', { text: `Ordre de tabulation (${items.length} éléments)` }), el('ol', { class: 'outline' }, items.slice(0, 60).map((t) => el('li', { text: `${t.order}. ${t.label}` }))));
+    nodes.push(el('h3', { text: `Ordre de tabulation (${items.length} éléments)` }), el('ol', { class: 'outline taborder' }, items.slice(0, 60).map((t) => el('li', { text: t.label }))));
   }
   nodes.push(answerButtons(fiche, entry ? entry.reponse : null, (reponse) => {
     Core.recordPage(state.session, pageInfo(), fiche, reponse);
