@@ -80,7 +80,7 @@ jobs:
 
       # Rapport de la semaine precedente, s'il existe : sert de reference pour les regressions.
       - name: Restore previous report
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: baseline-${{ steps.key.outputs.name }}.json
           key: audit-baseline-${{ steps.key.outputs.name }}-${{ github.run_id }}
@@ -113,7 +113,7 @@ jobs:
 
       - name: Store baseline
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: baseline-${{ steps.key.outputs.name }}.json
           key: audit-baseline-${{ steps.key.outputs.name }}-${{ github.run_id }}
