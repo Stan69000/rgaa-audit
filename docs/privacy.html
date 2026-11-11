@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data: https:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), interest-cohort=()">
   <meta name="description" content="Politique de confidentialité de RGAA Audit.">
@@ -15,12 +15,15 @@
   <meta property="og:url" content="https://stan69000.github.io/rgaa-audit/privacy.html">
   <meta property="og:site_name" content="RGAA Audit">
   <meta property="og:locale" content="fr_FR">
-  <meta property="og:image" content="https://stan69000.github.io/rgaa-audit/og-image.svg">
+  <meta property="og:image" content="https://stan69000.github.io/rgaa-audit/og-image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Politique de confidentialité RGAA Audit">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Politique de confidentialité — RGAA Audit">
   <meta name="twitter:description" content="Traitement des données et autorisations utilisées par l'extension RGAA Audit.">
-  <meta name="twitter:image" content="https://stan69000.github.io/rgaa-audit/og-image.svg">
+  <meta name="twitter:image" content="https://stan69000.github.io/rgaa-audit/og-image.png">
   <title>Politique de confidentialité — RGAA Audit</title>
   <script type="application/ld+json">
     {
@@ -37,9 +40,10 @@
       }
     }
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="preload" href="fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="icon" href="favicon-48.png" type="image/png" sizes="48x48">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <style>
     :root {
       --bg: #0B0C0F;
@@ -104,6 +108,10 @@
     footer a { color: var(--accent2); }
     @media (max-width: 900px) {
       .nav-links { display: none; }
+    }
+      /* Respecte le réglage « réduire les animations » du système (WCAG 2.3.3, RGAA 13.8). */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
     }
   </style>
 </head>
