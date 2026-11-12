@@ -2,6 +2,13 @@
 
 Toutes les évolutions notables du projet sont documentées ici.
 
+## Non publié
+
+- **Site : polices hébergées sur le site** (Geist, Geist Mono, Instrument Serif, licence SIL OFL) au lieu de Google Fonts. Plus aucune requête vers un tiers : l’adresse IP des visiteurs n’est plus transmise à Google, et la politique de sécurité du contenu (CSP) n’autorise plus que le site lui-même.
+- **Site : image de partage en PNG 1200×630** (Facebook, LinkedIn et X n’affichent pas d’image SVG), avec dimensions et type déclarés. Version corrigée en RGAA 4.1.2 sur l’image.
+- **Site : favicon** (plus d’erreur 404) et respect du réglage « réduire les animations » du système.
+- Site : directive `frame-ancestors` retirée de la CSP en balise `<meta>`, où les navigateurs l’ignorent ; dates du sitemap mises à jour.
+
 ## 0.4.0 — vérification manuelle guidée
 
 Lot 1 de la vérification guidée : accompagner pas à pas les vérifications qu’aucun outil automatique ne peut trancher.
