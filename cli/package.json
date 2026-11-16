@@ -19,7 +19,7 @@
     "store:screenshots": "node scripts/store-screenshots.js"
   },
   "dependencies": {
-    "html-validate": "11.18.0",
+    "html-validate": "11.21.1",
     "playwright": "^1.65.0"
   },
   "engines": {
