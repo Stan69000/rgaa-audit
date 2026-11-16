@@ -36,6 +36,10 @@ updates:
     commit-message:
       prefix: "chore(ci)"
     groups:
+      # init, autobuild et analyze doivent rester sur la même version, sinon CodeQL échoue
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
       ci-safe-updates:
         patterns:
           - "*"
