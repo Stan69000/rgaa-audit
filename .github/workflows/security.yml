@@ -94,7 +94,7 @@ jobs:
           languages: javascript-typescript
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@24c7eb380a2dc368f2d129e4c65e51d172983a1e # v4
+        uses: github/codeql-action/autobuild@3ea37a44b6e4e6847c46edae209410d258d548d1 # v4
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@24c7eb380a2dc368f2d129e4c65e51d172983a1e # v4
