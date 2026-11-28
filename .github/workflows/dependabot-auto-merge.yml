@@ -11,8 +11,11 @@ permissions:
 
 jobs:
   enable-automerge:
-    name: Enable auto-merge for patch/minor
-    if: github.actor == 'dependabot[bot]'
+    name: Enable auto-merge for patch updates
+    # L'auteur de la PR, pas github.actor : l'acteur est celui qui a déclenché
+    # l'événement (n'importe qui peut relancer un run ou ajouter un label sur
+    # une PR Dependabot), alors que l'auteur ne peut pas être usurpé.
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Fetch Dependabot metadata
@@ -22,9 +25,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Enable auto-merge when update is safe
-        if: |
-          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        # Patchs seulement : une version mineure apporte du code nouveau, elle
+        # mérite une relecture humaine avant fusion.
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
