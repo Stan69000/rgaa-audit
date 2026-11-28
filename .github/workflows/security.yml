@@ -97,15 +97,15 @@ jobs:
           persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@3ea37a44b6e4e6847c46edae209410d258d548d1 # v4
+        uses: github/codeql-action/init@776237d428f23fefc3d9e0fe1962921cbcd53e17 # v4
         with:
           languages: javascript-typescript
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@3ea37a44b6e4e6847c46edae209410d258d548d1 # v4
+        uses: github/codeql-action/autobuild@776237d428f23fefc3d9e0fe1962921cbcd53e17 # v4
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@3ea37a44b6e4e6847c46edae209410d258d548d1 # v4
+        uses: github/codeql-action/analyze@776237d428f23fefc3d9e0fe1962921cbcd53e17 # v4
 
   secrets-scan:
     name: Secret scan (gitleaks)
